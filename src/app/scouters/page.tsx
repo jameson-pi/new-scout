@@ -45,21 +45,29 @@ export default async function ScouterLeaderboard() {
                     {filteredStats.map((s, i) => (
                         <div key={s.scoutId} className="glass" style={{ padding: '1.5rem 2rem', borderRadius: '30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
                             <div className="flex items-center" style={{ gap: '2rem' }}>
-                                <span style={{ fontSize: '2rem', fontWeight: 950, fontStyle: 'italic', color: '#111', width: '40px' }}>{i + 1}</span>
+                                <span style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: '#111', width: '40px' }}>{i + 1}</span>
                                 <div>
                                     <p style={{ fontSize: '9px', fontWeight: 950, color: s.color, letterSpacing: '0.15em', marginBottom: '0.25rem' }}>{s.status}</p>
-                                    <h3 style={{ fontSize: '1.5rem', fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase' }}>{s.scoutId}</h3>
+                                    <h3 style={{ fontSize: '1.75rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', color: '#fff' }}>{s.scoutId}</h3>
+                                    <div className="flex items-center" style={{ gap: '0.5rem', marginTop: '0.25rem' }}>
+                                        <div style={{ padding: '2px 8px', borderRadius: '4px', background: s.bias > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', border: `1px solid ${s.bias > 0 ? '#ef4444' : '#3b82f6'}33` }}>
+                                            <span style={{ fontSize: '8px', fontWeight: 950, color: s.bias > 0 ? '#ef4444' : '#3b82f6', textTransform: 'uppercase' }}>
+                                                {s.bias > 0 ? `▲ INFLATION (+${s.bias.toFixed(1)})` : `▼ DEFLATION (${s.bias.toFixed(1)})`}
+                                            </span>
+                                        </div>
+                                        <span style={{ fontSize: '8px', fontWeight: 700, color: '#444' }}>BIAS TENDENCY</span>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center" style={{ gap: '4rem' }}>
-                                <div style={{ textAlign: 'right', width: '80px' }}>
-                                    <p style={{ fontSize: '1.75rem', fontWeight: 950, fontStyle: 'italic', color: s.spr < 2.5 ? '#22c55e' : '#fff' }}>{s.spr.toFixed(2)}</p>
-                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#444', textTransform: 'uppercase' }}>Precision</p>
+                                <div style={{ textAlign: 'right', width: '100px' }}>
+                                    <p style={{ fontSize: '2rem', fontWeight: 950, fontStyle: 'italic', color: s.spr < 2.5 ? '#22c55e' : '#fff' }}>{s.spr.toFixed(2)}</p>
+                                    <p style={{ fontSize: '10px', fontWeight: 950, color: '#555', textTransform: 'uppercase' }}>Precision</p>
                                 </div>
                                 <div style={{ textAlign: 'right', width: '80px' }}>
-                                    <p style={{ fontSize: '1.75rem', fontWeight: 950, fontStyle: 'italic', color: '#fff' }}>{s.matchesScouted}</p>
-                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#444', textTransform: 'uppercase' }}>Combos</p>
+                                    <p style={{ fontSize: '2rem', fontWeight: 950, fontStyle: 'italic', color: '#fff' }}>{s.matchesScouted}</p>
+                                    <p style={{ fontSize: '10px', fontWeight: 950, color: '#555', textTransform: 'uppercase' }}>Reports</p>
                                 </div>
                             </div>
                         </div>

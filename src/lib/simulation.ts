@@ -31,7 +31,8 @@ const ITERATIONS = 10000;
 export function runSimulation(
     teams: TeamPerformanceDistribution[],
     matches: SimulatedMatch[],
-    currentRPs: Record<string, number>
+    currentRPs: Record<string, number>,
+    matchLimit: number = 999 // Current "time" in the event
 ): SimResult[] {
     const teamStats: Record<string, { totalRP: number, ranks: number[] }> = {};
     const teamList = teams.map(t => t.teamKey);
@@ -40,27 +41,19 @@ export function runSimulation(
         teamStats[tk] = { totalRP: 0, ranks: [] };
     });
 
+    // Separate matches into "played" and "remaining" based on matchLimit
+    const playedMatches = matches.filter(m => getMatchNumber(m.matchKey) <= matchLimit);
+    const remainingMatches = matches.filter(m => getMatchNumber(m.matchKey) > matchLimit);
+
     // Run 10,000 iterations
     for (let i = 0; i < ITERATIONS; i++) {
         const iterationRPs: Record<string, number> = { ...currentRPs };
 
-        matches.forEach(match => {
+        // 1. Process Remaining Matches (Monte Carlo)
+        remainingMatches.forEach(match => {
             const redResult = simulateAlliance(match.red, teams);
             const blueResult = simulateAlliance(match.blue, teams);
-
-            // 1. Match Outcome RPs
-            if (redResult.score > blueResult.score) {
-                match.red.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 2);
-            } else if (blueResult.score > redResult.score) {
-                match.blue.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 2);
-            } else {
-                match.red.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 1);
-                match.blue.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 1);
-            }
-
-            // 2. Bonus RPs (Reefscape Rules)
-            applyBonusRPs(iterationRPs, match.red, redResult);
-            applyBonusRPs(iterationRPs, match.blue, blueResult);
+            processMatchOutcome(iterationRPs, match, redResult, blueResult);
         });
 
         // Rank teams for this iteration
@@ -90,6 +83,29 @@ export function runSimulation(
     }).sort((a, b) => a.expectedRank - b.expectedRank);
 }
 
+function getMatchNumber(matchKey: string): number {
+    return parseInt(matchKey.split('_qm').pop() || '0');
+}
+
+function processMatchOutcome(iterationRPs: Record<string, number>, match: SimulatedMatch, red: any, blue: any) {
+    if (red.score > blue.score) {
+        match.red.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 2);
+    } else if (blue.score > red.score) {
+        match.blue.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 2);
+    } else {
+        match.red.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 1);
+        match.blue.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 1);
+    }
+    applyBonusRPs(iterationRPs, match.red, red);
+    applyBonusRPs(iterationRPs, match.blue, blue);
+}
+
+function calculateActualAllianceScore(teamKeys: string[], distributions: TeamPerformanceDistribution[]) {
+    // In "Actual" mode, we just average the teams' performances or use the latest
+    // For simplicity in the sim, we'll pick from their distributions (which are already filtered by time in the UI)
+    return simulateAlliance(teamKeys, distributions);
+}
+
 function simulateAlliance(teamKeys: string[], distributions: TeamPerformanceDistribution[]) {
     // Pick one random past performance for each robot
     const performances = teamKeys.map(tk => {
@@ -101,7 +117,6 @@ function simulateAlliance(teamKeys: string[], distributions: TeamPerformanceDist
     });
 
     // Sum up points
-    // Weights (MVP constant)
     const AUTO = { l1: 3, l2: 4, l3: 6, l4: 7, proc: 6, net: 4 };
     const TELE = { l1: 2, l2: 3, l3: 4, l4: 5, proc: 6, net: 4 };
     const CLIMB = { Deep: 12, Shallow: 6, Park: 2, None: 0 };
@@ -111,12 +126,10 @@ function simulateAlliance(teamKeys: string[], distributions: TeamPerformanceDist
     let totalAlgae = 0;
 
     performances.forEach(p => {
-        // Auto
         score += p.auto.coral_l1 * AUTO.l1 + p.auto.coral_l2 * AUTO.l2 + p.auto.coral_l3 * AUTO.l3 + p.auto.coral_l4 * AUTO.l4;
         score += p.auto.algae_processor * AUTO.proc + p.auto.algae_net * AUTO.net;
         if (p.auto.moved) score += 3;
 
-        // Tele
         score += p.teleop.coral_l1 * TELE.l1 + p.teleop.coral_l2 * TELE.l2 + p.teleop.coral_l3 * TELE.l3 + p.teleop.coral_l4 * TELE.l4;
         score += p.teleop.algae_processor * TELE.proc + p.teleop.algae_net * TELE.net;
         score += CLIMB[p.teleop.climb] || 0;
@@ -129,12 +142,9 @@ function simulateAlliance(teamKeys: string[], distributions: TeamPerformanceDist
 }
 
 function applyBonusRPs(iterationRPs: Record<string, number>, teamKeys: string[], result: any) {
-    // Reefscape 2025 RP Rules (Simplified)
-    // 1. Coral Bonus: >= 15 coral
     if (result.totalCoral >= 15) {
         teamKeys.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 1);
     }
-    // 2. Algae Bonus: >= 8 algae
     if (result.totalAlgae >= 8) {
         teamKeys.forEach(t => iterationRPs[t] = (iterationRPs[t] || 0) + 1);
     }

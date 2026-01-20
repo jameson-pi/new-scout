@@ -43,42 +43,52 @@ function parseCSV(csvText: string) {
  */
 export function loadWacoReports(): ScoutReport[] {
     try {
-        const filePath = path.join(process.cwd(), 'public', '6377 Waco Scouting - Scouting_waco.csv');
+        const filePath = path.join(process.cwd(), 'public', '2025txwac.csv');
         const csvText = fs.readFileSync(filePath, 'utf-8');
         const rawData = parseCSV(csvText);
 
-        return rawData.map(row => {
-            const alliance = row.driver_station?.startsWith('red') ? 'red' : 'blue';
+        return rawData
+            .filter(row => row.frc_team && !isNaN(parseInt(row.frc_team)))
+            .map(row => {
+                const alliance = row.driver_station?.startsWith('red') ? 'red' : 'blue';
 
-            const data: ReefscapeData = {
-                auto: {
-                    coral_l1: parseInt(row.auto_coral_l1) || 0,
-                    coral_l2: parseInt(row.auto_coral_l2) || 0,
-                    coral_l3: parseInt(row.auto_coral_l3) || 0,
-                    coral_l4: parseInt(row.auto_coral_l4) || 0,
-                    algae_processor: parseInt(row.auto_algae_processor) || 0,
-                    algae_net: parseInt(row.auto_algae_barge) || 0, // Mapping barge to net for this game logic
-                    moved: row.auto_moved === 'Yes'
-                },
-                teleop: {
-                    coral_l1: parseInt(row.tele_coral_l1) || 0,
-                    coral_l2: parseInt(row.tele_coral_l2) || 0,
-                    coral_l3: parseInt(row.tele_coral_l3) || 0,
-                    coral_l4: parseInt(row.tele_coral_l4) || 0,
-                    algae_processor: parseInt(row.tele_algae_processor) || 0,
-                    algae_net: parseInt(row.tele_algae_barge) || 0,
-                    climb: parseClimb(row.tele_endgame)
-                }
-            };
+                const data: ReefscapeData = {
+                    auto: {
+                        coral_l1: parseInt(row.auto_coral_l1) || 0,
+                        coral_l2: parseInt(row.auto_coral_l2) || 0,
+                        coral_l3: parseInt(row.auto_coral_l3) || 0,
+                        coral_l4: parseInt(row.auto_coral_l4) || 0,
+                        algae_processor: parseInt(row.auto_algae_processor) || 0,
+                        algae_net: parseInt(row.auto_algae_barge) || 0, // Mapping barge to net for this game logic
+                        moved: row.auto_moved === 'Yes'
+                    },
+                    teleop: {
+                        coral_l1: parseInt(row.tele_coral_l1) || 0,
+                        coral_l2: parseInt(row.tele_coral_l2) || 0,
+                        coral_l3: parseInt(row.tele_coral_l3) || 0,
+                        coral_l4: parseInt(row.tele_coral_l4) || 0,
+                        algae_processor: parseInt(row.tele_algae_processor) || 0,
+                        algae_net: parseInt(row.tele_algae_barge) || 0,
+                        climb: parseClimb(row.tele_endgame)
+                    },
+                    notes: row.other_notes || '',
+                    mech_failure: row.mech_failure === 'Yes',
+                    defender_rating: parseInt(row.defender_rating) || 0
+                };
 
-            return {
-                scoutId: row.scouted_by,
-                matchKey: row.match_key,
-                teamKey: `frc${row.frc_team}`,
-                alliance: alliance as 'red' | 'blue',
-                data
-            };
-        });
+                return {
+                    scoutId: row.scouted_by,
+                    matchKey: row.match_key,
+                    teamKey: `frc${row.frc_team}`,
+                    alliance: alliance as 'red' | 'blue',
+                    data
+                };
+            })
+            .sort((a, b) => {
+                const numA = parseInt(a.matchKey.split('_qm')[1]) || 0;
+                const numB = parseInt(b.matchKey.split('_qm')[1]) || 0;
+                return numA - numB;
+            });
     } catch (e) {
         console.error("Error loading Waco reports:", e);
         return [];
@@ -121,5 +131,24 @@ export async function getMissionData(eventKey: string = '2025txwac') {
         };
     });
 
-    return { reports, tbaMatches };
+    return { reports, tbaMatches, tbaMatchesRaw };
+}
+
+export async function getEventSchedule(eventKey: string = '2025txwac') {
+    const tbaMatchesRaw = await getEventMatches(eventKey);
+    return tbaMatchesRaw
+        .filter(m => m.comp_level === 'qm')
+        .map(m => ({
+            key: m.key,
+            matchNumber: m.match_number,
+            red: m.alliances.red.team_keys,
+            blue: m.alliances.blue.team_keys
+        }))
+        .sort((a, b) => a.matchNumber - b.matchNumber);
+}
+
+export function getUniqueScouters(): string[] {
+    const reports = loadWacoReports();
+    const scouters = Array.from(new Set(reports.map(r => r.scoutId))).filter(Boolean).sort();
+    return scouters;
 }

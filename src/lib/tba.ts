@@ -39,3 +39,21 @@ export async function getTeamStatus(teamKey: string, eventKey: string) {
     });
     return response.json();
 }
+
+export async function getEventTeams(eventKey: string) {
+    const response = await fetch(`${TBA_BASE_URL}/event/${eventKey}/teams`, {
+        headers: { 'X-TBA-Auth-Key': TBA_KEY || '' },
+        next: { revalidate: 86400 }
+    });
+    if (!response.ok) return [];
+    return response.json();
+}
+
+export async function getEventRankings(eventKey: string) {
+    const response = await fetch(`${TBA_BASE_URL}/event/${eventKey}/rankings`, {
+        headers: { 'X-TBA-Auth-Key': TBA_KEY || '' },
+        next: { revalidate: 300 }
+    });
+    if (!response.ok) return null;
+    return response.json();
+}

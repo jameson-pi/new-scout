@@ -480,3 +480,5 @@ for the last 30 sec of teleop - stood still (mechanical failure?)"
 9786-2025txwac_qm63-red2-Pranav R,9786,2025txwac,2025txwac_qm63,red2,qm,63,0,1,0,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Pranav R, Got stuck on an algae and managed to get off and then got stuck on algae again 
 9786-2025txwac_qm72-blue3-Victoria H,9786,2025txwac,2025txwac_qm72,blue3,qm,72,0,0,0,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,Park,No Attempt,No,0,0,2,No,Victoria H,
 9786-2025txwac_qm77-blue3-Brace Y,9786,2025txwac,2025txwac_qm77,blue3,qm,77,0,0,0,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,No Attempt,No Attempt,No,2,0,0,No,Brace Y, I couldn't see the robot score
+2969-2025txwac_qm15-scout-TESTING,2969,2025txwac,2025txwac_qm15,scout,qm,15,3,0,0,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,N/A,No,0,0,3,No,TESTING,Automated Scout Submission
+5212-2025txwac_qm11-scout-TESTING,5212,2025txwac,2025txwac_qm11,scout,qm,11,3,0,0,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,Park,Normal,No,0,0,4,No,TESTING,Automated Scout Submission

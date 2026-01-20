@@ -20,6 +20,12 @@ export interface ReefscapeData {
         algae_net: number;
         climb: 'None' | 'Park' | 'Shallow' | 'Deep';
     };
+    notes?: string;
+    mech_failure?: boolean;
+    defender_rating?: number;
+    algae_removed?: number;
+    coral_source?: 'Floor' | 'Station' | 'Both';
+    climb_speed?: 'Fast' | 'Normal' | 'Slow' | 'Failed';
 }
 
 export interface ScoutReport {
