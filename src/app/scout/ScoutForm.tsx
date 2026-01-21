@@ -40,23 +40,23 @@ export default function ScoutForm({ initialSchedule, initialScouters }: ScoutFor
     }, [selectedMatchData]);
 
     const Counter = ({ label, value, color, onChange }: { label: string, value: number, color: string, onChange: (v: number) => void }) => (
-        <div className="glass flex items-center justify-between" style={{ padding: '1.5rem', marginBottom: '1rem', borderLeft: `6px solid ${color}`, borderRadius: '25px' }}>
-            <div>
-                <span style={{ fontSize: '11px', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', marginBottom: '0.5rem', display: 'block' }}>{label}</span>
-                <span style={{ fontSize: '3.5rem', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.05em', lineHeight: 1 }}>{value}</span>
+        <div className="glass flex items-center justify-between" style={{ padding: '1.25rem', marginBottom: '0.75rem', borderLeft: `6px solid ${color}`, borderRadius: '25px' }}>
+            <div style={{ flex: 1 }}>
+                <span style={{ fontSize: '10px', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', marginBottom: '0.25rem', display: 'block' }}>{label}</span>
+                <span style={{ fontSize: 'clamp(2.5rem, 8vw, 3.5rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.05em', lineHeight: 1 }}>{value}</span>
             </div>
-            <div className="flex" style={{ gap: '1rem' }}>
+            <div className="flex" style={{ gap: '0.75rem' }}>
                 <button
                     onClick={() => onChange(Math.max(0, value - 1))}
-                    style={{ width: '4rem', height: '4rem', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: '3.5rem', height: '3.5rem', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                    <svg style={{ width: '2rem', height: '2rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M20 12H4" /></svg>
+                    <svg style={{ width: '1.5rem', height: '1.5rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M20 12H4" /></svg>
                 </button>
                 <button
                     onClick={() => onChange(value + 1)}
-                    style={{ width: '4rem', height: '4rem', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: '3.5rem', height: '3.5rem', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                    <svg style={{ width: '2rem', height: '2rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M12 4v16m8-8H4" /></svg>
+                    <svg style={{ width: '1.5rem', height: '1.5rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M12 4v16m8-8H4" /></svg>
                 </button>
             </div>
         </div>
@@ -244,21 +244,21 @@ export default function ScoutForm({ initialSchedule, initialScouters }: ScoutFor
 
                         <div className="glass" style={{ padding: '2rem', borderRadius: '30px' }}>
                             <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Mission Endgame</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
                                 {(['None', 'Park', 'Shallow', 'Deep'] as const).map(climb => (
                                     <button
                                         key={climb}
                                         onClick={() => setFormData({ ...formData, tele: { ...formData.tele, climb: climb } })}
-                                        style={{ padding: '1rem', borderRadius: '12px', border: '1px solid', fontSize: '10px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: formData.tele.climb === climb ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', borderColor: formData.tele.climb === climb ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', color: formData.tele.climb === climb ? '#000' : '#888' }}
+                                        style={{ padding: '1.5rem', borderRadius: '15px', border: '1px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: formData.tele.climb === climb ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', borderColor: formData.tele.climb === climb ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', color: formData.tele.climb === climb ? '#000' : '#888' }}
                                     >{climb}</button>
                                 ))}
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
                                 {(['Slow', 'Normal', 'Fast', 'Failed'] as const).map(spd => (
                                     <button
                                         key={spd}
                                         onClick={() => setFormData({ ...formData, climb_speed: spd } as any)}
-                                        style={{ padding: '1rem', borderRadius: '12px', border: '1px solid', fontSize: '10px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: (formData as any).climb_speed === spd ? '#22c55e' : 'rgba(255,255,255,0.05)', borderColor: (formData as any).climb_speed === spd ? '#22c55e' : 'rgba(255,255,255,0.05)', color: (formData as any).climb_speed === spd ? '#000' : '#888' }}
+                                        style={{ padding: '1.5rem', borderRadius: '15px', border: '1px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: (formData as any).climb_speed === spd ? '#22c55e' : 'rgba(255,255,255,0.05)', borderColor: (formData as any).climb_speed === spd ? '#22c55e' : 'rgba(255,255,255,0.05)', color: (formData as any).climb_speed === spd ? '#000' : '#888' }}
                                     >{spd}</button>
                                 ))}
                             </div>

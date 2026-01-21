@@ -87,11 +87,11 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
             <div className="mx-auto" style={{ maxWidth: '1200px', display: 'grid', gap: '4rem' }}>
 
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end reveal" style={{ gap: '2rem' }}>
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end reveal mobile-stack" style={{ gap: '2rem' }}>
                     <div style={{ display: 'grid', gap: '0.5rem' }}>
                         <div className="flex items-center" style={{ gap: '0.75rem' }}>
                             <div style={{ width: '0.75rem', height: '0.75rem', borderRadius: '50%', background: '#ff0000', boxShadow: '0 0 10px #ff0000' }}></div>
-                            <p style={{ fontSize: '10px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#555' }}>Waco Mission Prediction</p>
+                            <p style={{ fontSize: '10px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#555' }}>{eventKey.split('2025')[1].toUpperCase()} Mission Prediction</p>
                         </div>
                         <h1 className="text-gradient" style={{ fontSize: 'clamp(3rem, 10vw, 6rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.05em', lineHeight: 1 }}>
                             {eventKey.toUpperCase()}
@@ -99,11 +99,18 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                         <p style={{ color: '#555', fontSize: '1.25rem', fontWeight: 500 }}>Monte Carlo Rank Integrity • {schedule.length} Matches Simulated</p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <Link href={`/event/${eventKey}/draft`} style={{ textDecoration: 'none' }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid var(--secondary)', background: 'rgba(57, 255, 20, 0.05)' }}>
+                    <div className="w-full md:w-auto" style={{ display: 'flex', gap: '1rem' }}>
+                        <Link href={`/scouters/${eventKey}`} style={{ textDecoration: 'none', flex: 1 }}>
+                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid var(--primary)', background: 'rgba(168, 85, 247, 0.05)', textAlign: 'center' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                                    Scouter Intel →
+                                </p>
+                            </div>
+                        </Link>
+                        <Link href={`/event/${eventKey}/draft`} style={{ textDecoration: 'none', flex: 1 }}>
+                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid var(--secondary)', background: 'rgba(57, 255, 20, 0.05)', textAlign: 'center' }}>
                                 <p style={{ fontSize: '9px', fontWeight: 950, color: 'var(--secondary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Launch Draft Advisor →
+                                    Draft Advisor →
                                 </p>
                             </div>
                         </Link>
@@ -126,9 +133,9 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                 {/* Simulation Control (Slider) */}
                 <section className="reveal delay-2">
                     <div className="glass" style={{ padding: '2rem', borderRadius: '35px' }}>
-                        <div className="flex justify-between items-center" style={{ marginBottom: '1.5rem' }}>
+                        <div className="flex justify-between items-center mobile-stack" style={{ marginBottom: '1.5rem' }}>
                             <h3 style={{ fontSize: '10px', fontWeight: 950, color: '#555', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Point-in-Time Mission Analysis</h3>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--primary)' }}>UP TO MATCH {matchLimit}</span>
+                            <span style={{ fontSize: 'clamp(1.25rem, 4vw, 1.75rem)', fontWeight: 950, fontStyle: 'italic', color: 'var(--primary)' }}>UP TO MATCH {matchLimit}</span>
                         </div>
                         <input
                             type="range" min="0" max={maxMatch} value={matchLimit}
@@ -154,30 +161,36 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
 
                         <div style={{ display: 'grid', gap: '1rem' }}>
                             {topTeams.map((p) => (
-                                <Link key={p.teamKey} href={`/team/frc${p.team}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                    <div className="glass flex items-center" style={{ padding: '2rem', gap: '2rem', borderRadius: '30px' }}>
-                                        <div style={{ textAlign: 'center' }}>
-                                            <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SIM</p>
-                                            <span style={{ fontSize: '3.5rem', fontWeight: 950, fontStyle: 'italic', color: '#fff' }}>#{p.expected}</span>
+                                <Link key={p.teamKey} href={`/event/${eventKey}/team/${p.teamKey}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <div className="glass flex items-center leaderboard-card" style={{ padding: '2rem', gap: '2rem', borderRadius: '30px' }}>
+                                        <div className="flex items-center gap-8 rank-pill">
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SIM</p>
+                                                <span style={{ fontSize: '3.5rem', fontWeight: 950, fontStyle: 'italic', color: '#fff' }}>#{p.expected}</span>
+                                            </div>
+                                            <div className="rank-divider" style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em' }}>TBA</p>
+                                                <span style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: p.actual === p.expected ? 'var(--secondary)' : '#666' }}>#{p.actual}</span>
+                                            </div>
                                         </div>
-                                        <div style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
-                                        <div style={{ textAlign: 'center' }}>
-                                            <p style={{ fontSize: '10px', fontWeight: 950, color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em' }}>TBA</p>
-                                            <span style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: p.actual === p.expected ? 'var(--secondary)' : '#666' }}>#{p.actual}</span>
-                                        </div>
-                                        <div style={{ flex: 1, marginLeft: '1rem' }}>
+
+                                        <div style={{ flex: 1 }}>
                                             <p style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.15em' }}>MISSION TEAM {p.team}</p>
-                                            <h3 style={{ fontSize: '2.25rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>{p.name}</h3>
+                                            <h3 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>{p.name}</h3>
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <p style={{ fontSize: '10px', fontWeight: 950, color: '#666', textTransform: 'uppercase' }}>EST. RP</p>
-                                            <p style={{ fontSize: '2rem', fontWeight: 950, color: '#fff', fontFamily: 'monospace' }}>{p.rp}</p>
-                                        </div>
-                                        <div style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
-                                        <div style={{ textAlign: 'right', minWidth: '120px' }}>
-                                            <p style={{ fontSize: '10px', fontWeight: 950, color: '#666', textTransform: 'uppercase' }}>TOP 1 PROB</p>
-                                            <div style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>
-                                                {p.prob}
+
+                                        <div className="flex items-center gap-8 mobile-stack">
+                                            <div>
+                                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#666', textTransform: 'uppercase' }}>EST. RP</p>
+                                                <p style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 950, color: '#fff', fontFamily: 'monospace' }}>{p.rp}</p>
+                                            </div>
+                                            <div className="rank-divider" style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#666', textTransform: 'uppercase' }}>TOP 1 PROB</p>
+                                                <div style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>
+                                                    {p.prob}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

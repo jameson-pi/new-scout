@@ -39,11 +39,15 @@ function parseCSV(csvText: string) {
 }
 
 /**
- * Loads the Waco CSV and converts to ScoutReport format
+ * Loads a specific event CSV and converts to ScoutReport format
  */
-export function loadWacoReports(): ScoutReport[] {
+export function loadEventReports(eventKey: string): ScoutReport[] {
     try {
-        const filePath = path.join(process.cwd(), 'public', '2025txwac.csv');
+        const filePath = path.join(process.cwd(), 'public', `${eventKey}.csv`);
+        if (!fs.existsSync(filePath)) {
+            console.warn(`Event data not found for ${eventKey}`);
+            return [];
+        }
         const csvText = fs.readFileSync(filePath, 'utf-8');
         const rawData = parseCSV(csvText);
 
@@ -59,7 +63,7 @@ export function loadWacoReports(): ScoutReport[] {
                         coral_l3: parseInt(row.auto_coral_l3) || 0,
                         coral_l4: parseInt(row.auto_coral_l4) || 0,
                         algae_processor: parseInt(row.auto_algae_processor) || 0,
-                        algae_net: parseInt(row.auto_algae_barge) || 0, // Mapping barge to net for this game logic
+                        algae_net: parseInt(row.auto_algae_barge) || 0,
                         moved: row.auto_moved === 'Yes'
                     },
                     teleop: {
@@ -90,7 +94,7 @@ export function loadWacoReports(): ScoutReport[] {
                 return numA - numB;
             });
     } catch (e) {
-        console.error("Error loading Waco reports:", e);
+        console.error(`Error loading reports for ${eventKey}:`, e);
         return [];
     }
 }
@@ -106,7 +110,7 @@ function parseClimb(val: string): 'None' | 'Park' | 'Shallow' | 'Deep' {
  * Unified getter for Simulation, SPR, and Dashboard
  */
 export async function getMissionData(eventKey: string = '2025txwac') {
-    const reports = loadWacoReports();
+    const reports = loadEventReports(eventKey);
     const tbaMatchesRaw = await getEventMatches(eventKey);
 
     // Map TBA matches to the format SPR expects
@@ -117,15 +121,15 @@ export async function getMissionData(eventKey: string = '2025txwac') {
             alliances: {
                 red: {
                     score: m.alliances.red.score,
-                    autoPoints: m.alliances.red.autoPoints || 0,
-                    teleopPoints: m.alliances.red.teleopPoints || 0,
-                    endgamePoints: m.alliances.red.endgamePoints || 0
+                    autoPoints: m.score_breakdown?.red?.autoPoints || 0,
+                    teleopPoints: m.score_breakdown?.red?.teleopPoints || 0,
+                    endgamePoints: m.score_breakdown?.red?.endgamePoints || 0
                 },
                 blue: {
                     score: m.alliances.blue.score,
-                    autoPoints: m.alliances.blue.autoPoints || 0,
-                    teleopPoints: m.alliances.blue.teleopPoints || 0,
-                    endgamePoints: m.alliances.blue.endgamePoints || 0
+                    autoPoints: m.score_breakdown?.blue?.autoPoints || 0,
+                    teleopPoints: m.score_breakdown?.blue?.teleopPoints || 0,
+                    endgamePoints: m.score_breakdown?.blue?.endgamePoints || 0
                 }
             }
         };
@@ -134,7 +138,7 @@ export async function getMissionData(eventKey: string = '2025txwac') {
     return { reports, tbaMatches, tbaMatchesRaw };
 }
 
-export async function getEventSchedule(eventKey: string = '2025txwac') {
+export async function getEventSchedule(eventKey: string) {
     const tbaMatchesRaw = await getEventMatches(eventKey);
     return tbaMatchesRaw
         .filter(m => m.comp_level === 'qm')
@@ -147,8 +151,31 @@ export async function getEventSchedule(eventKey: string = '2025txwac') {
         .sort((a, b) => a.matchNumber - b.matchNumber);
 }
 
-export function getUniqueScouters(): string[] {
-    const reports = loadWacoReports();
+export function getUniqueScouters(eventKey: string = '2025txwac'): string[] {
+    const reports = loadEventReports(eventKey);
     const scouters = Array.from(new Set(reports.map(r => r.scoutId))).filter(Boolean).sort();
     return scouters;
+}
+
+/**
+ * Discovers available mission datasets in the public directory
+ */
+export function getAvailableEvents() {
+    const publicDir = path.join(process.cwd(), 'public');
+    const files = fs.readdirSync(publicDir);
+    const csvs = files.filter(f => f.endsWith('.csv'));
+
+    const eventMetadata: Record<string, { name: string, location: string }> = {
+        '2025txwac': { name: 'Waco District', location: 'Waco, TX' },
+        '2025txman': { name: 'Manor District', location: 'Manor, TX' },
+        '2025txcmp2': { name: 'State Championship', location: 'Houston, TX' }
+    };
+
+    return csvs.map(f => {
+        const key = f.replace('.csv', '');
+        return {
+            key,
+            ...(eventMetadata[key] || { name: key.toUpperCase(), location: 'MISSION THEATER' })
+        };
+    }).sort((a, b) => b.key.localeCompare(a.key)); // Newest events first
 }

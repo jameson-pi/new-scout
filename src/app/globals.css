@@ -194,6 +194,77 @@ body {
   animation-delay: 0.4s;
 }
 
+.delay-3 {
+  animation-delay: 0.6s;
+}
+
+.delay-4 {
+  animation-delay: 0.8s;
+}
+
+.delay-5 {
+  animation-delay: 1s;
+}
+
+/* Mobile Optimization Helpers */
+@media (max-width: 768px) {
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .mobile-grid-2 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .leaderboard-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    padding: 1.25rem !important;
+    border-radius: 20px !important;
+  }
+
+  .rank-pill {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.75rem;
+    align-items: center !important;
+  }
+
+  .rank-pill span {
+    font-size: 2rem !important;
+  }
+
+  .rank-pill div:last-child span {
+    font-size: 1.5rem !important;
+  }
+
+  .mobile-stack {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    gap: 1rem !important;
+  }
+
+  .mobile-stack div {
+    text-align: left !important;
+    min-width: 0 !important;
+  }
+
+  .rank-divider {
+    display: none !important;
+  }
+}
+
 /* Dashboard Link Card wrapper */
 .card-wrapper {
   text-decoration: none;

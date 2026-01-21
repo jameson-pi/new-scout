@@ -1,0 +1,258 @@
+primary_key,frc_team,event_key,match_key,driver_station,comp_level,match_number,auto_moved,auto_coral_l1,auto_coral_l2,auto_coral_l3,auto_coral_l4,auto_coral_floor,auto_coral_station,auto_algae_removed,auto_algae_processor,auto_algae_barge,tele_coral_l1,tele_coral_l2,tele_coral_l3,tele_coral_l4,tele_coral_floor,tele_coral_station,tele_algae_removed,tele_algae_processor,tele_algae_barge,tele_endgame,tele_climb_speed,tele_shuttler,tele_human_barge,tele_human_barge_miss,defender_rating,mech_failure,scouted_by,id
+10032-2025txman_qm1-blue3-Jameson P,10032,2025txman,2025txman_qm1,blue3,qm,1,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,3,3,No,Jameson P,477
+10032-2025txman_qm10-red3-Sai K,10032,2025txman,2025txman_qm10,red3,qm,10,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,5,No,Sai K,527
+10032-2025txman_qm13-blue3-Vaed D,10032,2025txman,2025txman_qm13,blue3,qm,13,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,2,Yes,Vaed D,544
+10032-2025txman_qm25-blue1-Arjun M,10032,2025txman,2025txman_qm25,blue1,qm,25,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Arjun M,604
+10032-2025txman_qm29-red2-Clyde D,10032,2025txman,2025txman_qm29,red2,qm,29,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Clyde D,626
+10032-2025txman_qm34-red1-Arjun S,10032,2025txman,2025txman_qm34,red1,qm,34,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,2,0,3,No,Arjun S,652
+10032-2025txman_qm44-blue3-Victoria H,10032,2025txman,2025txman_qm44,blue3,qm,44,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,5,No,Victoria H,697
+10032-2025txman_qm48-blue1-Vomkar A,10032,2025txman,2025txman_qm48,blue1,qm,48,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,4,No,Vomkar A,718
+10032-2025txman_qm5-red2-Clyde D,10032,2025txman,2025txman_qm5,red2,qm,5,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,3,No,Clyde D,497
+10118-2025txman_qm10-red2-Clyde D,10118,2025txman,2025txman_qm10,red2,qm,10,Yes,1,0,0,0,0,2,0,0,0,5,0,0,0,0,6,0,3,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Clyde D,524
+10118-2025txman_qm17-blue3-Vaed D,10118,2025txman,2025txman_qm17,blue3,qm,17,Yes,2,0,0,0,0,0,0,0,0,3,0,0,0,0,3,0,3,0,Park,No Attempt,No,0,0,0,No,Vaed D,565
+10118-2025txman_qm20-blue2-Pranav R,10118,2025txman,2025txman_qm20,blue2,qm,20,Yes,3,0,0,0,0,2,0,0,0,8,0,0,0,0,8,0,2,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Pranav R,578
+10118-2025txman_qm23-red3-Ainesh Y,10118,2025txman,2025txman_qm23,red3,qm,23,No,1,0,0,0,0,0,0,0,0,3,0,0,0,0,3,0,6,0,Deep Climb,Medium (4-7sec),No,5,0,0,No,Ainesh Y,598
+10118-2025txman_qm26-red1-Jameson P,10118,2025txman,2025txman_qm26,red1,qm,26,Yes,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,2,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Jameson P,608
+10118-2025txman_qm30-blue1-Tanish D,10118,2025txman,2025txman_qm30,blue1,qm,30,Yes,2,0,0,0,0,2,0,0,0,1,0,0,0,0,5,0,1,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Tanish D,633
+10118-2025txman_qm35-blue1-Tanish D,10118,2025txman,2025txman_qm35,blue1,qm,35,Yes,2,0,0,0,0,1,0,0,0,5,0,0,0,0,7,0,2,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Tanish D,657
+10118-2025txman_qm38-red3-Prateek K,10118,2025txman,2025txman_qm38,red3,qm,38,Yes,1,0,0,0,0,1,0,0,0,7,0,0,0,0,7,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Prateek K,673
+10118-2025txman_qm4-blue2-Tejas E,10118,2025txman,2025txman_qm4,blue2,qm,4,Yes,3,0,0,0,0,2,0,0,0,1,0,0,0,0,2,0,5,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Tejas E,495
+10118-2025txman_qm42-red3-Vishnu S,10118,2025txman,2025txman_qm42,red3,qm,42,Yes,3,0,0,0,0,1,0,0,0,4,0,0,0,0,5,0,3,0,Deep Climb,No Attempt,No,0,0,0,No,Vishnu S,688
+10118-2025txman_qm7-red2-Clyde D,10118,2025txman,2025txman_qm7,red2,qm,7,Yes,1,0,0,0,0,0,0,0,0,2,0,0,0,0,3,0,5,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Clyde D,513
+118-2025txman_qm1-blue1-Arjun M,118,2025txman,2025txman_qm1,blue1,qm,1,Yes,0,0,0,0,0,2,0,0,0,0,4,2,3,9,0,6,4,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Arjun M,472
+118-2025txman_qm11-blue2-Tejas E,118,2025txman,2025txman_qm11,blue2,qm,11,Yes,0,0,0,3,0,3,0,0,0,0,2,5,3,7,0,4,2,1,Deep Climb,Medium (4-7sec),No,0,0,1,No,Tejas E,534
+118-2025txman_qm15-blue1-Tanish D,118,2025txman,2025txman_qm15,blue1,qm,15,Yes,0,0,0,2,0,2,0,0,0,0,1,4,9,13,1,1,0,1,Deep Climb,Fast (< 3sec),No,0,0,0,No,Tanish D,557
+118-2025txman_qm18-blue1-Tanish D,118,2025txman,2025txman_qm18,blue1,qm,18,Yes,0,0,0,2,0,0,0,0,0,1,3,3,4,12,0,4,2,1,Deep Climb,Fast (< 3sec),Yes,0,0,0,No,Tanish D,571
+118-2025txman_qm22-blue2-Tejas E,118,2025txman,2025txman_qm22,blue2,qm,22,Yes,0,0,0,3,0,2,0,0,0,1,0,5,7,15,1,3,2,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Tejas E,589
+118-2025txman_qm27-red3-Sai K,118,2025txman,2025txman_qm27,red3,qm,27,Yes,0,0,0,3,0,2,0,0,0,1,8,0,3,0,0,2,2,0,Deep Climb,Medium (4-7sec),No,2,0,0,No,Sai K,617
+118-2025txman_qm31-blue3-Vaed D,118,2025txman,2025txman_qm31,blue3,qm,31,Yes,0,0,0,3,0,3,0,0,0,0,1,6,3,9,0,3,3,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Vaed D,638
+118-2025txman_qm36-red3-Prateek K,118,2025txman,2025txman_qm36,red3,qm,36,Yes,0,0,0,1,0,1,0,0,0,1,0,5,5,11,0,3,0,2,Deep Climb,Fast (< 3sec),No,0,0,0,No,Prateek K,664
+118-2025txman_qm42-red1-Arjun S,118,2025txman,2025txman_qm42,red1,qm,42,Yes,0,0,0,1,0,2,0,0,0,4,0,4,7,14,0,3,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Arjun S,689
+118-2025txman_qm45-red2-Tanish D,118,2025txman,2025txman_qm45,red2,qm,45,Yes,0,0,0,2,0,2,0,0,0,0,1,2,10,12,0,3,0,3,Deep Climb,Fast (< 3sec),No,0,0,0,No,Tanish D,705
+118-2025txman_qm8-blue3-Jameson P,118,2025txman,2025txman_qm8,blue3,qm,8,Yes,1,0,0,2,0,0,0,0,0,0,0,5,9,0,0,1,1,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Jameson P,514
+2158-2025txman_qm10-blue2-Tejas E,2158,2025txman,2025txman_qm10,blue2,qm,10,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,4,No,Tejas E,528
+2158-2025txman_qm18-blue2-Pranav R,2158,2025txman,2025txman_qm18,blue2,qm,18,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Pranav R,570
+2158-2025txman_qm27-blue1-Arjun M,2158,2025txman,2025txman_qm27,blue1,qm,27,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,1,No,Arjun M,615
+2158-2025txman_qm4-red3-Sai K,2158,2025txman,2025txman_qm4,red3,qm,4,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Sai K,492
+2158-2025txman_qm43-red1-Arjun S,2158,2025txman,2025txman_qm43,red1,qm,43,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,Park,No Attempt,No,2,0,2,No,Arjun S,694
+2158-2025txman_qm46-blue3-Victoria H,2158,2025txman,2025txman_qm46,blue3,qm,46,Yes,1,0,0,0,0,0,0,0,0,6,0,0,0,12,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Victoria H,709
+2158-2025txman_qm7-red1-Josh W,2158,2025txman,2025txman_qm7,red1,qm,7,Yes,1,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Josh W,508
+2468-2025txman_qm20-red1-Arjun S,2468,2025txman,2025txman_qm20,red1,qm,20,Yes,0,0,0,0,0,0,0,0,0,0,2,5,0,0,13,0,0,0,Deep Climb,Slow (> 8sec),No,1,0,0,No,Arjun S,579
+2468-2025txman_qm28-red2-Clyde D,2468,2025txman,2025txman_qm28,red2,qm,28,Yes,0,0,0,0,0,0,0,0,0,1,0,0,6,0,8,0,0,0,Park,No Attempt,No,0,0,0,No,Clyde D,621
+2468-2025txman_qm3-red1-Josh W,2468,2025txman,2025txman_qm3,red1,qm,3,Yes,0,0,0,1,0,0,0,0,0,0,4,2,2,0,0,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Josh W,486
+2468-2025txman_qm32-blue2-Pranav R,2468,2025txman,2025txman_qm32,blue2,qm,32,Yes,0,0,0,0,0,0,0,0,0,1,0,0,3,0,6,2,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,644
+2468-2025txman_qm35-blue2-Pranav R,2468,2025txman,2025txman_qm35,blue2,qm,35,Yes,0,0,0,1,0,0,0,0,0,0,0,4,3,0,10,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Pranav R,658
+2468-2025txman_qm38-blue3-Shay S,2468,2025txman,2025txman_qm38,blue3,qm,38,Yes,0,0,0,1,0,0,0,0,0,0,0,0,8,0,9,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Shay S,672
+2468-2025txman_qm43-red3-Vishnu S,2468,2025txman,2025txman_qm43,red3,qm,43,Yes,0,0,0,0,0,0,0,0,0,0,0,6,3,0,10,1,2,0,No Attempt,No Attempt,No,0,0,0,No,Vishnu S,693
+2468-2025txman_qm48-red3-Vishnu S,2468,2025txman,2025txman_qm48,red3,qm,48,Yes,0,0,0,1,0,0,0,0,0,0,0,0,2,0,0,1,3,0,Deep Climb,No Attempt,No,0,0,0,No,Vishnu S,719
+2468-2025txman_qm6-blue3-Jameson P,2468,2025txman,2025txman_qm6,blue3,qm,6,Yes,0,0,0,1,0,0,0,0,0,0,1,0,5,0,6,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Jameson P,506
+2687-2025txman_qm10-blue1-Arjun M,2687,2025txman,2025txman_qm10,blue1,qm,10,Yes,1,0,0,0,0,0,0,0,0,0,5,0,0,0,5,0,0,0,Park,No Attempt,No,3,0,0,No,Arjun M,525
+2687-2025txman_qm13-red1-Arjun S,2687,2025txman,2025txman_qm13,red1,qm,13,Yes,0,0,0,0,0,0,0,0,0,1,5,1,0,0,6,0,0,0,Park,No Attempt,No,0,0,0,No,Arjun S,543
+2687-2025txman_qm21-blue2-Pranav R,2687,2025txman,2025txman_qm21,blue2,qm,21,Yes,0,1,0,0,0,0,0,0,0,0,3,3,0,0,5,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Pranav R,587
+2687-2025txman_qm24-red3-Sai K,2687,2025txman,2025txman_qm24,red3,qm,24,Yes,0,1,0,0,0,0,0,0,0,0,4,2,0,0,7,0,0,0,Park,No Attempt,No,0,0,0,No,Sai K,602
+2687-2025txman_qm28-blue1-Arjun M,2687,2025txman,2025txman_qm28,blue1,qm,28,Yes,0,1,0,0,0,0,0,0,0,0,4,1,0,0,6,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Arjun M,620
+2687-2025txman_qm3-blue3-Jameson P,2687,2025txman,2025txman_qm3,blue3,qm,3,Yes,1,1,0,0,0,0,0,0,0,1,3,2,0,0,0,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Jameson P,485
+2687-2025txman_qm31-red2-Clyde D,2687,2025txman,2025txman_qm31,red2,qm,31,Yes,0,1,0,0,0,0,0,0,0,2,4,0,0,0,6,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Clyde D,636
+2687-2025txman_qm31-red2-Vomkar A,2687,2025txman,2025txman_qm31,red2,qm,31,No,0,0,0,0,0,0,0,0,0,0,4,4,0,0,8,0,0,0,Shallow Climb,Medium (4-7sec),No,0,0,0,No,Vomkar A,635
+2687-2025txman_qm37-red2-Tejas E,2687,2025txman,2025txman_qm37,red2,qm,37,Yes,0,0,0,0,0,0,0,0,0,0,4,2,0,0,8,1,0,0,Park,No Attempt,No,0,0,0,No,Tejas E,667
+2687-2025txman_qm42-red2-Tanish D,2687,2025txman,2025txman_qm42,red2,qm,42,Yes,1,0,0,0,0,0,0,0,0,0,2,0,0,0,3,0,3,0,Park,No Attempt,No,3,0,1,No,Tanish D,690
+2687-2025txman_qm45-blue3-Victoria H,2687,2025txman,2025txman_qm45,blue3,qm,45,Yes,0,2,0,0,0,1,0,0,0,0,2,4,0,0,8,0,2,0,No Attempt,No Attempt,No,2,0,0,No,Victoria H,703
+2687-2025txman_qm48-blue3-Victoria H,2687,2025txman,2025txman_qm48,blue3,qm,48,Yes,0,2,0,0,0,1,0,0,0,0,3,4,0,0,9,0,0,0,Deep Climb,No Attempt,No,0,0,0,No,Victoria H,716
+2687-2025txman_qm7-blue1-Arjun M,2687,2025txman,2025txman_qm7,blue1,qm,7,Yes,1,0,0,0,0,0,0,0,0,0,2,0,0,0,2,1,0,0,Deep Climb,Slow (> 8sec),No,4,0,0,No,Arjun M,510
+2689-2025txman_qm13-red2-Vomkar A,2689,2025txman,2025txman_qm13,red2,qm,13,No,0,0,0,0,0,1,0,0,0,7,0,0,0,0,8,0,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Vomkar A,546
+2689-2025txman_qm17-red1-Arjun S,2689,2025txman,2025txman_qm17,red1,qm,17,Yes,1,0,0,0,0,1,0,0,0,11,0,0,0,0,12,0,0,0,Deep Climb,Medium (4-7sec),No,3,0,0,No,Arjun S,564
+2689-2025txman_qm21-red3-Shreya A,2689,2025txman,2025txman_qm21,red3,qm,21,Yes,1,0,0,0,0,1,0,0,0,8,0,0,0,0,10,0,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Shreya A,585
+2689-2025txman_qm25-red3-Sai K,2689,2025txman,2025txman_qm25,red3,qm,25,Yes,2,0,0,0,0,1,0,0,0,5,0,0,0,0,6,0,2,0,Deep Climb,Medium (4-7sec),No,2,0,0,No,Sai K,606
+2689-2025txman_qm29-blue3-Vaed D,2689,2025txman,2025txman_qm29,blue3,qm,29,No,1,0,0,0,0,0,0,0,0,8,0,0,0,0,8,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Vaed D,624
+2689-2025txman_qm33-red1-Arjun S,2689,2025txman,2025txman_qm33,red1,qm,33,Yes,2,0,0,0,0,1,0,0,0,12,0,0,0,0,13,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Arjun S,647
+2689-2025txman_qm47-blue2-Pranav R,2689,2025txman,2025txman_qm47,blue2,qm,47,Yes,2,0,0,0,0,2,0,0,0,11,0,0,0,0,12,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Pranav R,710
+2689-2025txman_qm5-red3-Sai K,2689,2025txman,2025txman_qm5,red3,qm,5,Yes,2,0,0,0,0,2,0,0,0,11,0,0,0,0,11,0,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Sai K,501
+2689-2025txman_qm8-blue2-Tejas E,2689,2025txman,2025txman_qm8,blue2,qm,8,Yes,1,0,0,0,0,1,0,0,0,10,0,0,0,0,11,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Tejas E,515
+2789-2025txman_qm13-red3-Shreya A,2789,2025txman,2025txman_qm13,red3,qm,13,Yes,1,0,0,0,0,0,0,0,0,5,0,0,0,0,10,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Shreya A,545
+2789-2025txman_qm16-blue3-Vaed D,2789,2025txman,2025txman_qm16,blue3,qm,16,Yes,0,0,0,0,0,0,0,0,0,8,0,0,0,0,9,0,0,0,Park,No Attempt,No,0,0,0,No,Vaed D,560
+2789-2025txman_qm19-blue2-Pranav R,2789,2025txman,2025txman_qm19,blue2,qm,19,Yes,1,0,0,0,0,0,0,0,0,4,0,0,0,0,4,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Pranav R,577
+2789-2025txman_qm22-blue1-Arjun M,2789,2025txman,2025txman_qm22,blue1,qm,22,Yes,1,0,0,0,0,0,0,0,0,6,0,0,0,0,11,0,0,0,No Attempt,No Attempt,No,3,0,0,No,Arjun M,592
+2789-2025txman_qm26-red2-Clyde D,2789,2025txman,2025txman_qm26,red2,qm,26,Yes,1,0,0,0,0,0,0,0,0,5,0,0,0,0,9,0,0,0,Park,No Attempt,No,0,0,0,No,Clyde D,612
+2789-2025txman_qm32-red1-Arjun S,2789,2025txman,2025txman_qm32,red1,qm,32,Yes,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,No Attempt,No Attempt,No,0,0,1,No,Arjun S,641
+2789-2025txman_qm38-blue2-Shreya A,2789,2025txman,2025txman_qm38,blue2,qm,38,Yes,0,0,0,0,0,0,0,0,0,10,0,0,0,0,12,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Shreya A,670
+2789-2025txman_qm4-blue3-Jameson P,2789,2025txman,2025txman_qm4,blue3,qm,4,Yes,1,0,0,0,0,0,0,0,0,4,0,0,0,0,4,0,0,0,Park,No Attempt,No,0,0,0,No,Jameson P,490
+2789-2025txman_qm42-blue2-Pranav R,2789,2025txman,2025txman_qm42,blue2,qm,42,Yes,1,0,0,0,0,0,0,0,0,7,0,0,0,0,7,0,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,686
+2789-2025txman_qm46-red1-Arjun S,2789,2025txman,2025txman_qm46,red1,qm,46,Yes,1,0,0,0,0,0,0,0,0,13,0,0,0,0,14,0,0,0,No Attempt,No Attempt,No,2,0,0,No,Arjun S,707
+2789-2025txman_qm49-red3-Vishnu S,2789,2025txman,2025txman_qm49,red3,qm,49,Yes,1,0,0,0,0,0,0,0,0,8,0,0,0,0,8,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Vishnu S,721
+2789-2025txman_qm8-red1-Josh W,2789,2025txman,2025txman_qm8,red1,qm,8,Yes,1,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Josh W,517
+2881-2025txman_qm1-red2-Clyde D,2881,2025txman,2025txman_qm1,red2,qm,1,Yes,0,0,0,1,0,1,0,0,0,0,0,0,3,0,4,0,0,0,Park,No Attempt,No,0,0,0,No,Clyde D,473
+2881-2025txman_qm13-blue2-Pranav R,2881,2025txman,2025txman_qm13,blue2,qm,13,No,0,0,0,2,0,1,0,0,0,0,0,0,11,0,11,0,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Pranav R,542
+2881-2025txman_qm19-blue1-Tanish D,2881,2025txman,2025txman_qm19,blue1,qm,19,Yes,0,0,0,2,0,3,0,0,0,0,0,2,10,0,12,0,0,0,Park,No Attempt,No,0,0,0,No,Tanish D,576
+2881-2025txman_qm23-red2-Clyde D,2881,2025txman,2025txman_qm23,red2,qm,23,Yes,0,0,0,2,0,1,0,0,0,0,1,3,4,0,8,2,0,0,No Attempt,No Attempt,No,0,0,0,No,Clyde D,594
+2881-2025txman_qm27-red1-Jameson P,2881,2025txman,2025txman_qm27,red1,qm,27,Yes,0,0,0,2,0,0,0,0,0,0,1,1,3,0,0,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Jameson P,614
+2881-2025txman_qm32-blue3-Vaed D,2881,2025txman,2025txman_qm32,blue3,qm,32,Yes,0,0,0,0,0,1,0,0,0,0,3,4,3,0,10,2,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Vaed D,640
+2881-2025txman_qm35-red1-Arjun S,2881,2025txman,2025txman_qm35,red1,qm,35,Yes,0,0,0,2,0,2,0,0,0,0,0,0,10,0,9,0,0,0,Deep Climb,Medium (4-7sec),No,3,0,0,No,Arjun S,656
+2881-2025txman_qm39-blue3-Shay S,2881,2025txman,2025txman_qm39,blue3,qm,39,Yes,0,0,0,1,0,1,0,0,0,0,0,0,11,0,11,1,0,0,Park,No Attempt,No,0,0,0,No,Shay S,678
+2881-2025txman_qm49-red2-Tanish D,2881,2025txman,2025txman_qm49,red2,qm,49,Yes,0,0,0,2,0,1,0,0,0,0,0,0,10,0,10,1,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Tanish D,723
+2881-2025txman_qm5-blue3-Jameson P,2881,2025txman,2025txman_qm5,blue3,qm,5,Yes,0,0,0,1,0,0,0,0,0,0,0,0,2,0,0,2,0,0,Park,No Attempt,No,0,0,0,No,Jameson P,500
+3743-2025txman_qm10-red1-Josh W,3743,2025txman,2025txman_qm10,red1,qm,10,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Josh W,526
+3743-2025txman_qm21-blue3-Vaed D,3743,2025txman,2025txman_qm21,blue3,qm,21,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Vaed D,586
+3743-2025txman_qm26-red3-Sai K,3743,2025txman,2025txman_qm26,red3,qm,26,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,4,No,Sai K,610
+3743-2025txman_qm3-blue2-Tejas E,3743,2025txman,2025txman_qm3,blue2,qm,3,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Tejas E,489
+3743-2025txman_qm30-blue2-Pranav R,3743,2025txman,2025txman_qm30,blue2,qm,30,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,632
+3743-2025txman_qm36-blue3-Shay S,3743,2025txman,2025txman_qm36,blue3,qm,36,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,1,No,Shay S,663
+3743-2025txman_qm41-red1-Arjun S,3743,2025txman,2025txman_qm41,red1,qm,41,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,1,No,Arjun S,683
+3743-2025txman_qm50-red1-Arjun S,3743,2025txman,2025txman_qm50,red1,qm,50,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,1,0,1,No,Arjun S,727
+3743-2025txman_qm6-red2-Clyde D,3743,2025txman,2025txman_qm6,red2,qm,6,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Clyde D,503
+418-2025txman_qm11-red3-Sai K,418,2025txman,2025txman_qm11,red3,qm,11,Yes,0,0,0,2,0,1,0,0,0,0,4,0,4,0,9,1,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Sai K,532
+418-2025txman_qm14-blue1-Tanish D,418,2025txman,2025txman_qm14,blue1,qm,14,Yes,0,0,0,1,0,0,0,0,0,0,0,0,10,0,12,1,0,0,Shallow Climb,Medium (4-7sec),No,0,0,0,No,Tanish D,551
+418-2025txman_qm2-blue2-Tejas E,418,2025txman,2025txman_qm2,blue2,qm,2,Yes,0,0,0,2,0,1,0,0,0,0,1,4,3,0,10,2,0,0,Park,No Attempt,Yes,0,0,0,No,Tejas E,483
+418-2025txman_qm20-blue3-Vaed D,418,2025txman,2025txman_qm20,blue3,qm,20,Yes,0,0,0,1,0,1,0,0,0,0,0,0,7,0,10,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Vaed D,580
+418-2025txman_qm23-red1-Jameson P,418,2025txman,2025txman_qm23,red1,qm,23,Yes,0,0,0,0,0,0,0,0,0,0,2,2,1,0,0,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Jameson P,596
+418-2025txman_qm26-blue1-Arjun M,418,2025txman,2025txman_qm26,blue1,qm,26,Yes,0,0,0,1,0,1,0,0,0,0,4,2,3,0,10,0,0,0,Park,No Attempt,No,2,0,0,No,Arjun M,611
+418-2025txman_qm31-blue2-Pranav R,418,2025txman,2025txman_qm31,blue2,qm,31,Yes,0,0,0,0,0,0,0,0,0,0,4,0,0,0,5,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Pranav R,634
+418-2025txman_qm40-blue3-Shay S,418,2025txman,2025txman_qm40,blue3,qm,40,Yes,0,0,0,1,0,1,0,0,0,3,5,0,1,0,11,1,0,0,Park,No Attempt,No,0,0,0,No,Shay S,681
+418-2025txman_qm43-red2-Tanish D,418,2025txman,2025txman_qm43,red2,qm,43,Yes,0,0,0,1,0,1,0,0,0,1,4,0,6,0,10,3,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Tanish D,692
+418-2025txman_qm47-red1-Arjun S,418,2025txman,2025txman_qm47,red1,qm,47,Yes,0,0,0,2,0,1,0,0,0,4,2,1,3,0,16,1,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Arjun S,712
+418-2025txman_qm8-red2-Clyde D,418,2025txman,2025txman_qm8,red2,qm,8,Yes,0,0,0,1,0,0,0,0,0,0,5,0,5,0,11,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Clyde D,519
+4251-2025txman_qm14-red3-Shreya A,4251,2025txman,2025txman_qm14,red3,qm,14,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Shreya A,550
+4251-2025txman_qm19-red2-Vomkar A,4251,2025txman,2025txman_qm19,red2,qm,19,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Vomkar A,573
+4251-2025txman_qm2-blue1-Arjun M,4251,2025txman,2025txman_qm2,blue1,qm,2,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,1,0,0,No,Arjun M,480
+4251-2025txman_qm22-red3-Sai K,4251,2025txman,2025txman_qm22,red3,qm,22,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,5,No,Sai K,591
+4251-2025txman_qm29-blue2-Pranav R,4251,2025txman,2025txman_qm29,blue2,qm,29,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,Park,No Attempt,No,0,0,3,No,Pranav R,625
+4251-2025txman_qm34-blue1-Tanish D,4251,2025txman,2025txman_qm34,blue1,qm,34,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,3,No,Tanish D,654
+4251-2025txman_qm37-red1-Arjun M,4251,2025txman,2025txman_qm37,red1,qm,37,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,1,0,1,No,Arjun M,666
+4251-2025txman_qm46-red2-Tanish D,4251,2025txman,2025txman_qm46,red2,qm,46,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Tanish D,708
+4251-2025txman_qm5-blue2-Tejas E,4251,2025txman,2025txman_qm5,blue2,qm,5,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,4,No,Tejas E,498
+4251-2025txman_qm9-blue3-Jameson P,4251,2025txman,2025txman_qm9,blue3,qm,9,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,2,No,Jameson P,520
+5052-2025txman_qm1-red3-Sai K,5052,2025txman,2025txman_qm1,red3,qm,1,Yes,0,0,0,0,1,0,0,0,0,2,0,0,0,1,3,0,0,0,Park,No Attempt,Yes,0,0,2,No,Sai K,476
+5052-2025txman_qm12-blue3-Pranav R,5052,2025txman,2025txman_qm12,blue3,qm,12,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,Park,No Attempt,No,0,0,5,No,Pranav R,537
+5052-2025txman_qm20-blue1-Tanish D,5052,2025txman,2025txman_qm20,blue1,qm,20,Yes,0,0,0,0,0,0,0,0,0,1,1,0,0,0,2,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Tanish D,583
+5052-2025txman_qm25-blue2-Tejas E,5052,2025txman,2025txman_qm25,blue2,qm,25,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,Park,No Attempt,No,0,0,2,No,Tejas E,605
+5052-2025txman_qm28-red3-Sai K,5052,2025txman,2025txman_qm28,red3,qm,28,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,5,No,Sai K,622
+5052-2025txman_qm31-red1-Arjun S,5052,2025txman,2025txman_qm31,red1,qm,31,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,2,0,0,No,Arjun S,639
+5052-2025txman_qm34-blue2-Pranav R,5052,2025txman,2025txman_qm34,blue2,qm,34,No,0,0,0,0,0,0,0,0,0,2,0,0,0,0,2,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Pranav R,653
+5052-2025txman_qm45-red3-Vishnu S,5052,2025txman,2025txman_qm45,red3,qm,45,No,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,Park,No Attempt,No,0,0,0,No,Vishnu S,702
+5052-2025txman_qm50-blue2-Pranav R,5052,2025txman,2025txman_qm50,blue2,qm,50,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,726
+5052-2025txman_qm6-blue1-Arjun M,5052,2025txman,2025txman_qm6,blue1,qm,6,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,2,No,Arjun M,504
+6180-2025txman_qm10-blue3-Pranav R,6180,2025txman,2025txman_qm10,blue3,qm,10,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,529
+6180-2025txman_qm16-blue2-Pranav R,6180,2025txman,2025txman_qm16,blue2,qm,16,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,1,No,Pranav R,562
+6180-2025txman_qm19-red1-Arjun S,6180,2025txman,2025txman_qm19,red1,qm,19,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,Park,No Attempt,No,3,0,0,Yes,Arjun S,574
+6180-2025txman_qm2-red1-Josh W,6180,2025txman,2025txman_qm2,red1,qm,2,Yes,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Josh W,479
+6180-2025txman_qm23-blue2-Tejas E,6180,2025txman,2025txman_qm23,blue2,qm,23,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,Park,No Attempt,No,0,0,1,No,Tejas E,595
+6180-2025txman_qm36-red1-Arjun M,6180,2025txman,2025txman_qm36,red1,qm,36,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,1,No,Arjun M,661
+6180-2025txman_qm40-blue2-Shreya A,6180,2025txman,2025txman_qm40,blue2,qm,40,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Shreya A,679
+6180-2025txman_qm45-red1-Arjun S,6180,2025txman,2025txman_qm45,red1,qm,45,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,3,0,1,Yes,Arjun S,704
+6180-2025txman_qm49-blue2-Pranav R,6180,2025txman,2025txman_qm49,blue2,qm,49,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Pranav R,720
+6180-2025txman_qm6-red3-Sai K,6180,2025txman,2025txman_qm6,red3,qm,6,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,4,No,Sai K,505
+624-2025txman_qm12-blue1-Arjun M,624,2025txman,2025txman_qm12,blue1,qm,12,Yes,0,0,0,2,1,0,0,0,0,0,0,0,5,11,0,0,0,0,Park,No Attempt,No,2,0,0,No,Arjun M,538
+624-2025txman_qm15-red1-Arjun S,624,2025txman,2025txman_qm15,red1,qm,15,Yes,0,0,0,1,0,1,0,0,0,0,4,5,3,12,0,2,0,0,Deep Climb,Fast (< 3sec),No,3,0,0,No,Arjun S,552
+624-2025txman_qm18-blue3-Prateek K,624,2025txman,2025txman_qm18,blue3,qm,18,Yes,2,0,0,0,0,1,0,0,0,4,0,0,0,0,4,0,4,0,Deep Climb,Medium (4-7sec),Yes,0,0,0,No,Prateek K,828
+624-2025txman_qm18-blue3-Vaed D,624,2025txman,2025txman_qm18,blue3,qm,18,Yes,0,0,0,2,0,0,0,0,0,0,4,4,3,12,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Vaed D,568
+624-2025txman_qm24-red2-Clyde D,624,2025txman,2025txman_qm24,red2,qm,24,Yes,1,0,0,0,0,1,0,0,0,1,0,0,4,5,0,3,0,1,Park,No Attempt,No,0,0,0,No,Clyde D,603
+624-2025txman_qm29-red1-Jameson P,624,2025txman,2025txman_qm29,red1,qm,29,Yes,2,0,0,0,0,0,0,0,0,1,0,0,3,0,0,1,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Jameson P,627
+624-2025txman_qm3-red3-Sai K,624,2025txman,2025txman_qm3,red3,qm,3,Yes,0,0,0,2,0,1,0,0,0,0,2,2,1,7,0,2,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Sai K,488
+624-2025txman_qm32-red2-Clyde D,624,2025txman,2025txman_qm32,red2,qm,32,Yes,0,0,0,1,0,0,0,0,0,0,0,0,7,9,0,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Clyde D,642
+624-2025txman_qm37-blue3-Shay S,624,2025txman,2025txman_qm37,blue3,qm,37,Yes,0,0,0,1,1,0,0,0,0,0,3,2,2,2,0,4,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Shay S,668
+624-2025txman_qm43-blue3-Victoria H,624,2025txman,2025txman_qm43,blue3,qm,43,Yes,0,0,0,1,0,0,0,0,0,0,0,0,11,14,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Victoria H,691
+624-2025txman_qm50-red2-Tanish D,624,2025txman,2025txman_qm50,red2,qm,50,Yes,0,0,0,2,0,1,0,0,0,0,0,0,10,11,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Tanish D,728
+624-2025txman_qm9-red2-Clyde D,624,2025txman,2025txman_qm9,red2,qm,9,Yes,0,0,0,2,0,1,0,0,0,1,2,0,4,8,0,0,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Clyde D,523
+6377-2025txman_qm1-blue2-Tejas E,6377,2025txman,2025txman_qm1,blue2,qm,1,Yes,0,0,0,1,0,1,0,0,0,0,2,1,4,11,0,0,0,0,Park,No Attempt,No,0,0,0,No,Tejas E,475
+6377-2025txman_qm11-red1-Josh W,6377,2025txman,2025txman_qm11,red1,qm,11,Yes,1,0,0,0,0,0,0,0,0,4,1,5,1,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Josh W,531
+6377-2025txman_qm16-red1-Arjun S,6377,2025txman,2025txman_qm16,red1,qm,16,Yes,0,0,0,1,0,0,0,0,0,1,0,3,9,11,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Arjun S,558
+6377-2025txman_qm21-blue1-Tanish D,6377,2025txman,2025txman_qm21,blue1,qm,21,Yes,0,0,0,1,0,1,0,0,0,0,0,0,10,8,2,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Tanish D,584
+6377-2025txman_qm25-red2-Clyde D,6377,2025txman,2025txman_qm25,red2,qm,25,Yes,1,0,0,0,0,1,0,0,0,0,0,0,3,3,0,0,0,0,Park,No Attempt,No,0,0,2,Yes,Clyde D,607
+6377-2025txman_qm33-red2-Clyde D,6377,2025txman,2025txman_qm33,red2,qm,33,Yes,1,0,0,0,0,1,0,0,0,0,0,0,7,7,0,0,0,0,Park,No Attempt,No,0,0,0,No,Clyde D,646
+6377-2025txman_qm37-blue2-Shreya A,6377,2025txman,2025txman_qm37,blue2,qm,37,Yes,0,0,0,0,0,1,0,0,0,10,1,2,3,16,0,0,0,0,Park,No Attempt,No,0,0,0,No,Shreya A,674
+6377-2025txman_qm46-red3-Vishnu S,6377,2025txman,2025txman_qm46,red3,qm,46,Yes,1,0,0,0,0,1,0,0,0,5,0,0,4,0,8,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Vishnu S,706
+6377-2025txman_qm5-blue1-Arjun M,6377,2025txman,2025txman_qm5,blue1,qm,5,Yes,0,0,0,0,0,0,0,0,0,1,5,4,4,18,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Arjun M,499
+6377-2025txman_qm50-blue3-Victoria H,6377,2025txman,2025txman_qm50,blue3,qm,50,Yes,0,0,0,0,0,0,0,0,0,14,0,0,0,16,0,0,0,0,Park,No Attempt,No,0,0,0,No,Victoria H,725
+6800-2025txman_qm11-blue1-Arjun M,6800,2025txman,2025txman_qm11,blue1,qm,11,No,0,0,0,1,0,3,0,0,0,0,6,3,3,0,12,2,0,2,Deep Climb,Fast (< 3sec),No,2,0,0,No,Arjun M,530
+6800-2025txman_qm15-red3-Shreya A,6800,2025txman,2025txman_qm15,red3,qm,15,Yes,0,0,0,2,0,2,0,0,0,0,3,4,4,0,12,2,0,2,Deep Climb,Fast (< 3sec),No,0,0,0,No,Shreya A,555
+6800-2025txman_qm19-red3-Shreya A,6800,2025txman,2025txman_qm19,red3,qm,19,Yes,0,0,0,2,0,2,0,0,0,0,5,4,4,0,12,2,2,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Shreya A,575
+6800-2025txman_qm28-blue2-Tejas E,6800,2025txman,2025txman_qm28,blue2,qm,28,Yes,0,0,0,2,0,3,0,0,0,0,1,5,7,0,13,5,0,1,Deep Climb,Slow (> 8sec),No,0,0,0,No,Tejas E,619
+6800-2025txman_qm32-blue1-Tanish D,6800,2025txman,2025txman_qm32,blue1,qm,32,Yes,0,0,0,0,0,0,0,0,0,0,3,2,2,0,11,0,0,2,No Attempt,No Attempt,No,0,0,0,No,Tanish D,643
+6800-2025txman_qm36-blue2-Shreya A,6800,2025txman,2025txman_qm36,blue2,qm,36,Yes,0,0,0,2,0,3,0,0,0,0,5,5,6,0,15,2,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Shreya A,660
+6800-2025txman_qm39-red1-Arjun M,6800,2025txman,2025txman_qm39,red1,qm,39,No,0,0,0,2,0,1,0,0,0,0,0,1,8,0,11,2,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Arjun M,677
+6800-2025txman_qm4-red2-Clyde D,6800,2025txman,2025txman_qm4,red2,qm,4,Yes,0,0,0,3,0,3,0,0,0,0,5,5,2,0,13,2,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Clyde D,491
+6800-2025txman_qm44-red1-Arjun S,6800,2025txman,2025txman_qm44,red1,qm,44,Yes,0,0,0,2,0,2,0,0,0,0,2,6,3,0,10,4,2,0,Deep Climb,Fast (< 3sec),No,3,0,0,No,Arjun S,700
+6800-2025txman_qm47-red2-Tanish D,6800,2025txman,2025txman_qm47,red2,qm,47,Yes,0,0,0,3,0,3,0,0,0,0,5,5,5,0,14,4,0,0,Deep Climb,Fast (< 3sec),No,0,0,0,No,Tanish D,713
+6800-2025txman_qm7-red3-Sai K,6800,2025txman,2025txman_qm7,red3,qm,7,Yes,0,0,0,3,0,2,0,0,0,0,4,5,3,0,12,3,0,0,Deep Climb,Medium (4-7sec),No,0,0,1,No,Sai K,512
+8370-2025txman_qm12-red2-Clyde D,8370,2025txman,2025txman_qm12,red2,qm,12,Yes,0,0,0,0,0,0,0,0,0,0,0,0,2,0,3,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Clyde D,536
+8370-2025txman_qm17-blue2-Pranav R,8370,2025txman,2025txman_qm17,blue2,qm,17,Yes,0,0,0,0,0,0,0,0,0,0,0,0,1,0,2,1,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,563
+8370-2025txman_qm2-blue3-Jameson P,8370,2025txman,2025txman_qm2,blue3,qm,2,Yes,0,0,0,0,0,0,0,0,0,4,0,0,0,0,7,0,0,0,No Attempt,No Attempt,No,1,0,0,No,Jameson P,478
+8370-2025txman_qm20-red3-Shreya A,8370,2025txman,2025txman_qm20,red3,qm,20,Yes,0,0,0,0,0,0,0,0,0,1,0,1,0,0,4,5,0,0,Park,No Attempt,No,1,0,0,No,Shreya A,582
+8370-2025txman_qm24-blue1-Arjun M,8370,2025txman,2025txman_qm24,blue1,qm,24,Yes,0,0,0,0,0,0,0,0,0,3,0,0,1,0,6,1,0,0,Park,No Attempt,No,3,0,0,No,Arjun M,599
+8370-2025txman_qm27-red2-Clyde D,8370,2025txman,2025txman_qm27,red2,qm,27,Yes,0,0,0,0,0,0,1,0,0,3,0,0,0,0,5,0,0,0,Park,No Attempt,No,0,0,0,No,Clyde D,613
+8370-2025txman_qm41-red2-Tejas E,8370,2025txman,2025txman_qm41,red2,qm,41,Yes,0,0,0,0,0,0,0,0,0,2,0,0,0,0,6,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Tejas E,684
+8370-2025txman_qm44-red3-Vishnu S,8370,2025txman,2025txman_qm44,red3,qm,44,Yes,0,0,0,0,0,0,0,0,0,3,0,0,1,0,4,0,0,0,Park,No Attempt,No,0,0,0,No,Vishnu S,698
+8370-2025txman_qm5-red1-Josh W,8370,2025txman,2025txman_qm5,red1,qm,5,No,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Josh W,496
+8576-2025txman_qm11-red2-Clyde D,8576,2025txman,2025txman_qm11,red2,qm,11,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,2,Deep Climb,Medium (4-7sec),No,0,0,0,No,Clyde D,533
+8576-2025txman_qm15-blue2-Pranav R,8576,2025txman,2025txman_qm15,blue2,qm,15,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,4,Park,No Attempt,No,0,0,0,No,Pranav R,556
+8576-2025txman_qm21-red1-Arjun S,8576,2025txman,2025txman_qm21,red1,qm,21,Yes,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,2,Deep Climb,Slow (> 8sec),No,0,0,0,No,Arjun S,588
+8576-2025txman_qm24-blue2-Tejas E,8576,2025txman,2025txman_qm24,blue2,qm,24,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,6,Deep Climb,Medium (4-7sec),Yes,0,0,0,No,Tejas E,601
+8576-2025txman_qm28-red1-Jameson P,8576,2025txman,2025txman_qm28,red1,qm,28,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,No Attempt,No Attempt,No,0,0,0,No,Jameson P,618
+8576-2025txman_qm33-blue3-Vaed D,8576,2025txman,2025txman_qm33,blue3,qm,33,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,1,Deep Climb,Medium (4-7sec),No,0,0,0,No,Vaed D,645
+8576-2025txman_qm38-red1-Arjun M,8576,2025txman,2025txman_qm38,red1,qm,38,Yes,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,7,Park,No Attempt,No,0,0,0,No,Arjun M,671
+8576-2025txman_qm4-red1-Josh W,8576,2025txman,2025txman_qm4,red1,qm,4,Yes,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,3,Park,No Attempt,No,5,0,0,No,Josh W,493
+8576-2025txman_qm41-blue3-Victoria H,8576,2025txman,2025txman_qm41,blue3,qm,41,Yes,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,4,Deep Climb,No Attempt,No,0,0,3,No,Victoria H,685
+8576-2025txman_qm45-blue2-Pranav R,8576,2025txman,2025txman_qm45,blue2,qm,45,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,5,Deep Climb,Medium (4-7sec),No,0,0,0,No,Pranav R,701
+8576-2025txman_qm49-blue3-Victoria H,8576,2025txman,2025txman_qm49,blue3,qm,49,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Victoria H,724
+8576-2025txman_qm8-red3-Sai K,8576,2025txman,2025txman_qm8,red3,qm,8,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,2,1,Deep Climb,Medium (4-7sec),No,1,0,1,No,Sai K,518
+8879-2025txman_qm1-red1-Josh W,8879,2025txman,2025txman_qm1,red1,qm,1,Yes,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,3,0,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Josh W,474
+8879-2025txman_qm12-red1-Josh W,8879,2025txman,2025txman_qm12,red1,qm,12,Yes,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Josh W,541
+8879-2025txman_qm15-blue3-Vaed D,8879,2025txman,2025txman_qm15,blue3,qm,15,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Deep Climb,Slow (> 8sec),No,0,0,3,No,Vaed D,553
+8879-2025txman_qm19-blue3-Vaed D,8879,2025txman,2025txman_qm19,blue3,qm,19,Yes,0,0,0,0,0,0,0,0,0,0,0,2,0,0,1,5,3,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Vaed D,572
+8879-2025txman_qm22-red1-Jameson P,8879,2025txman,2025txman_qm22,red1,qm,22,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Jameson P,593
+8879-2025txman_qm26-blue2-Tejas E,8879,2025txman,2025txman_qm26,blue2,qm,26,Yes,0,0,0,0,0,0,0,0,0,1,1,1,0,0,3,6,3,0,Park,No Attempt,No,0,0,0,No,Tejas E,609
+8879-2025txman_qm30-red2-Clyde D,8879,2025txman,2025txman_qm30,red2,qm,30,Yes,0,0,0,0,0,0,0,0,0,0,0,2,0,0,2,3,2,0,Park,No Attempt,No,0,0,0,No,Clyde D,629
+8879-2025txman_qm35-blue3-Vaed D,8879,2025txman,2025txman_qm35,blue3,qm,35,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,5,2,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Vaed D,655
+8879-2025txman_qm39-red3-Prateek K,8879,2025txman,2025txman_qm39,red3,qm,39,Yes,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,3,2,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Prateek K,676
+8879-2025txman_qm43-blue2-Pranav R,8879,2025txman,2025txman_qm43,blue2,qm,43,Yes,0,0,0,0,0,0,0,0,0,0,0,2,0,0,1,1,1,0,Deep Climb,Slow (> 8sec),No,0,0,0,No,Pranav R,695
+8879-2025txman_qm48-blue2-Pranav R,8879,2025txman,2025txman_qm48,blue2,qm,48,Yes,0,0,0,0,0,0,0,0,0,0,0,4,0,0,3,5,2,0,Deep Climb,Medium (4-7sec),No,0,0,0,No,Pranav R,715
+8879-2025txman_qm6-red1-Josh W,8879,2025txman,2025txman_qm6,red1,qm,6,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,Park,No Attempt,No,0,0,0,No,Josh W,502
+9054-2025txman_qm11-blue3-Pranav R,9054,2025txman,2025txman_qm11,blue3,qm,11,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,4,0,No Attempt,No Attempt,Yes,0,0,0,No,Pranav R,535
+9054-2025txman_qm14-blue3-Vaed D,9054,2025txman,2025txman_qm14,blue3,qm,14,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,Park,No Attempt,No,0,0,0,No,Vaed D,549
+9054-2025txman_qm17-blue1-Tanish D,9054,2025txman,2025txman_qm17,blue1,qm,17,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,No Attempt,No Attempt,No,0,0,0,No,Tanish D,566
+9054-2025txman_qm2-red2-Clyde D,9054,2025txman,2025txman_qm2,red2,qm,2,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,Park,No Attempt,No,0,0,0,No,Clyde D,481
+9054-2025txman_qm22-red2-Clyde D,9054,2025txman,2025txman_qm22,red2,qm,22,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,Park,No Attempt,No,2,0,0,No,Clyde D,590
+9054-2025txman_qm29-blue1-Arjun M,9054,2025txman,2025txman_qm29,blue1,qm,29,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,No Attempt,No Attempt,No,0,0,0,No,Arjun M,623
+9054-2025txman_qm29-blue1-Tanish D,9054,2025txman,2025txman_qm29,blue1,qm,29,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,No Attempt,No Attempt,No,4,0,0,No,Tanish D,628
+9054-2025txman_qm35-red3-Tejas E,9054,2025txman,2025txman_qm35,red3,qm,35,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Tejas E,659
+9054-2025txman_qm40-red2-Tejas E,9054,2025txman,2025txman_qm40,red2,qm,40,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,Park,No Attempt,No,0,0,0,No,Tejas E,682
+9054-2025txman_qm48-red1-Arjun S,9054,2025txman,2025txman_qm48,red1,qm,48,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,No Attempt,No Attempt,No,2,0,0,No,Arjun S,717
+9054-2025txman_qm7-blue2-Tejas E,9054,2025txman,2025txman_qm7,blue2,qm,7,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,Park,No Attempt,No,0,0,0,No,Tejas E,511
+9137-2025txman_qm13-blue1-Tanish D,9137,2025txman,2025txman_qm13,blue1,qm,13,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,2,0,0,Park,No Attempt,No,0,0,0,No,Tanish D,547
+9137-2025txman_qm16-red3-Shreya A,9137,2025txman,2025txman_qm16,red3,qm,16,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,3,0,0,No Attempt,No Attempt,No,0,0,0,No,Shreya A,561
+9137-2025txman_qm2-red3-Sai K,9137,2025txman,2025txman_qm2,red3,qm,2,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,Yes,Sai K,482
+9137-2025txman_qm24-red1-Jameson P,9137,2025txman,2025txman_qm24,red1,qm,24,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Jameson P,600
+9137-2025txman_qm27-blue2-Tejas E,9137,2025txman,2025txman_qm27,blue2,qm,27,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,3,0,0,0,Park,No Attempt,No,0,0,0,No,Tejas E,616
+9137-2025txman_qm30-blue3-Vaed D,9137,2025txman,2025txman_qm30,blue3,qm,30,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,2,0,0,Park,No Attempt,No,0,0,0,No,Vaed D,630
+9137-2025txman_qm34-red2-Clyde D,9137,2025txman,2025txman_qm34,red2,qm,34,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,No Attempt,No Attempt,No,0,0,0,No,Clyde D,650
+9137-2025txman_qm39-red2-Tejas E,9137,2025txman,2025txman_qm39,red2,qm,39,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Tejas E,675
+9137-2025txman_qm42-blue3-Victoria H,9137,2025txman,2025txman_qm42,blue3,qm,42,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Victoria H,687
+9137-2025txman_qm9-blue1-Arjun M,9137,2025txman,2025txman_qm9,blue1,qm,9,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,Park,No Attempt,No,0,0,0,No,Arjun M,521
+9311-2025txman_qm12-red3-Sai K,9311,2025txman,2025txman_qm12,red3,qm,12,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0,Park,No Attempt,No,2,0,0,No,Sai K,539
+9311-2025txman_qm15-red2-Vomkar A,9311,2025txman,2025txman_qm15,red2,qm,15,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,4,0,Park,No Attempt,No,0,0,3,No,Vomkar A,554
+9311-2025txman_qm18-red1-Arjun S,9311,2025txman,2025txman_qm18,red1,qm,18,Yes,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,2,0,No Attempt,No Attempt,No,2,0,0,No,Arjun S,567
+9311-2025txman_qm23-blue1-Arjun M,9311,2025txman,2025txman_qm23,blue1,qm,23,Yes,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,Park,No Attempt,No,4,0,0,No,Arjun M,597
+9311-2025txman_qm3-red2-Clyde D,9311,2025txman,2025txman_qm3,red2,qm,3,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,No Attempt,No Attempt,No,0,0,0,No,Clyde D,484
+9311-2025txman_qm31-blue1-Tanish D,9311,2025txman,2025txman_qm31,blue1,qm,31,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,No Attempt,No Attempt,No,0,0,3,No,Tanish D,637
+9311-2025txman_qm34-blue3-Vaed D,9311,2025txman,2025txman_qm34,blue3,qm,34,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0,Park,No Attempt,No,0,0,0,No,Vaed D,651
+9311-2025txman_qm38-red2-Tejas E,9311,2025txman,2025txman_qm38,red2,qm,38,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,1,No,Tejas E,669
+9311-2025txman_qm49-red1-Arjun S,9311,2025txman,2025txman_qm49,red1,qm,49,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,No Attempt,No Attempt,No,0,0,0,No,Arjun S,722
+9311-2025txman_qm7-blue3-Jameson P,9311,2025txman,2025txman_qm7,blue3,qm,7,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,Park,No Attempt,No,0,0,0,No,Jameson P,509
+9506-2025txman_qm14-red1-Arjun S,9506,2025txman,2025txman_qm14,red1,qm,14,Yes,0,0,0,0,0,0,0,0,0,0,0,0,4,0,4,0,0,0,Park,No Attempt,No,2,0,0,No,Arjun S,548
+9506-2025txman_qm18-red3-Shreya A,9506,2025txman,2025txman_qm18,red3,qm,18,Yes,0,0,0,0,0,0,0,0,0,0,0,0,4,0,4,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Shreya A,569
+9506-2025txman_qm3-blue1-Arjun M,9506,2025txman,2025txman_qm3,blue1,qm,3,Yes,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,No Attempt,No Attempt,No,1,0,0,No,Arjun M,487
+9506-2025txman_qm33-blue2-Pranav R,9506,2025txman,2025txman_qm33,blue2,qm,33,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Pranav R,649
+9506-2025txman_qm36-red2-Tejas E,9506,2025txman,2025txman_qm36,red2,qm,36,Yes,0,0,0,0,0,0,0,0,0,0,0,0,1,0,4,0,0,0,Park,No Attempt,No,0,0,0,No,Tejas E,662
+9506-2025txman_qm40-red1-Arjun M,9506,2025txman,2025txman_qm40,red1,qm,40,Yes,0,0,0,0,0,0,0,0,0,0,1,0,0,0,2,1,0,0,No Attempt,No Attempt,No,0,0,1,No,Arjun M,680
+9506-2025txman_qm44-red2-Tanish D,9506,2025txman,2025txman_qm44,red2,qm,44,Yes,0,0,0,0,0,0,0,0,0,1,0,1,2,0,2,0,0,0,Park,No Attempt,No,0,0,0,No,Tanish D,699
+9506-2025txman_qm47-blue3-Victoria H,9506,2025txman,2025txman_qm47,blue3,qm,47,Yes,0,0,0,0,0,0,0,0,0,1,0,0,3,0,6,0,0,0,Park,No Attempt,No,0,0,0,No,Victoria H,711
+9506-2025txman_qm6-blue2-Tejas E,9506,2025txman,2025txman_qm6,blue2,qm,6,No,0,0,0,0,0,0,0,0,0,0,0,0,2,0,3,0,0,0,Park,No Attempt,No,0,0,0,No,Tejas E,507
+9506-2025txman_qm9-red1-Josh W,9506,2025txman,2025txman_qm9,red1,qm,9,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,No Attempt,No,0,0,3,No,Josh W,522
+9577-2025txman_qm12-blue2-Tejas E,9577,2025txman,2025txman_qm12,blue2,qm,12,No,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,2,0,No Attempt,No Attempt,No,0,0,0,No,Tejas E,540
+9577-2025txman_qm16-red2-Vomkar A,9577,2025txman,2025txman_qm16,red2,qm,16,No,0,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,1,0,Park,No Attempt,No,0,0,0,No,Vomkar A,559
+9577-2025txman_qm20-red2-Vomkar A,9577,2025txman,2025txman_qm20,red2,qm,20,No,0,0,0,0,0,0,0,0,0,0,0,0,5,0,5,0,0,0,Park,No Attempt,No,0,0,0,No,Vomkar A,581
+9577-2025txman_qm30-red1-Arjun S,9577,2025txman,2025txman_qm30,red1,qm,30,Yes,0,0,0,0,0,0,0,0,0,0,0,0,4,0,3,0,0,0,Park,No Attempt,No,1,0,0,No,Arjun S,631
+9577-2025txman_qm33-blue1-Tanish D,9577,2025txman,2025txman_qm33,blue1,qm,33,Yes,0,0,0,0,0,0,0,0,0,0,0,0,5,0,4,0,0,0,Park,No Attempt,No,0,0,0,No,Tanish D,648
+9577-2025txman_qm37-red3-Prateek K,9577,2025txman,2025txman_qm37,red3,qm,37,Yes,0,0,0,0,0,0,0,0,0,0,0,0,2,0,3,0,1,0,No Attempt,No Attempt,No,1,0,0,No,Prateek K,665
+9577-2025txman_qm4-blue1-Arjun M,9577,2025txman,2025txman_qm4,blue1,qm,4,No,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,1,0,Park,No Attempt,No,1,0,0,No,Arjun M,494
+9577-2025txman_qm44-blue2-Pranav R,9577,2025txman,2025txman_qm44,blue2,qm,44,Yes,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,Park,No Attempt,No,0,0,0,No,Pranav R,696
+9577-2025txman_qm47-red3-Vishnu S,9577,2025txman,2025txman_qm47,red3,qm,47,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,No Attempt,No Attempt,No,0,0,0,No,Vishnu S,714

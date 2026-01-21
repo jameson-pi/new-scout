@@ -5,13 +5,31 @@ const client = new OpenRouter({
     serverURL: "https://ai.hackclub.com/proxy/v1",
 });
 
+// 5-Minute Memory Cache Utility
+const AI_CACHE = new Map<string, { content: string; expiry: number }>();
+const CACHE_TTL = 0 * 60 * 60 * 1000; // 3 hours in ms
+
+async function withCache(key: string, fn: () => Promise<string>): Promise<string> {
+    const now = Date.now();
+    const cached = AI_CACHE.get(key);
+    if (cached && now < cached.expiry) {
+        console.log(`[AI CACHE] Hit for ${key}`);
+        return cached.content;
+    }
+    const result = await fn();
+    if (result && !result.includes("severed") && !result.includes("offline")) {
+        AI_CACHE.set(key, { content: result, expiry: now + CACHE_TTL });
+    }
+    return result;
+}
+
 const REEFSCAPE_CONTEXT = `
 REEFSCAPE 2025 - Strategic Ruleset:
 
 1. Autonomous Period (First 15 Seconds)
 - Leave (3 Points): All robots must leave starting zone.
 - Coral L1 (3 Points), L2 (4 Points), L3 (6 Points), L4 (7 Points).
-- Algae Processor (6 Points), Net (4 Points).
+- Algae Processor (2 Points), Net (4 Points).
 
 2. Teleop Period (2 Minutes 15 Seconds)
 - Coral Scoring: L1 (2 Points), L2 (3 Points), L3 (4 Points), L4 (5 Points).
@@ -20,7 +38,7 @@ REEFSCAPE 2025 - Strategic Ruleset:
 
 3. Endgame
 - Park (2 Points).
-- Shallow Cage Hang (6 Points).
+- Shallow Cage Hang (6 Points). Not many teams will score this. Specific mechanisms are required.
 - Deep Cage Hang (12 Points). Required for Barge RP (14+ pts).
 
 Ranking Points (RP):
@@ -41,7 +59,6 @@ export async function generateMatchStrategy(
             - Team ${t.teamKey}:
                 - Avg L4 Coral: ${t.avgL4}
                 - Auto Mobility: ${t.autoMobility}%
-                - Max Algae Harvest: ${t.maxAlgae}
                 - Deep Climb Rate: ${t.climbRate}%
                 - Defense Rating: ${t.avgDefense || 'N/A'}/5
                 - Breakdown Risk: ${t.failures || 0} failures noticed
@@ -64,24 +81,25 @@ export async function generateMatchStrategy(
             ${REEFSCAPE_CONTEXT}
  
             Task:
-            1. **Match Forecast**: Who has the mechanical advantage? Is this a high-scoring shootout or a defensive grind?
-            2. **Target Neutralization**: Identify the MOST DANGEROUS robot on the opposing alliance. What is the specific plan to shut them down? (e.g., "Pin Team X at the Processor to prevent Algae clearing").
-            3. **Our Strategic Path**: Precise scoring priorities (RP vs Win). Should we focus on L4 branch dominance or Algae-clearing for L2/L3 access?
-            4. **Endgame Coordination**: Coordination plan for the Deep Cage Hang given the climb rates of both alliances.
- 
-            Tone: Professional, High-Stakes Tactical Briefing. Do not use markdown. Please limit your response to 400 words.
+            1. **Our Strategic Path**: Precise scoring priorities (RP vs Win). Should we focus on L4 branch dominance or Algae-clearing for L2/L3 access?
+            2. **Defence Plan**: What is the specific plan to shut down the opposing alliance's defence? Only suggest a plan if it is a clear advantage to defend rather than score.
+            3. **Individual robots** What is the specific plan for each robot on our alliance? (e.g., "Team X will score L4 Coral, Team Y will score L2 Coral, Team Z will score L3 Coral.")
+            Tone: Professional, High-Stakes Tactical Briefing. Do not use markdown. Please limit your response to 100 words.
         `;
 
-        const response = await client.chat.send({
-            model: 'google/gemini-3-pro-preview',
-            messages: [
-                { role: 'system', content: 'You are an FRC Elite Strategy Analyst.' },
-                { role: 'user', content: prompt }
-            ],
-            stream: false,
+        const cacheKey = `match-${matchKey}-${alliance}`;
+        return withCache(cacheKey, async () => {
+            const response = await client.chat.send({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    { role: 'system', content: 'You are an FRC Elite Strategy Analyst.' },
+                    { role: 'user', content: prompt }
+                ],
+                stream: false,
+                maxTokens: 2000,
+            });
+            return (response.choices[0]?.message?.content as string) || "Strategy generation offline.";
         });
-
-        return (response.choices[0]?.message?.content as string) || "Strategy generation offline.";
     } catch (e) {
         console.error("AI Strategy Error:", e);
         return "Tactical link severed.";
@@ -112,16 +130,19 @@ export async function generateAllianceDraft(targetTeam: string, allTeamsData: an
             Provide a professional draft analysis report. Use a high-impact, tactical tone.
         `;
 
-        const response = await client.chat.send({
-            model: 'google/gemini-3-pro-preview',
-            messages: [
-                { role: 'system', content: 'You are an FRC Strategy Specialist.' },
-                { role: 'user', content: prompt }
-            ],
-            stream: false,
+        const cacheKey = `draft-${targetTeam}-${allTeamsData.length}`;
+        return withCache(cacheKey, async () => {
+            const response = await client.chat.send({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    { role: 'system', content: 'You are an FRC Strategy Specialist.' },
+                    { role: 'user', content: prompt }
+                ],
+                stream: false,
+                maxTokens: 2000,
+            });
+            return (response.choices[0]?.message?.content as string) || "Draft advisor offline.";
         });
-
-        return (response.choices[0]?.message?.content as string) || "Draft advisor offline.";
     } catch (e) {
         console.error("AI Draft Error:", e);
         return "Intelligence link severed.";
@@ -147,16 +168,19 @@ export async function generateEventStrategy(eventKey: string, topTeams: any[]) {
             Keep the tone like a professional sports analyst. Use markdown.
         `;
 
-        const response = await client.chat.send({
-            model: 'google/gemini-3-flash-preview',
-            messages: [
-                { role: 'system', content: 'You are an FRC Lead Strategic Analyst.' },
-                { role: 'user', content: prompt }
-            ],
-            stream: false,
+        const cacheKey = `event-${eventKey}-${topTeams[0]?.teamKey}`;
+        return withCache(cacheKey, async () => {
+            const response = await client.chat.send({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    { role: 'system', content: 'You are an FRC Lead Strategic Analyst.' },
+                    { role: 'user', content: prompt }
+                ],
+                stream: false,
+                maxTokens: 2000,
+            });
+            return (response.choices[0]?.message?.content as string) || "Strategic link offline.";
         });
-
-        return (response.choices[0]?.message?.content as string) || "Strategic link offline.";
     } catch (e) {
         console.error("Event strategy error:", e);
         return "Intelligence link severed.";
@@ -200,16 +224,18 @@ export async function generateTeamStrategy(teamKey: string, nickname: string, re
             Tone: Professional Tactical Intel. Use Markdown.
         `;
 
-        const response = await client.chat.send({
-            model: 'google/gemini-3-pro-preview',
-            messages: [
-                { role: 'system', content: 'You are an FRC Lead Tactical Scout.' },
-                { role: 'user', content: prompt }
-            ],
-            stream: false,
+        const cacheKey = `team-${teamKey}-${reports.length}`;
+        return withCache(cacheKey, async () => {
+            const response = await client.chat.send({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    { role: 'system', content: 'You are an FRC Lead Tactical Scout.' },
+                    { role: 'user', content: prompt }
+                ],
+                stream: false,
+            });
+            return (response.choices[0]?.message?.content as string) || "Scouter notes unavailable.";
         });
-
-        return (response.choices[0]?.message?.content as string) || "Scouter notes unavailable.";
     } catch (e) {
         console.error("Team strategy error:", e);
         return "Intelligence link severed.";

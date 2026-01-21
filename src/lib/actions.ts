@@ -64,3 +64,13 @@ export async function saveScoutReport(report: any) {
         return { success: false, error: String(e) };
     }
 }
+import { generateMatchStrategy } from './ai';
+
+export async function getTacticalStrategy(matchKey: string, alliance: 'red' | 'blue', allianceData: any[], opponentData: any[]) {
+    try {
+        return await generateMatchStrategy(matchKey, alliance, allianceData, opponentData);
+    } catch (e) {
+        console.error("Tactical strategy error:", e);
+        return "Tactical link severed.";
+    }
+}
