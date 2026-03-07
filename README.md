@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HowdyScout 🤠
+
+**HowdyScout** is a comprehensive FRC (FIRST Robotics Competition) scouting application built with Next.js for the 2026 REBUILT™ season.
+
+## Features
+
+- **Scout Precision Ranking (SPR)** - Evaluate scout accuracy using Bayesian methods
+- **Monte Carlo Simulation** - Predict rankings with 10,000+ iterations
+- **Match Predictions** - Predict match outcomes with confidence intervals
+- **What-If Scenarios** - Simulate hypothetical outcomes
+- **Pick List Generator** - Generate alliance selection rankings
+- **Defense Analysis** - Track defensive capabilities and matchups
+- **AI Strategy** - AI-powered match strategy generation
+- **Real-time Data** - Live integration with The Blue Alliance API
+- **EPA Metrics** - Integration with Statbotics EPA data
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```bash
+npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file:
+
+```
+NEXT_PUBLIC_TBA_API_KEY=your_tba_api_key
+HACK_CLUB_AI_KEY=your_ai_key
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Run all tests
+npm test
 
-## Learn More
+# Run tests in watch mode
+npm run test:watch
 
-To learn more about Next.js, take a look at the following resources:
+# Run tests with coverage
+npm run test:coverage
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Build
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+npm start
+```
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/          # Next.js App Router pages
+├── components/   # React components
+├── hooks/        # Custom React hooks
+└── lib/          # Core logic & utilities
+    ├── spr.ts         # Scout Precision Ranking
+    ├── simulation.ts  # Monte Carlo simulator
+    ├── predictions.ts # Match predictions
+    ├── scenarios.ts   # What-if analysis
+    ├── pickList.ts    # Alliance selection
+    ├── defense.ts     # Defense analysis
+    ├── ai.ts          # AI strategy generation
+    └── ...
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Framework**: Next.js 16
+- **Language**: TypeScript
+- **Styling**: CSS Modules
+- **Data Fetching**: SWR
+- **Charts**: Recharts
+- **Testing**: Jest + React Testing Library
+- **APIs**: The Blue Alliance, Statbotics, OpenRouter AI
+
+## License
+
+MIT

@@ -1,120 +1,97 @@
-import fs from 'fs';
-import path from 'path';
-import { ScoutReport, ReefscapeData } from './spr';
+import { ScoutReport, RebuiltData } from './spr';
 import { getEventMatches } from './tba';
+import { getPool, sql } from './db';
 
-/**
- * Robust CSV Parser (no external deps)
- */
-function parseCSV(csvText: string) {
-    const lines = csvText.split(/\r?\n/);
-    const headers = lines[0].split(',');
-    return lines.slice(1).filter(l => l.trim()).map(line => {
-        // Handle quoted strings correctly
-        const values: string[] = [];
-        let current = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            if (char === '"' && line[i + 1] === '"') {
-                current += '"';
-                i++;
-            } else if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                values.push(current);
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        values.push(current);
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
 
-        const obj: any = {};
-        headers.forEach((h, i) => {
-            obj[h.trim()] = values[i]?.trim();
-        });
-        return obj;
-    });
+function parseTowerLevel(val: string | null | undefined, isAuto: boolean): string {
+    if (!val) return 'None';
+    if (val.includes('Level3') && !isAuto) return 'Level3';
+    if (val.includes('Level2') && !isAuto) return 'Level2';
+    if (val.includes('Level1')) return 'Level1';
+    return 'None';
 }
 
+function parseHubControl(val: string | null | undefined): 'Dominant' | 'Average' | 'Weak' | undefined {
+    if (val === 'Dominant') return 'Dominant';
+    if (val === 'Weak') return 'Weak';
+    if (val === 'Average') return 'Average';
+    return undefined;
+}
+
+function rowToScoutReport(row: any): ScoutReport {
+    const driverStation: string = row.driver_station ?? '';
+    const alliance = driverStation.startsWith('red') ? 'red' : 'blue';
+
+    const data: RebuiltData = {
+        auto: {
+            fuel_scored: Number(row.auto_fuel_scored) || 0,
+            tower_level: parseTowerLevel(row.auto_tower_level, true) as 'None' | 'Level1',
+            moved: row.auto_moved === true || row.auto_moved === 1,
+        },
+        teleop: {
+            fuel_scored: Number(row.tele_fuel_scored) || 0,
+            tower_level: parseTowerLevel(row.tele_tower_level, false) as 'None' | 'Level1' | 'Level2' | 'Level3',
+        },
+        notes: row.other_notes || '',
+        mech_failure: row.mech_failure === true || row.mech_failure === 1,
+        defender_rating: Number(row.defender_rating) || 0,
+        hub_control: parseHubControl(row.hub_control),
+        trench_capable: row.trench_capable === true || row.trench_capable === 1,
+    };
+
+    return {
+        scoutId: row.scouted_by ?? '',
+        matchKey: row.match_key ?? '',
+        teamKey: `frc${row.frc_team}`,
+        alliance: alliance as 'red' | 'blue',
+        data,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
- * Loads a specific event CSV and converts to ScoutReport format
+ * Load all scouting reports for a given event from Azure SQL.
+ * REBUILT 2026 Edition
  */
-export function loadEventReports(eventKey: string): ScoutReport[] {
+export async function loadEventReports(eventKey: string): Promise<ScoutReport[]> {
     try {
-        const filePath = path.join(process.cwd(), 'public', `${eventKey}.csv`);
-        if (!fs.existsSync(filePath)) {
-            console.warn(`Event data not found for ${eventKey}`);
-            return [];
-        }
-        const csvText = fs.readFileSync(filePath, 'utf-8');
-        const rawData = parseCSV(csvText);
+        const pool = await getPool();
+        const result = await pool.request()
+            .input('eventKey', sql.NVarChar(20), eventKey)
+            .query(`
+                SELECT
+                    frc_team, match_key, driver_station, scouted_by,
+                    auto_fuel_scored, auto_tower_level, auto_moved,
+                    tele_fuel_scored, tele_tower_level, other_notes,
+                    mech_failure, defender_rating, trench_capable, hub_control
+                FROM ScoutReports
+                WHERE event_key = @eventKey
+                ORDER BY match_number ASC, frc_team ASC
+            `);
 
-        return rawData
-            .filter(row => row.frc_team && !isNaN(parseInt(row.frc_team)))
-            .map(row => {
-                const alliance = row.driver_station?.startsWith('red') ? 'red' : 'blue';
-
-                const data: ReefscapeData = {
-                    auto: {
-                        coral_l1: parseInt(row.auto_coral_l1) || 0,
-                        coral_l2: parseInt(row.auto_coral_l2) || 0,
-                        coral_l3: parseInt(row.auto_coral_l3) || 0,
-                        coral_l4: parseInt(row.auto_coral_l4) || 0,
-                        algae_processor: parseInt(row.auto_algae_processor) || 0,
-                        algae_net: parseInt(row.auto_algae_barge) || 0,
-                        moved: row.auto_moved === 'Yes'
-                    },
-                    teleop: {
-                        coral_l1: parseInt(row.tele_coral_l1) || 0,
-                        coral_l2: parseInt(row.tele_coral_l2) || 0,
-                        coral_l3: parseInt(row.tele_coral_l3) || 0,
-                        coral_l4: parseInt(row.tele_coral_l4) || 0,
-                        algae_processor: parseInt(row.tele_algae_processor) || 0,
-                        algae_net: parseInt(row.tele_algae_barge) || 0,
-                        climb: parseClimb(row.tele_endgame)
-                    },
-                    notes: row.other_notes || '',
-                    mech_failure: row.mech_failure === 'Yes',
-                    defender_rating: parseInt(row.defender_rating) || 0
-                };
-
-                return {
-                    scoutId: row.scouted_by,
-                    matchKey: row.match_key,
-                    teamKey: `frc${row.frc_team}`,
-                    alliance: alliance as 'red' | 'blue',
-                    data
-                };
-            })
-            .sort((a, b) => {
-                const numA = parseInt(a.matchKey.split('_qm')[1]) || 0;
-                const numB = parseInt(b.matchKey.split('_qm')[1]) || 0;
-                return numA - numB;
-            });
+        return result.recordset.map(rowToScoutReport);
     } catch (e) {
-        console.error(`Error loading reports for ${eventKey}:`, e);
+        console.error(`[DB] Error loading reports for ${eventKey}:`, e);
         return [];
     }
-}
-
-function parseClimb(val: string): 'None' | 'Park' | 'Shallow' | 'Deep' {
-    if (val?.includes('Deep')) return 'Deep';
-    if (val?.includes('Shallow')) return 'Shallow';
-    if (val?.includes('Park')) return 'Park';
-    return 'None';
 }
 
 /**
  * Unified getter for Simulation, SPR, and Dashboard
  */
-export async function getMissionData(eventKey: string = '2025txwac') {
-    const reports = loadEventReports(eventKey);
-    const tbaMatchesRaw = await getEventMatches(eventKey);
+export async function getMissionData(eventKey: string = '2026txcle') {
+    const [reports, tbaMatchesRaw] = await Promise.all([
+        loadEventReports(eventKey),
+        getEventMatches(eventKey),
+    ]);
 
-    // Map TBA matches to the format SPR expects
-    const tbaMatches: any = {};
+    const tbaMatches: Record<string, any> = {};
     tbaMatchesRaw.forEach((m: any) => {
         tbaMatches[m.key] = {
             matchKey: m.key,
@@ -123,59 +100,77 @@ export async function getMissionData(eventKey: string = '2025txwac') {
                     score: m.alliances.red.score,
                     autoPoints: m.score_breakdown?.red?.autoPoints || 0,
                     teleopPoints: m.score_breakdown?.red?.teleopPoints || 0,
-                    endgamePoints: m.score_breakdown?.red?.endgamePoints || 0
+                    endgamePoints: m.score_breakdown?.red?.endgamePoints || 0,
                 },
                 blue: {
                     score: m.alliances.blue.score,
                     autoPoints: m.score_breakdown?.blue?.autoPoints || 0,
                     teleopPoints: m.score_breakdown?.blue?.teleopPoints || 0,
-                    endgamePoints: m.score_breakdown?.blue?.endgamePoints || 0
-                }
-            }
+                    endgamePoints: m.score_breakdown?.blue?.endgamePoints || 0,
+                },
+            },
         };
     });
 
     return { reports, tbaMatches, tbaMatchesRaw };
 }
 
-export async function getEventSchedule(eventKey: string) {
+export async function getEventSchedule(eventKey: string = '2026txcle') {
     const tbaMatchesRaw = await getEventMatches(eventKey);
     return tbaMatchesRaw
-        .filter(m => m.comp_level === 'qm')
-        .map(m => ({
+        .filter((m: any) => m.comp_level === 'qm')
+        .map((m: any) => ({
             key: m.key,
             matchNumber: m.match_number,
             red: m.alliances.red.team_keys,
-            blue: m.alliances.blue.team_keys
+            blue: m.alliances.blue.team_keys,
         }))
-        .sort((a, b) => a.matchNumber - b.matchNumber);
+        .sort((a: any, b: any) => a.matchNumber - b.matchNumber);
 }
 
-export function getUniqueScouters(eventKey: string = '2025txwac'): string[] {
-    const reports = loadEventReports(eventKey);
-    const scouters = Array.from(new Set(reports.map(r => r.scoutId))).filter(Boolean).sort();
-    return scouters;
+export async function getUniqueScouters(eventKey: string = '2026txcle'): Promise<string[]> {
+    try {
+        const pool = await getPool();
+        const result = await pool.request()
+            .input('eventKey', sql.NVarChar(20), eventKey)
+            .query(`
+                SELECT DISTINCT scouted_by
+                FROM ScoutReports
+                WHERE event_key = @eventKey
+                  AND scouted_by IS NOT NULL
+                  AND scouted_by <> ''
+                ORDER BY scouted_by ASC
+            `);
+        return result.recordset.map((r: any) => r.scouted_by as string);
+    } catch (e) {
+        console.error(`[DB] Error loading scouters for ${eventKey}:`, e);
+        return [];
+    }
 }
 
 /**
- * Discovers available mission datasets in the public directory
+ * Returns all known events from the Events table in Azure SQL.
  */
-export function getAvailableEvents() {
-    const publicDir = path.join(process.cwd(), 'public');
-    const files = fs.readdirSync(publicDir);
-    const csvs = files.filter(f => f.endsWith('.csv'));
-
-    const eventMetadata: Record<string, { name: string, location: string }> = {
-        '2025txwac': { name: 'Waco District', location: 'Waco, TX' },
-        '2025txman': { name: 'Manor District', location: 'Manor, TX' },
-        '2025txcmp2': { name: 'State Championship', location: 'Houston, TX' }
-    };
-
-    return csvs.map(f => {
-        const key = f.replace('.csv', '');
-        return {
-            key,
-            ...(eventMetadata[key] || { name: key.toUpperCase(), location: 'MISSION THEATER' })
-        };
-    }).sort((a, b) => b.key.localeCompare(a.key)); // Newest events first
+export async function getAvailableEvents(): Promise<{ key: string; name: string; location: string }[]> {
+    try {
+        const pool = await getPool();
+        const result = await pool.request().query(`
+            SELECT event_key, name, location
+            FROM Events
+            ORDER BY event_key DESC
+        `);
+        return result.recordset.map((r: any) => ({
+            key: r.event_key as string,
+            name: r.name as string,
+            location: r.location as string,
+        }));
+    } catch (e) {
+        console.error('[DB] Error loading available events:', e);
+        // Fallback to known events if DB is unavailable
+        return [
+            { key: '2026howdy',  name: 'HowdyScout Practice', location: 'Houston, TX' },
+            { key: '2026txcle',  name: 'Space City #1',        location: 'Houston, TX' },
+            { key: '2026txman',  name: 'Manor District',        location: 'Manor, TX' },
+        ];
+    }
 }

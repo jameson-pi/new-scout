@@ -1,6 +1,9 @@
 const TBA_BASE_URL = 'https://www.thebluealliance.com/api/v3';
 const TBA_KEY = process.env.NEXT_PUBLIC_TBA_API_KEY;
 
+// Practice / local events that don't exist on TBA — skip the network call entirely
+const LOCAL_ONLY_EVENTS = new Set(['2026howdy']);
+
 if (!TBA_KEY) {
     console.warn("TBA API Key is missing!");
 }
@@ -17,6 +20,8 @@ export interface TBAMatch {
 }
 
 export async function getEventMatches(eventKey: string): Promise<TBAMatch[]> {
+    if (LOCAL_ONLY_EVENTS.has(eventKey)) return [];
+
     const response = await fetch(`${TBA_BASE_URL}/event/${eventKey}/matches`, {
         headers: {
             'X-TBA-Auth-Key': TBA_KEY || '',
@@ -26,21 +31,25 @@ export async function getEventMatches(eventKey: string): Promise<TBAMatch[]> {
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to fetch matches for ${eventKey}: ${response.statusText}`);
+        console.warn(`TBA: no matches for ${eventKey} (${response.status} ${response.statusText})`);
+        return [];
     }
 
     return response.json();
 }
 
 export async function getTeamStatus(teamKey: string, eventKey: string) {
+    if (LOCAL_ONLY_EVENTS.has(eventKey)) return null;
     const response = await fetch(`${TBA_BASE_URL}/team/${teamKey}/event/${eventKey}/status`, {
         headers: { 'X-TBA-Auth-Key': TBA_KEY || '' },
         next: { revalidate: 600 }
     });
+    if (!response.ok) return null;
     return response.json();
 }
 
 export async function getEventTeams(eventKey: string) {
+    if (LOCAL_ONLY_EVENTS.has(eventKey)) return [];
     const response = await fetch(`${TBA_BASE_URL}/event/${eventKey}/teams`, {
         headers: { 'X-TBA-Auth-Key': TBA_KEY || '' },
         next: { revalidate: 86400 }
@@ -50,6 +59,7 @@ export async function getEventTeams(eventKey: string) {
 }
 
 export async function getEventRankings(eventKey: string) {
+    if (LOCAL_ONLY_EVENTS.has(eventKey)) return null;
     const response = await fetch(`${TBA_BASE_URL}/event/${eventKey}/rankings`, {
         headers: { 'X-TBA-Auth-Key': TBA_KEY || '' },
         next: { revalidate: 300 }

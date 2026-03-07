@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getAvailableEvents } from '@/lib/data';
 
 export default async function Home() {
-  const events = getAvailableEvents();
+  const events = await getAvailableEvents();
 
   return (
     <main className="container flex flex-col items-center justify-center" style={{ minHeight: '100vh', paddingTop: '8rem' }}>
@@ -17,7 +17,7 @@ export default async function Home() {
           <h1 className="hero-title text-gradient" style={{ fontSize: 'clamp(3rem, 12vw, 8rem)', fontWeight: 950, letterSpacing: '-0.05em' }}>
             MISSION<span className="text-primary">CONTROL</span>
           </h1>
-          <p className="mt-4" style={{ fontSize: '1.25rem', color: '#555', maxWidth: '600px', fontWeight: 500 }}>
+          <p className="mt-4" style={{ fontSize: '1.25rem', color: '#888', maxWidth: '600px', fontWeight: 500 }}>
             Select a tactical theater to begin signal processing. Dynamic simulation active for <span style={{ color: '#fff' }}>{events.length}</span> active events.
           </p>
         </div>
@@ -37,10 +37,10 @@ export default async function Home() {
                     {i === 0 && <span style={{ fontSize: '8px', fontWeight: 950, color: 'var(--primary)', border: '1px solid var(--primary)', padding: '2px 8px', borderRadius: '100px' }}>PRIORITY HIGH</span>}
                   </div>
                   <h2 style={{ fontSize: '2rem', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.02em', color: '#fff', textTransform: 'uppercase' }}>{event.name}</h2>
-                  <p style={{ color: '#444', fontSize: '10px', marginTop: '0.25rem', fontWeight: 950, letterSpacing: '0.15em' }}>{event.location.toUpperCase()}</p>
+                  <p style={{ color: '#888', fontSize: '10px', marginTop: '0.25rem', fontWeight: 950, letterSpacing: '0.15em' }}>{event.location.toUpperCase()}</p>
                 </div>
                 <div className="flex justify-between items-end">
-                  <span style={{ fontSize: '9px', fontWeight: 950, color: '#333', letterSpacing: '0.1em' }}>CODE: {event.key.toUpperCase()}</span>
+                  <span style={{ fontSize: '9px', fontWeight: 950, color: '#555', letterSpacing: '0.1em' }}>CODE: {event.key.toUpperCase()}</span>
                   <span style={{ fontSize: '11px', fontWeight: 950, color: 'var(--secondary)' }}>ENTER THEATER →</span>
                 </div>
               </div>
@@ -48,17 +48,17 @@ export default async function Home() {
           ))}
 
           {/* Global Scouter Intel Card */}
-          <Link href={`/scouters/${events[0]?.key || '2025txwac'}`} className="card-wrapper" style={{ textDecoration: 'none' }}>
+          <Link href={`/scouters/${events[0]?.key || '2026txcle'}`} className="card-wrapper" style={{ textDecoration: 'none' }}>
             <div className="glass flex flex-col justify-between" style={{ height: '280px', padding: '2.5rem', background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(10, 10, 13, 0.95) 100%)', border: '1px solid rgba(244, 63, 94, 0.1)', borderRadius: '40px' }}>
               <div>
                 <div className="card-icon" style={{ background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', marginBottom: '1.5rem' }}>
                   <svg className="text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
                 <h2 style={{ fontSize: '2rem', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.02em', color: '#fff', textTransform: 'uppercase' }}>OPERATIVE INTEL</h2>
-                <p style={{ color: '#444', fontSize: '10px', marginTop: '0.25rem', fontWeight: 950, letterSpacing: '0.15em' }}>GLOBAL PRECISION RANKINGS</p>
+                <p style={{ color: '#888', fontSize: '10px', marginTop: '0.25rem', fontWeight: 950, letterSpacing: '0.15em' }}>GLOBAL PRECISION RANKINGS</p>
               </div>
               <div className="flex justify-between items-end">
-                <span style={{ fontSize: '9px', fontWeight: 950, color: '#333', letterSpacing: '0.1em' }}>CROSS-MISSION ANALYTICS</span>
+                <span style={{ fontSize: '9px', fontWeight: 950, color: '#555', letterSpacing: '0.1em' }}>CROSS-MISSION ANALYTICS</span>
                 <span style={{ fontSize: '11px', fontWeight: 950, color: 'var(--accent)' }}>VIEW DOSSIERS →</span>
               </div>
             </div>
@@ -69,17 +69,17 @@ export default async function Home() {
         <footer className="flex flex-col items-center reveal delay-2" style={{ marginTop: '8rem', paddingBottom: '4rem' }}>
           <div className="flex gap-12" style={{ marginBottom: '3rem' }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Unified Feed</p>
+              <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Unified Feed</p>
               <p style={{ fontSize: '1.5rem', fontWeight: 700, fontStyle: 'italic', color: '#22c55e' }}>SYNCHRONIZED</p>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Available Missions</p>
+              <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Available Missions</p>
               <p style={{ fontSize: '1.5rem', fontWeight: 700, fontStyle: 'italic', color: 'var(--secondary)' }}>{events.length} ACTIVE</p>
             </div>
           </div>
           <div style={{ height: '1px', width: '200px', background: 'rgba(255,255,255,0.05)', marginBottom: '2rem' }}></div>
-          <p style={{ fontSize: '11px', fontFamily: 'monospace', color: '#333', fontStyle: 'italic', letterSpacing: '0.1em' }}>
-            PENN ROBOTICS • ARCHITECTING TRUTH IN REEFSCAPE 2025
+          <p style={{ fontSize: '11px', fontFamily: 'monospace', color: '#888', fontStyle: 'italic', letterSpacing: '0.1em' }}>
+            PENN ROBOTICS • ARCHITECTING TRUTH IN REBUILT 2026
           </p>
         </footer>
 

@@ -459,3 +459,5 @@ primary_key,frc_team,event_key,match_key,driver_station,comp_level,match_number,
 9786-2025txwac_qm58-red3-Arjun KS,9786,2025txwac,2025txwac_qm58,red3,qm,58,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,3,3,Park,No Attempt,No,2,0,0,No,Arjun KS,468
 9786-2025txwac_qm63-red2-Pranav R,9786,2025txwac,2025txwac_qm63,red2,qm,63,Yes,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,No Attempt,No Attempt,No,0,0,2,No,Pranav R,469
 9786-2025txwac_qm72-blue3-Victoria H,9786,2025txwac,2025txwac_qm72,blue3,qm,72,No,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,Park,No Attempt,No,0,0,2,No,Victoria H,470
+
+2969-2025txwac_qm75-scout-Jameson P,2969,2025txwac,2025txwac_qm75,scout,qm,75,3,0,0,Yes,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,Park,Fast,No,0,0,5,No,Jameson P,Pancake bot

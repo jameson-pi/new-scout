@@ -2,6 +2,7 @@ import { getMissionData } from '@/lib/data';
 import { TeamPerformanceDistribution, SimulatedMatch } from '@/lib/simulation';
 import { getEventTeams, getEventRankings } from '@/lib/tba';
 import { generateEventStrategy } from '@/lib/ai';
+import { getStatboticsEvent } from '@/lib/statbotics';
 import EventDashboard from './EventDashboard';
 
 export default async function EventView({ params }: { params: Promise<{ eventKey: string }> }) {
@@ -44,10 +45,13 @@ export default async function EventView({ params }: { params: Promise<{ eventKey
     // 3. Get AI Summary for the top teams (Initial State)
     const topTeamsForAI = teams.slice(0, 10).map(tk => ({
         teamKey: tk,
-        avgL4: (reports.filter(r => r.teamKey === tk).reduce((acc, r) => acc + r.data.teleop.coral_l4, 0) / (reports.filter(r => r.teamKey === tk).length || 1)).toFixed(1),
+        avgFuel: (reports.filter(r => r.teamKey === tk).reduce((acc, r) => acc + r.data.auto.fuel_scored + r.data.teleop.fuel_scored, 0) / (reports.filter(r => r.teamKey === tk).length || 1)).toFixed(1),
         prob: "CALCULATING..."
     }));
-    const aiSummary = await generateEventStrategy(eventKey, topTeamsForAI);
+    const aiSummary = "Event strategy disabled by user request.";
+
+    // 4. Fetch Statbotics Data
+    const statboticsData = await getStatboticsEvent(eventKey);
 
     return (
         <EventDashboard
@@ -59,6 +63,7 @@ export default async function EventView({ params }: { params: Promise<{ eventKey
             aiSummary={aiSummary}
             tbaMatchesRaw={tbaMatchesRaw}
             actualRankings={actualRankings}
+            statboticsData={statboticsData}
         />
     );
 }

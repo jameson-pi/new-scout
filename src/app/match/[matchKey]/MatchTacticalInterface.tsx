@@ -8,11 +8,17 @@ import ReactMarkdown from 'react-markdown';
 interface TeamProfile {
     teamKey: string;
     teamNum: string;
-    avgL4: string;
+    avgAutoFuel: string;
+    avgTeleopFuel: string;
+    avgFuel: string;
+    avgTowerPts: string;
+    bestTowerLevel: string;
     autoMobility: string;
-    maxAlgae: number;
-    climbRate: string;
+    autoFuel: string;
+    towerRate: string;
     avgDefense: string;
+    hubControl: string;
+    trenchCapable: string;
     failures: number;
     notes: string;
 }
@@ -37,7 +43,6 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
         setIsLoading(true);
         setBriefing(null);
 
-        // Inject manual overrides into profiles
         const updatedAllianceData = activeProfiles.map(p => ({
             ...p,
             notes: manualNotes[p.teamKey] ? `${p.notes} [OVERRIDE: ${manualNotes[p.teamKey]}]` : p.notes
@@ -55,7 +60,7 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
             <section className="reveal delay-1">
                 <div className="glass" style={{ padding: '2rem', borderRadius: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '0.5rem' }}>Tactical Focus</p>
+                        <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '0.5rem' }}>Tactical Focus</p>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase' }}>Alliance Selection</h2>
                     </div>
                     <div className="flex gap-4" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -108,36 +113,45 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
                             <div className="flex justify-between items-start" style={{ marginBottom: '1.5rem' }}>
                                 <div>
                                     <h4 style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: '#fff', lineHeight: 1 }}>{p.teamNum}</h4>
-                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tactical Unit</p>
+                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tactical Unit</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <span style={{ fontSize: '10px', fontWeight: 950, color: '#22c55e' }}>● READY</span>
+                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#aaa' }}>HUB: {p.hubControl?.toUpperCase()}</p>
+                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#22c55e' }}>AUTO FUEL: {p.autoFuel}</p>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-                                <div>
-                                    <p style={{ fontSize: '8px', fontWeight: 950, color: '#333', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Avg L4 Coral</p>
-                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{p.avgL4}</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '7px', fontWeight: 950, color: '#888' }}>AUTO FUEL</p>
+                                    <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.avgAutoFuel}</p>
                                 </div>
-                                <div>
-                                    <p style={{ fontSize: '8px', fontWeight: 950, color: '#333', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Deep Climb</p>
-                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{p.climbRate}%</p>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '7px', fontWeight: 950, color: '#888' }}>TELE FUEL</p>
+                                    <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.avgTeleopFuel}</p>
                                 </div>
-                                <div>
-                                    <p style={{ fontSize: '8px', fontWeight: 950, color: '#333', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Auto Mobility</p>
-                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{p.autoMobility}%</p>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '7px', fontWeight: 950, color: '#888' }}>TOWER PTS</p>
+                                    <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.avgTowerPts}</p>
                                 </div>
-                                <div>
-                                    <p style={{ fontSize: '8px', fontWeight: 950, color: '#333', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Max Algae</p>
-                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{p.maxAlgae}</p>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '7px', fontWeight: 950, color: '#333' }}>TOWER %</p>
+                                    <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.towerRate}%</p>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '7px', fontWeight: 950, color: '#333' }}>TRENCH</p>
+                                    <p style={{ fontSize: '1.25rem', fontWeight: 950, color: p.trenchCapable === 'Yes' ? '#22c55e' : '#666' }}>{p.trenchCapable}</p>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '7px', fontWeight: 950, color: '#333' }}>DEFENSE</p>
+                                    <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.avgDefense}</p>
                                 </div>
                             </div>
 
                             <div style={{ position: 'relative' }}>
                                 <p style={{ fontSize: '8px', fontWeight: 950, color: selectedAlliance === 'red' ? '#ef4444' : '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Intelligence Overrides</p>
                                 <textarea
-                                    placeholder="Enter field observations (e.g. broken intake, special strategy...)"
+                                    placeholder="Enter field observations (e.g. hub shift timing, broken shooter, special strategy...)"
                                     value={manualNotes[p.teamKey] || ''}
                                     onChange={(e) => setManualNotes({ ...manualNotes, [p.teamKey]: e.target.value })}
                                     style={{
@@ -188,7 +202,7 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
                             <div style={{ width: '10px', height: '10px', background: '#22c55e', borderRadius: '2px' }}></div>
                             <span style={{ fontSize: '11px', fontWeight: 950, color: '#22c55e', letterSpacing: '0.3em', textTransform: 'uppercase' }}>Strategic Resolution Active</span>
                         </div>
-                        <div className="briefing-content" style={{ fontSize: '1.2rem', color: '#ccc', lineHeight: 1.8 }}>
+                        <div className="briefing-content" style={{ fontSize: '1.2rem', color: '#eee', lineHeight: 1.8 }}>
                             <ReactMarkdown>{briefing}</ReactMarkdown>
                         </div>
                     </div>

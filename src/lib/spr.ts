@@ -1,31 +1,21 @@
 // Scout Precision Ranking (SPR) Algorithm
-// Reefscape 2025 Edition
+// REBUILT 2026 Edition
 
-export interface ReefscapeData {
+export interface RebuiltData {
     auto: {
-        coral_l1: number;
-        coral_l2: number;
-        coral_l3: number;
-        coral_l4: number;
-        algae_processor: number;
-        algae_net: number;
+        fuel_scored: number;
+        tower_level: 'None' | 'Level1';
         moved: boolean;
     };
     teleop: {
-        coral_l1: number;
-        coral_l2: number;
-        coral_l3: number;
-        coral_l4: number;
-        algae_processor: number;
-        algae_net: number;
-        climb: 'None' | 'Park' | 'Shallow' | 'Deep';
+        fuel_scored: number;
+        tower_level: 'None' | 'Level1' | 'Level2' | 'Level3';
     };
     notes?: string;
     mech_failure?: boolean;
     defender_rating?: number;
-    algae_removed?: number;
-    coral_source?: 'Floor' | 'Station' | 'Both';
-    climb_speed?: 'Fast' | 'Normal' | 'Slow' | 'Failed';
+    hub_control?: 'Dominant' | 'Average' | 'Weak';
+    trench_capable?: boolean;
 }
 
 export interface ScoutReport {
@@ -33,10 +23,10 @@ export interface ScoutReport {
     matchKey: string;
     teamKey: string;
     alliance: 'red' | 'blue';
-    data: ReefscapeData;
+    data: RebuiltData;
 }
 
-interface TBAMatchResult {
+export interface TBAMatchResult {
     matchKey: string;
     alliances: {
         red: { score: number; autoPoints: number; teleopPoints: number; endgamePoints: number };
@@ -44,7 +34,7 @@ interface TBAMatchResult {
     };
 }
 
-interface ScouterStats {
+export interface ScouterStats {
     scoutId: string;
     matchesScouted: number;
     avgError: number;
@@ -55,6 +45,23 @@ interface ScouterStats {
     autoError: number;
     teleError: number;
     endgameError: number;
+}
+
+// REBUILT 2026 Scoring Constants
+const POINTS = {
+    auto: { fuel: 1, tower_Level1: 15, moved: 3 },
+    tele: { fuel: 1, tower_Level1: 10, tower_Level2: 20, tower_Level3: 30 }
+};
+
+function getTowerPoints(level: string, phase: 'auto' | 'tele'): number {
+    if (phase === 'auto') {
+        if (level === 'Level1') return POINTS.auto.tower_Level1;
+        return 0;
+    }
+    if (level === 'Level1') return POINTS.tele.tower_Level1;
+    if (level === 'Level2') return POINTS.tele.tower_Level2;
+    if (level === 'Level3') return POINTS.tele.tower_Level3;
+    return 0;
 }
 
 /**
@@ -97,13 +104,6 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
         const actual = tbaMatch.alliances[allianceColor as 'red' | 'blue'];
         const actualTotal = actual.score;
 
-        // Points Mapping for diagnostics
-        const POINTS = {
-            auto: { l1: 3, l2: 4, l3: 6, l4: 7, proc: 6, net: 4, moved: 3 },
-            tele: { l1: 2, l2: 3, l3: 4, l4: 5, proc: 6, net: 4 },
-            climb: { Deep: 12, Shallow: 6, Park: 2, None: 0 }
-        };
-
         combinations.forEach(combo => {
             let reportedAuto = 0;
             let reportedTele = 0;
@@ -112,29 +112,18 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
             combo.forEach(r => {
                 const d = r.data;
                 // Auto
-                reportedAuto += d.auto.coral_l1 * POINTS.auto.l1;
-                reportedAuto += d.auto.coral_l2 * POINTS.auto.l2;
-                reportedAuto += d.auto.coral_l3 * POINTS.auto.l3;
-                reportedAuto += d.auto.coral_l4 * POINTS.auto.l4;
-                reportedAuto += d.auto.algae_processor * POINTS.auto.proc;
-                reportedAuto += d.auto.algae_net * POINTS.auto.net;
+                reportedAuto += d.auto.fuel_scored * POINTS.auto.fuel;
+                reportedAuto += getTowerPoints(d.auto.tower_level, 'auto');
                 if (d.auto.moved) reportedAuto += POINTS.auto.moved;
 
-                // Teleop
-                reportedTele += d.teleop.coral_l1 * POINTS.tele.l1;
-                reportedTele += d.teleop.coral_l2 * POINTS.tele.l2;
-                reportedTele += d.teleop.coral_l3 * POINTS.tele.l3;
-                reportedTele += d.teleop.coral_l4 * POINTS.tele.l4;
-                reportedTele += d.teleop.algae_processor * POINTS.tele.proc;
-                reportedTele += d.teleop.algae_net * POINTS.tele.net;
+                // Teleop (fuel only, tower is endgame)
+                reportedTele += d.teleop.fuel_scored * POINTS.tele.fuel;
 
-                // Endgame
-                reportedEndgame += POINTS.climb[d.teleop.climb] || 0;
+                // Endgame (Tower climb)
+                reportedEndgame += getTowerPoints(d.teleop.tower_level, 'tele');
             });
 
             const totalError = (reportedAuto + reportedTele + reportedEndgame) - actualTotal;
-            // Note: We don't have per-category actuals in the simplified TBAMatchResult yet, 
-            // but we'll use the breakdown if we can. For now, estimate delta.
             const autoError = Math.abs(reportedAuto - (actual.autoPoints || 0));
             const teleError = Math.abs(reportedTele - (actual.teleopPoints || 0));
             const endgameError = Math.abs(reportedEndgame - (actual.endgamePoints || 0));
@@ -177,6 +166,27 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
     }
 
     return results.sort((a, b) => a.spr - b.spr);
+}
+
+export function calculateTeamEPA(reports: ScoutReport[]): number {
+    if (reports.length === 0) return 0;
+
+    let totalPoints = 0;
+    reports.forEach(r => {
+        const d = r.data;
+        // Auto
+        totalPoints += d.auto.fuel_scored * POINTS.auto.fuel;
+        totalPoints += getTowerPoints(d.auto.tower_level, 'auto');
+        if (d.auto.moved) totalPoints += POINTS.auto.moved;
+
+        // Teleop
+        totalPoints += d.teleop.fuel_scored * POINTS.tele.fuel;
+
+        // Endgame (Tower)
+        totalPoints += getTowerPoints(d.teleop.tower_level, 'tele');
+    });
+
+    return totalPoints / reports.length;
 }
 
 // Helper: Cartesian Product

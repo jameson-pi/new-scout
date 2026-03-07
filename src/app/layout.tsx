@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: "NewScout | Reefscape AI",
+  title: "NewScout | REBUILT AI",
   description: "Advanced FRC Strategy & Scouting",
 };
 
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <Navbar />
         {children}
       </body>

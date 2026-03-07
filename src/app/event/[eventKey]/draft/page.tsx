@@ -4,32 +4,32 @@ import { generateAllianceDraft } from '@/lib/ai';
 import { getEventTeams } from '@/lib/tba';
 import ReactMarkdown from 'react-markdown';
 
+const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+
 export default async function DraftAdvisorPage({ params }: { params: Promise<{ eventKey: string }> }) {
     const { eventKey } = await params;
     const { reports } = await getMissionData(eventKey);
     const eventTeams = await getEventTeams(eventKey);
 
-    // Map team keys to nicknames
     const teamNameMap: Record<string, string> = {};
     eventTeams.forEach((t: any) => {
         teamNameMap[t.key] = t.nickname || t.team_number.toString();
     });
 
-    // 1. Synthesize profiles for all teams at the event
+    // 1. Synthesize profiles for all teams (REBUILT 2026)
     const uniqueTeams = Array.from(new Set(reports.map(r => r.teamKey)));
     const allProfiles = uniqueTeams.map(tk => {
         const teamReports = reports.filter(r => r.teamKey === tk);
         return {
             teamKey: tk,
             name: teamNameMap[tk] || 'UNIT',
-            avgL4: (teamReports.reduce((acc, r) => acc + r.data.teleop.coral_l4, 0) / teamReports.length).toFixed(1),
-            maxAlgae: Math.max(...teamReports.map(r => r.data.teleop.algae_processor + r.data.teleop.algae_net), 0),
-            climbRate: ((teamReports.filter(r => r.data.teleop.climb === 'Deep').length / teamReports.length) * 100).toFixed(0)
+            avgFuel: (teamReports.reduce((acc, r) => acc + r.data.auto.fuel_scored + r.data.teleop.fuel_scored, 0) / teamReports.length).toFixed(1),
+            avgTowerPts: (teamReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.tower_level] || 0), 0) / teamReports.length).toFixed(1),
+            towerRate: ((teamReports.filter(r => r.data.teleop.tower_level !== 'None').length / teamReports.length) * 100).toFixed(0)
         };
     });
 
     // 2. Generate Draft Advice
-    // Defaulting target team to 6377 (Howdy Bots) as the primary user team
     const draftAdvice = await generateAllianceDraft('6377', allProfiles);
 
     return (
@@ -64,16 +64,16 @@ export default async function DraftAdvisorPage({ params }: { params: Promise<{ e
                 <div className="reveal delay-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
                     <div className="glass" style={{ padding: '1.5rem', borderRadius: '25px', opacity: 0.5 }}>
                         <p style={{ fontSize: '9px', fontWeight: 950, color: '#444', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Constraint: Complementarity</p>
-                        <p style={{ fontSize: '0.875rem', color: '#666' }}>Prioritizing L1/Algae specialists to complement high-L4 scoring.</p>
+                        <p style={{ fontSize: '0.875rem', color: '#666' }}>Prioritizing Tower climbers and Hub controllers to complement high-FUEL throughput.</p>
                     </div>
                     <div className="glass" style={{ padding: '1.5rem', borderRadius: '25px', opacity: 0.5 }}>
                         <p style={{ fontSize: '9px', fontWeight: 950, color: '#444', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Constraint: Reliability</p>
-                        <p style={{ fontSize: '0.875rem', color: '#666' }}>Climb consistency is weighted heavily for playoff durability.</p>
+                        <p style={{ fontSize: '0.875rem', color: '#666' }}>Tower consistency and Hub shift dominance weighted heavily for playoff durability.</p>
                     </div>
                 </div>
 
                 <footer style={{ padding: '2rem', textAlign: 'center', color: '#222' }}>
-                    <p style={{ fontSize: '9px', fontWeight: 950, letterSpacing: '0.3em' }}>ALGORITHM: BAYESIAN PLAYOFF PREFERENCE • REEFSCAPE-25</p>
+                    <p style={{ fontSize: '9px', fontWeight: 950, letterSpacing: '0.3em' }}>ALGORITHM: BAYESIAN PLAYOFF PREFERENCE • REBUILT-26</p>
                 </footer>
 
             </div>

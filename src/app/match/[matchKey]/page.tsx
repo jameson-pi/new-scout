@@ -14,18 +14,32 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
 
     const alliances = match.alliances;
 
+    const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+
     const getProfiles = (teams: string[]) => teams.map(teamKey => {
         const teamReports = reports.filter(r => r.teamKey === teamKey);
+        const count = teamReports.length || 1;
+
+        // Hub control assessment
+        const hubDominant = teamReports.filter(r => r.data.hub_control === 'Dominant').length;
+        const hubControl = hubDominant > count / 2 ? 'Dominant' : 'Average';
+
         return {
             teamKey,
             teamNum: teamKey.replace('frc', ''),
-            avgL4: (teamReports.reduce((acc, r) => acc + (r.data.teleop.coral_l4 || 0), 0) / (teamReports.length || 1)).toFixed(1),
-            autoMobility: ((teamReports.filter(r => r.data.auto.moved).length / (teamReports.length || 1)) * 100).toFixed(0),
-            maxAlgae: Math.max(...teamReports.map(r => (r.data.teleop.algae_processor || 0) + (r.data.teleop.algae_net || 0)), 0),
-            climbRate: ((teamReports.filter(r => r.data.teleop.climb === 'Deep').length / (teamReports.length || 1)) * 100).toFixed(0),
-            avgDefense: (teamReports.reduce((acc, r) => acc + (r.data.defender_rating || 0), 0) / (teamReports.length || 1)).toFixed(1),
+            avgAutoFuel: (teamReports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0), 0) / count).toFixed(1),
+            avgTeleopFuel: (teamReports.reduce((acc, r) => acc + (r.data.teleop.fuel_scored || 0), 0) / count).toFixed(1),
+            avgFuel: (teamReports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0) + (r.data.teleop.fuel_scored || 0), 0) / count).toFixed(1),
+            avgTowerPts: (teamReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.tower_level] || 0), 0) / count).toFixed(1),
+            bestTowerLevel: teamReports.some(r => r.data.teleop.tower_level === 'Level3') ? 'Level3' : teamReports.some(r => r.data.teleop.tower_level === 'Level2') ? 'Level2' : teamReports.some(r => r.data.teleop.tower_level === 'Level1') ? 'Level1' : 'None',
+            autoMobility: ((teamReports.filter(r => r.data.auto.moved).length / count) * 100).toFixed(0),
+            autoFuel: (teamReports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0), 0) / count).toFixed(1),
+            towerRate: ((teamReports.filter(r => r.data.teleop.tower_level !== 'None').length / count) * 100).toFixed(0),
+            avgDefense: (teamReports.reduce((acc, r) => acc + (r.data.defender_rating || 0), 0) / count).toFixed(1),
+            hubControl,
+            trenchCapable: teamReports.some(r => r.data.trench_capable) ? 'Yes' : 'No',
             failures: teamReports.filter(r => r.data.mech_failure).length,
-            notes: teamReports.map(r => r.data.notes).filter(Boolean).join(' | ')
+            notes: teamReports.map(r => r.data.notes).filter(Boolean).slice(0, 5).join(' | ')
         };
     });
 
@@ -37,15 +51,15 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
             <div className="mx-auto" style={{ maxWidth: '1200px', display: 'grid', gap: '3rem' }}>
 
                 <header className="reveal">
-                    <Link href={`/event/${eventKey}`} style={{ fontSize: '9px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#444', textDecoration: 'none', marginBottom: '1rem', display: 'block' }}>
-                        ← BACK TO {eventKey.split('2025')[1]?.toUpperCase() || 'MISSION'} ANALYTICS
+                    <Link href={`/event/${eventKey}`} style={{ fontSize: '9px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#888', textDecoration: 'none', marginBottom: '1rem', display: 'block' }}>
+                        ← BACK TO {eventKey.split('2026')[1]?.toUpperCase() || 'MISSION'} ANALYTICS
                     </Link>
                     <div className="flex justify-between items-end">
                         <h1 className="text-gradient" style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
                             STRATEGY<span className="text-primary">TERMINAL</span>
                         </h1>
                         <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase' }}>Match Identifier</p>
+                            <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>Match Identifier</p>
                             <p style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>{matchKey.split('_qm').pop()?.toUpperCase()}</p>
                         </div>
                     </div>
@@ -60,7 +74,7 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
 
                 <footer style={{ marginTop: '4rem', padding: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
                     <p style={{ fontSize: '10px', fontFamily: 'monospace', color: '#222', letterSpacing: '0.2em' }}>
-                        SECURE TACTICAL UPLINK // REEFSCAPE 2025 // ENCRYPTED
+                        SECURE TACTICAL UPLINK // REBUILT 2026 // ENCRYPTED
                     </p>
                 </footer>
             </div>

@@ -23,8 +23,8 @@ export default function ScoutForm({ initialSchedule, initialScouters }: ScoutFor
         match: '',
         team: '',
         scouter: '',
-        auto: { l1: 0, l2: 0, l3: 0, l4: 0, processor: 0, net: 0, moved: false },
-        tele: { l1: 0, l2: 0, l3: 0, l4: 0, processor: 0, net: 0, climb: 'None' as 'None' | 'Park' | 'Shallow' | 'Deep' }
+        auto: { fuel: 0, towerLevel: 'None' as 'None' | 'Level1', moved: false },
+        tele: { fuel: 0, towerLevel: 'None' as 'None' | 'Level1' | 'Level2' | 'Level3' }
     });
 
     const selectedMatchData = useMemo(() => {
@@ -72,7 +72,7 @@ export default function ScoutForm({ initialSchedule, initialScouters }: ScoutFor
                     </Link>
                     <div className="text-center">
                         <h1 style={{ fontSize: '0.875rem', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--primary)' }}>MISSION INTEL</h1>
-                        <p style={{ fontSize: '10px', fontFamily: 'monospace', color: '#888', textTransform: 'uppercase', fontWeight: 700 }}>Event: 2025txwac • Waco District</p>
+                        <p style={{ fontSize: '10px', fontFamily: 'monospace', color: '#888', textTransform: 'uppercase', fontWeight: 700 }}>REBUILT 2026 • Field Scouting</p>
                     </div>
                     <div style={{ width: '3rem' }}></div>
                 </header>
@@ -184,12 +184,20 @@ export default function ScoutForm({ initialSchedule, initialScouters }: ScoutFor
                         </div>
 
                         <div style={{ display: 'grid', gap: '1rem' }}>
-                            <Counter label="Level 4 Coral" value={formData.auto.l4} color="#a855f7" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, l4: v } })} />
-                            <Counter label="Level 3 Coral" value={formData.auto.l3} color="#8b5cf6" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, l3: v } })} />
-                            <Counter label="Level 2 Coral" value={formData.auto.l2} color="#7c3aed" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, l2: v } })} />
-                            <Counter label="Level 1 Coral" value={formData.auto.l1} color="#6d28d9" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, l1: v } })} />
-                            <Counter label="Processor Algae" value={formData.auto.processor} color="#f43f5e" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, processor: v } })} />
-                            <Counter label="Net Algae" value={formData.auto.net} color="#be123c" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, net: v } })} />
+                            <Counter label="FUEL Scored in Hub" value={formData.auto.fuel} color="#a855f7" onChange={v => setFormData({ ...formData, auto: { ...formData.auto, fuel: v } })} />
+                        </div>
+
+                        <div className="glass" style={{ padding: '2rem', borderRadius: '30px' }}>
+                            <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Auto Tower</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                {(['None', 'Level1'] as const).map(level => (
+                                    <button
+                                        key={level}
+                                        onClick={() => setFormData({ ...formData, auto: { ...formData.auto, towerLevel: level } })}
+                                        style={{ padding: '1.5rem', borderRadius: '15px', border: '2px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: formData.auto.towerLevel === level ? '#eab308' : 'rgba(255,255,255,0.05)', borderColor: formData.auto.towerLevel === level ? '#eab308' : 'rgba(255,255,255,0.05)', color: formData.auto.towerLevel === level ? '#000' : '#888' }}
+                                    >{level === 'None' ? 'None' : 'Level 1 (15pts)'}</button>
+                                ))}
+                            </div>
                         </div>
 
                         <button
@@ -219,55 +227,47 @@ export default function ScoutForm({ initialSchedule, initialScouters }: ScoutFor
                         </div>
 
                         <div style={{ display: 'grid', gap: '1rem' }}>
-                            <Counter label="Level 4 Coral" value={formData.tele.l4} color="var(--secondary)" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, l4: v } })} />
-                            <Counter label="Level 3 Coral" value={formData.tele.l3} color="#0891b2" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, l3: v } })} />
-                            <Counter label="Level 2 Coral" value={formData.tele.l2} color="#06b6d4" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, l2: v } })} />
-                            <Counter label="Level 1 Coral" value={formData.tele.l1} color="#22d3ee" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, l1: v } })} />
-                            <Counter label="Processor Algae" value={formData.tele.processor} color="#f43f5e" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, processor: v } })} />
-                            <Counter label="Net Algae" value={formData.tele.net} color="#be123c" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, net: v } })} />
-                            <Counter label="Algae Removed" value={(formData as any).algae_removed || 0} color="#fb7185" onChange={v => setFormData({ ...formData, algae_removed: v } as any)} />
+                            <Counter label="FUEL Scored in Hub" value={formData.tele.fuel} color="var(--secondary)" onChange={v => setFormData({ ...formData, tele: { ...formData.tele, fuel: v } })} />
                             <Counter label="Defender Rating (1-5)" value={(formData as any).defender_rating || 3} color="#94a3b8" onChange={v => setFormData({ ...formData, defender_rating: Math.min(5, Math.max(1, v)) } as any)} />
                         </div>
 
                         <div className="glass" style={{ padding: '2rem', borderRadius: '30px' }}>
-                            <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Coral Logistics</p>
+                            <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Hub Control Rating</p>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                                {(['Floor', 'Station', 'Both'] as const).map(src => (
+                                {(['Dominant', 'Average', 'Weak'] as const).map(ctrl => (
                                     <button
-                                        key={src}
-                                        onClick={() => setFormData({ ...formData, coral_source: src } as any)}
-                                        style={{ padding: '1.25rem', borderRadius: '15px', border: '2px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: (formData as any).coral_source === src ? 'var(--primary)' : 'rgba(255,255,255,0.05)', borderColor: (formData as any).coral_source === src ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: (formData as any).coral_source === src ? '#000' : '#888' }}
-                                    >{src}</button>
+                                        key={ctrl}
+                                        onClick={() => setFormData({ ...formData, hub_control: ctrl } as any)}
+                                        style={{ padding: '1.25rem', borderRadius: '15px', border: '2px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: (formData as any).hub_control === ctrl ? 'var(--primary)' : 'rgba(255,255,255,0.05)', borderColor: (formData as any).hub_control === ctrl ? 'var(--primary)' : 'rgba(255,255,255,0.05)', color: (formData as any).hub_control === ctrl ? '#000' : '#888' }}
+                                    >{ctrl}</button>
                                 ))}
                             </div>
                         </div>
 
                         <div className="glass" style={{ padding: '2rem', borderRadius: '30px' }}>
-                            <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Mission Endgame</p>
+                            <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Mission Endgame — Tower Level</p>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                                {(['None', 'Park', 'Shallow', 'Deep'] as const).map(climb => (
+                                {(['None', 'Level1', 'Level2', 'Level3'] as const).map(level => (
                                     <button
-                                        key={climb}
-                                        onClick={() => setFormData({ ...formData, tele: { ...formData.tele, climb: climb } })}
-                                        style={{ padding: '1.5rem', borderRadius: '15px', border: '1px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: formData.tele.climb === climb ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', borderColor: formData.tele.climb === climb ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', color: formData.tele.climb === climb ? '#000' : '#888' }}
-                                    >{climb}</button>
+                                        key={level}
+                                        onClick={() => setFormData({ ...formData, tele: { ...formData.tele, towerLevel: level } })}
+                                        style={{ padding: '1.5rem', borderRadius: '15px', border: '1px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: formData.tele.towerLevel === level ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', borderColor: formData.tele.towerLevel === level ? 'var(--secondary)' : 'rgba(255,255,255,0.05)', color: formData.tele.towerLevel === level ? '#000' : '#888' }}
+                                    >{level === 'None' ? 'None' : level === 'Level1' ? 'L1 (10pts)' : level === 'Level2' ? 'L2 (20pts)' : 'L3 (30pts)'}</button>
                                 ))}
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                                {(['Slow', 'Normal', 'Fast', 'Failed'] as const).map(spd => (
-                                    <button
-                                        key={spd}
-                                        onClick={() => setFormData({ ...formData, climb_speed: spd } as any)}
-                                        style={{ padding: '1.5rem', borderRadius: '15px', border: '1px solid', fontSize: '12px', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s', background: (formData as any).climb_speed === spd ? '#22c55e' : 'rgba(255,255,255,0.05)', borderColor: (formData as any).climb_speed === spd ? '#22c55e' : 'rgba(255,255,255,0.05)', color: (formData as any).climb_speed === spd ? '#000' : '#888' }}
-                                    >{spd}</button>
-                                ))}
-                            </div>
+
+                            <button
+                                onClick={() => setFormData({ ...formData, trench_capable: !(formData as any).trench_capable } as any)}
+                                style={{ width: '100%', padding: '1rem', borderRadius: '15px', border: '2px solid', transition: 'all 0.3s', fontWeight: 950, fontSize: '12px', cursor: 'pointer', background: (formData as any).trench_capable ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', borderColor: (formData as any).trench_capable ? '#22c55e' : 'rgba(255,255,255,0.1)', color: (formData as any).trench_capable ? '#22c55e' : '#888' }}
+                            >
+                                {(formData as any).trench_capable ? '● TRENCH CAPABLE' : '○ TRENCH NOT TESTED'}
+                            </button>
                         </div>
 
                         <div className="glass" style={{ padding: '2rem', borderRadius: '30px' }}>
                             <p style={{ fontSize: '11px', fontWeight: 950, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1rem' }}>Field Intelligence (Notes)</p>
                             <textarea
-                                placeholder="Report mechanical issues, driver quirks, or tactical observations..."
+                                placeholder="Report mechanical issues, driver quirks, hub shift timing, or tactical observations..."
                                 value={(formData as any).notes || ''}
                                 onChange={e => setFormData({ ...formData, notes: e.target.value } as any)}
                                 style={{ width: '100%', minHeight: '120px', background: 'rgba(255,255,255,0.03)', border: '2px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '1.25rem', color: '#fff', fontSize: '1rem', outline: 'none', resize: 'none' }}
