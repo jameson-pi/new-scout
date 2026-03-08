@@ -15,12 +15,12 @@ function createMockReport(
     const data: RebuiltData = {
         auto: {
             fuel_scored: 10,
-            tower_level: 'None',
+            climb_level: 'No Attempt',
             moved: true,
         },
         teleop: {
             fuel_scored: teleopFuel,
-            tower_level: 'Level1',
+            climb_level: 'Level1',
         },
         defender_rating: defenderRating,
     };

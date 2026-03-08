@@ -13,19 +13,19 @@ function createMockReport(
     teamKey: string,
     overrides: {
         fuel?: number;
-        tower?: 'None' | 'Level1' | 'Level2' | 'Level3';
+        tower?: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
         defenderRating?: number;
     } = {}
 ): ScoutReport {
     const data: RebuiltData = {
         auto: {
             fuel_scored: overrides.fuel ?? 10,
-            tower_level: 'None',
+            climb_level: 'No Attempt',
             moved: true,
         },
         teleop: {
             fuel_scored: overrides.fuel ?? 20,
-            tower_level: overrides.tower ?? 'Level1',
+            climb_level: overrides.tower ?? 'Level1',
         },
         defender_rating: overrides.defenderRating ?? 0,
     };
@@ -86,8 +86,8 @@ describe('pickList', () => {
             const reports: ScoutReport[] = [
                 createMockReport('frc254', { tower: 'Level3' }),
                 createMockReport('frc254', { tower: 'Level2' }),
-                createMockReport('frc254', { tower: 'None' }),
-                createMockReport('frc254', { tower: 'None' }),
+                createMockReport('frc254', { tower: 'No Attempt' }),
+                createMockReport('frc254', { tower: 'No Attempt' }),
             ];
             const result = analyzeTeamRole(reports);
             expect(result.towerRate).toBe(50); // 2/4 climbed tower

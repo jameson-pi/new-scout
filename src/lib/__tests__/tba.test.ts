@@ -35,13 +35,14 @@ describe('tba', () => {
             expect(result).toEqual(mockMatches);
         });
 
-        it('should throw error on failed request', async () => {
+        it('should return empty array on failed request', async () => {
             (global.fetch as jest.Mock).mockResolvedValueOnce({
                 ok: false,
                 statusText: 'Not Found',
             });
 
-            await expect(getEventMatches('invalid')).rejects.toThrow('Failed to fetch matches');
+            const result = await getEventMatches('invalid');
+            expect(result).toEqual([]);
         });
     });
 

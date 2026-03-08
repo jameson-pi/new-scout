@@ -8,7 +8,7 @@ const client = new OpenRouter({
 
 // 5-Minute Memory Cache Utility
 const AI_CACHE = new Map<string, { content: string; expiry: number }>();
-const CACHE_TTL = 0 * 60 * 60 * 1000; // 1 hour in ms
+const CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour in ms
 
 async function withCache(key: string, fn: () => Promise<string>): Promise<string> {
     const now = Date.now();
@@ -71,6 +71,9 @@ export async function generateMatchStrategy(
             const teamNum = parseInt(t.teamKey.replace('frc', ''));
             const epa = sbData.find(s => s.team === teamNum);
 
+            const pitSection = t.pit ? `
+                - Pit Intel: Drivebase=${t.pit.drivebase || '?'}, Max Climb=${t.pit.climb || '?'}, Hopper=${t.pit.hopperCapacity ?? '?'} balls, Turret=${t.pit.turret || '?'}, Lob=${t.pit.canLob || '?'}, Trench=${t.pit.trench || '?'}, Bump=${t.pit.bump || '?'}, Shift Tracking=${t.pit.shiftTracking || '?'}, Floor Pickup=${t.pit.pickupFloor || '?'}, Robot Quality=${t.pit.robotQuality ?? '?'}/5${t.pit.otherNotes ? `, Pit Notes: ${t.pit.otherNotes}` : ''}` : '';
+
             return `
             - Team ${t.teamKey}:
                 - FUEL Throughput: Avg Auto Fuel: ${t.avgAutoFuel || 'N/A'}, Avg Teleop Fuel: ${t.avgTeleopFuel || 'N/A'}
@@ -81,7 +84,7 @@ export async function generateMatchStrategy(
                 - Defense Rating: ${t.avgDefense || 'N/A'}/5
                 - Breakdown Risk: ${t.failures || 0} failures noticed
                 - Intel Notes: ${t.notes || 'None'}
-                - STATBOTICS EPA: Total: ${epa?.epa?.breakdown?.total_points?.toFixed(1) || 'N/A'} (Auto: ${epa?.epa?.breakdown?.auto_points?.toFixed(1) || 'N/A'}, Tele: ${epa?.epa?.breakdown?.teleop_points?.toFixed(1) || 'N/A'}, End: ${epa?.epa?.breakdown?.endgame_points?.toFixed(1) || 'N/A'})
+                - STATBOTICS EPA: Total: ${epa?.epa?.breakdown?.total_points?.toFixed(1) || 'N/A'} (Auto: ${epa?.epa?.breakdown?.auto_points?.toFixed(1) || 'N/A'}, Tele: ${epa?.epa?.breakdown?.teleop_points?.toFixed(1) || 'N/A'}, End: ${epa?.epa?.breakdown?.endgame_points?.toFixed(1) || 'N/A'})${pitSection}
         `};
 
         const allianceProfiles = (allianceData || []).map(formatProfile).join('\n');
@@ -103,8 +106,8 @@ export async function generateMatchStrategy(
             1. **Our Strategic Path**: Precise scoring priorities (RP vs Win). Should we focus on FUEL volume for Energized/Supercharged RP or Tower climbing for Traversal RP?
             2. **Hub Shift Strategy**: Plan for active/inactive Hub shifts. When should we stockpile vs fire?
             3. **Defence Plan**: Should we defend the opponent's Hub access or focus on scoring? Only suggest defense if it's a clear advantage.
-            4. **Individual Robots**: What is the specific plan for each robot on our alliance? (e.g., "Team X focuses FUEL throughput, Team Y climbs Tower, Team Z controls Hub access.")
-            Tone: Professional, High-Stakes Tactical Briefing. Do not use markdown. Please limit your response to 100 words.
+            4. **Individual Robots**: What is the specific plan for each robot on our alliance? Factor in Pit Intel (hopper capacity, drivebase, turret, trench capability) alongside match performance. (e.g., "Team X focuses FUEL throughput, Team Y climbs Tower, Team Z controls Hub access.")
+            Tone: Professional, High-Stakes Tactical Briefing. Do not use markdown. Please limit your response to 120 words.
         `;
 
         const cacheKey = `match-${matchKey}-${alliance}`;
@@ -221,24 +224,47 @@ export async function generateEventStrategy(eventKey: string, topTeams: any[]) {
     }
 }
 
-export async function generateTeamStrategy(teamKey: string, nickname: string, reports: any[]) {
+export async function generateTeamStrategy(teamKey: string, nickname: string, reports: any[], pitReport?: {
+    drivebase?: string; codeLanguage?: string; climb?: string; hopperCapacity?: number | null;
+    trench?: string; bump?: string; canLob?: string; canDoze?: string;
+    pickupFloor?: string; pickupOutpost?: string; turret?: string; shiftTracking?: string;
+    weightLbs?: number | null; heightIn?: number | null; widthIn?: number | null; lengthIn?: number | null;
+    climbPosition1?: string; climbPosition2?: string; climbPartners?: number;
+    autoClimb?: string; autoPrefStart?: string; kitbot?: string;
+    robotQuality?: number; pitQuality?: number; humanPlayer?: string; otherNotes?: string;
+} | null) {
     try {
-        const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+        const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
         const stats = {
             avgFuel: (reports.reduce((acc, r) => acc + r.data.auto.fuel_scored + r.data.teleop.fuel_scored, 0) / (reports.length || 1)).toFixed(1),
             autoMove: (reports.filter(r => r.data.auto.moved).length / (reports.length || 1) * 100).toFixed(0),
-            towerRate: (reports.filter(r => r.data.teleop.tower_level !== 'None').length / (reports.length || 1) * 100).toFixed(0),
-            avgTowerPts: (reports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.tower_level] || 0), 0) / (reports.length || 1)).toFixed(1),
+            towerRate: (reports.filter(r => r.data.teleop.climb_level !== 'No Attempt').length / (reports.length || 1) * 100).toFixed(0),
+            avgTowerPts: (reports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.climb_level] || 0), 0) / (reports.length || 1)).toFixed(1),
             failures: reports.filter(r => r.data.mech_failure).length,
             avgDefense: (reports.reduce((acc, r) => acc + (r.data.defender_rating || 0), 0) / (reports.length || 1)).toFixed(1)
         };
 
         const scouterIntel = reports.map(r => `[Match ${r.matchKey.split('_qm').pop()}]: ${r.data.notes || 'No notes.'}`).join('\n');
 
+        const pitSection = pitReport ? `
+Pit Scouting Intel:
+- Drivebase: ${pitReport.drivebase || 'Unknown'} | Code: ${pitReport.codeLanguage || 'Unknown'}
+- Dimensions: ${pitReport.weightLbs ?? '?'} lbs, ${pitReport.heightIn ?? '?'}" H × ${pitReport.widthIn ?? '?'}" W × ${pitReport.lengthIn ?? '?'}" L
+- Hopper Capacity: ${pitReport.hopperCapacity ?? 'Unknown'} balls
+- Turret: ${pitReport.turret || '?'} | Shift Tracking: ${pitReport.shiftTracking || '?'}
+- Pickup: Floor=${pitReport.pickupFloor || '?'}, Outpost=${pitReport.pickupOutpost || '?'}, Lob=${pitReport.canLob || '?'}, Doze=${pitReport.canDoze || '?'}
+- Tower: Max=${pitReport.climb || '?'}, Pos1=${pitReport.climbPosition1 || '?'}, Pos2=${pitReport.climbPosition2 || '?'}, Partners=${pitReport.climbPartners ?? '?'}, AutoClimb=${pitReport.autoClimb || '?'}
+- Field Nav: Trench=${pitReport.trench || '?'}, Bump=${pitReport.bump || '?'}
+- Auto Start Pref: ${pitReport.autoPrefStart || '?'}
+- Robot Quality: ${pitReport.robotQuality ?? '?'}/5 | Pit Quality: ${pitReport.pitQuality ?? '?'}/5
+- Kitbot: ${pitReport.kitbot || 'Custom'} | Human Player: ${pitReport.humanPlayer || 'Unknown'}
+- Pit Notes: ${pitReport.otherNotes || 'None'}
+` : 'Pit Scouting Intel: Not yet collected.';
+
         const prompt = `
             Analyze Team ${teamKey.replace('frc', '')} (${nickname}) for FRC REBUILT 2026.
             
-            Current Intelligence Profile:
+            Match Performance Profile (${reports.length} matches scouted):
             - Average FUEL per Match: ${stats.avgFuel}
             - Auto Mobility: ${stats.autoMove}%
             - Tower Climb Rate: ${stats.towerRate}%
@@ -246,20 +272,25 @@ export async function generateTeamStrategy(teamKey: string, nickname: string, re
             - Mechanical Failures: ${stats.failures} in ${reports.length} matches
             - Defense Capability Rating: ${stats.avgDefense}/5
 
+            ${pitSection}
+
             Scouter Field Observations:
-            ${scouterIntel}
+            ${scouterIntel || 'None yet.'}
 
             ${REBUILT_CONTEXT}
 
             Task:
-            1. **Scouter Synthesis**: Summarize the "Other Notes" into a cohesive narrative. Mention any specific behavioral quirks or mechanical issues noticed.
-            2. **Strategy for Alliance Partners**: How should an alliance best utilize this robot? (e.g. "Primary FUEL Scorer" vs "Tower Specialist" vs "Hub Controller" vs "Defensive Specialist").
-            3. **Opponent Playbook**: How can an opponent shut them down? Consider their reliability and notes.
+            1. **Scouter Synthesis**: Combine match observations AND pit intel into a cohesive robot profile. Note mechanical issues, hopper capacity implications, and field navigation ability (trench/bump).
+            2. **Strategy for Alliance Partners**: How should an alliance best utilize this robot based on both its pit specs AND match performance? (e.g. "Primary FUEL Scorer" vs "Tower Specialist" vs "Hub Controller" vs "Defensive Specialist").
+            3. **Opponent Playbook**: How can an opponent shut them down? Consider drivebase, trench/bump capability, and reliability.
 
-            Tone: Professional Tactical Intel. Use Markdown. Please limit your response to 100 words.
+            Tone: Professional Tactical Intel. Use Markdown. Please limit your response to 120 words.
         `;
 
-        const cacheKey = `team-${teamKey}-${reports.length}`;
+        const pitFingerprint = pitReport
+            ? `${pitReport.drivebase}-${pitReport.climb}-${pitReport.hopperCapacity}-${pitReport.robotQuality}`
+            : 'nopit';
+        const cacheKey = `team-${teamKey}-${reports.length}-${pitFingerprint}`;
         return withCache(cacheKey, async () => {
             const response = await client.chat.send({
                 model: 'google/gemini-3-flash-preview',

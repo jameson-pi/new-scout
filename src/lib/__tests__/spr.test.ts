@@ -10,20 +10,20 @@ function createMockReport(
     overrides: Partial<{
         autoFuel: number;
         teleopFuel: number;
-        autoTower: 'None' | 'Level1';
-        teleopTower: 'None' | 'Level1' | 'Level2' | 'Level3';
+        autoTower: 'No Attempt' | 'Level1';
+        teleopTower: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
         moved: boolean;
     }> = {}
 ): ScoutReport {
     const data: RebuiltData = {
         auto: {
             fuel_scored: overrides.autoFuel ?? 10,
-            tower_level: overrides.autoTower ?? 'None',
+            climb_level: overrides.autoTower ?? 'No Attempt',
             moved: overrides.moved ?? true,
         },
         teleop: {
             fuel_scored: overrides.teleopFuel ?? 20,
-            tower_level: overrides.teleopTower ?? 'Level1',
+            climb_level: overrides.teleopTower ?? 'Level1',
         },
     };
 

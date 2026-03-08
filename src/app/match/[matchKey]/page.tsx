@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getMissionData } from '@/lib/data';
+import { getAllPitReports } from '@/lib/data';
 import { getEventMatches } from '@/lib/tba';
 import MatchTacticalInterface from './MatchTacticalInterface';
 
@@ -7,7 +8,10 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
     const { matchKey } = await params;
     const eventKey = matchKey.split('_')[0];
     const { reports } = await getMissionData(eventKey);
-    const matches = await getEventMatches(eventKey);
+    const [matches, pitReports] = await Promise.all([
+        getEventMatches(eventKey),
+        getAllPitReports(eventKey),
+    ]);
     const match = matches.find((m: any) => m.key === matchKey);
 
     if (!match) return <div>Match Not Found</div>;
@@ -19,6 +23,7 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
     const getProfiles = (teams: string[]) => teams.map(teamKey => {
         const teamReports = reports.filter(r => r.teamKey === teamKey);
         const count = teamReports.length || 1;
+        const pit = pitReports.find(p => p.teamKey === teamKey) || null;
 
         // Hub control assessment
         const hubDominant = teamReports.filter(r => r.data.hub_control === 'Dominant').length;
@@ -30,16 +35,33 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
             avgAutoFuel: (teamReports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0), 0) / count).toFixed(1),
             avgTeleopFuel: (teamReports.reduce((acc, r) => acc + (r.data.teleop.fuel_scored || 0), 0) / count).toFixed(1),
             avgFuel: (teamReports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0) + (r.data.teleop.fuel_scored || 0), 0) / count).toFixed(1),
-            avgTowerPts: (teamReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.tower_level] || 0), 0) / count).toFixed(1),
-            bestTowerLevel: teamReports.some(r => r.data.teleop.tower_level === 'Level3') ? 'Level3' : teamReports.some(r => r.data.teleop.tower_level === 'Level2') ? 'Level2' : teamReports.some(r => r.data.teleop.tower_level === 'Level1') ? 'Level1' : 'None',
+            avgTowerPts: (teamReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.climb_level] || 0), 0) / count).toFixed(1),
+            bestTowerLevel: teamReports.some(r => r.data.teleop.climb_level === 'Level3') ? 'Level3' : teamReports.some(r => r.data.teleop.climb_level === 'Level2') ? 'Level2' : teamReports.some(r => r.data.teleop.climb_level === 'Level1') ? 'Level1' : 'None',
             autoMobility: ((teamReports.filter(r => r.data.auto.moved).length / count) * 100).toFixed(0),
             autoFuel: (teamReports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0), 0) / count).toFixed(1),
-            towerRate: ((teamReports.filter(r => r.data.teleop.tower_level !== 'None').length / count) * 100).toFixed(0),
+            towerRate: ((teamReports.filter(r => r.data.teleop.climb_level !== 'No Attempt').length / count) * 100).toFixed(0),
             avgDefense: (teamReports.reduce((acc, r) => acc + (r.data.defender_rating || 0), 0) / count).toFixed(1),
             hubControl,
-            trenchCapable: teamReports.some(r => r.data.trench_capable) ? 'Yes' : 'No',
+            trenchCapable: teamReports.some(r => r.data.trench_capable) ? 'Yes' : (pit?.trench === 'Yes' ? 'Yes' : 'No'),
             failures: teamReports.filter(r => r.data.mech_failure).length,
-            notes: teamReports.map(r => r.data.notes).filter(Boolean).slice(0, 5).join(' | ')
+            notes: teamReports.map(r => r.data.notes).filter(Boolean).slice(0, 5).join(' | '),
+            pit: pit ? {
+                drivebase: pit.drivebase,
+                climb: pit.climb,
+                hopperCapacity: pit.hopperCapacity,
+                trench: pit.trench,
+                bump: pit.bump,
+                canLob: pit.canLob,
+                turret: pit.turret,
+                shiftTracking: pit.shiftTracking,
+                pickupFloor: pit.pickupFloor,
+                pickupOutpost: pit.pickupOutpost,
+                autoClimb: pit.autoClimb,
+                robotQuality: pit.robotQuality,
+                weightLbs: pit.weightLbs,
+                heightIn: pit.heightIn,
+                otherNotes: pit.otherNotes,
+            } : null,
         };
     });
 

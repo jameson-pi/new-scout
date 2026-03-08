@@ -16,12 +16,12 @@ function createMockDistribution(
     const pastMatches: RebuiltData[] = [{
         auto: {
             fuel_scored: Math.floor(fuelCount * 0.3),
-            tower_level: 'None' as const,
+            climb_level: 'No Attempt' as const,
             moved: true,
         },
         teleop: {
             fuel_scored: Math.floor(fuelCount * 0.7),
-            tower_level: avgScore > 40 ? 'Level2' as const : 'Level1' as const,
+            climb_level: avgScore > 40 ? 'Level2' as const : 'Level1' as const,
         },
     }];
 

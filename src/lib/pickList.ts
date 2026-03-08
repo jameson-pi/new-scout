@@ -6,7 +6,7 @@
 import { ScoutReport, calculateTeamEPA } from './spr';
 import { TeamReliability } from './reliability';
 
-const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
 
 export interface TeamSynergyProfile {
     teamKey: string;
@@ -48,8 +48,8 @@ export function analyzeTeamRole(reports: ScoutReport[]): TeamSynergyProfile {
 
     // Calculate averages (REBUILT 2026)
     const avgFuel = reports.reduce((acc, r) => acc + (r.data.auto.fuel_scored || 0) + (r.data.teleop.fuel_scored || 0), 0) / reports.length;
-    const avgTowerPts = reports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.tower_level] || 0), 0) / reports.length;
-    const towerRate = reports.filter(r => r.data.teleop.tower_level !== 'None').length / reports.length * 100;
+    const avgTowerPts = reports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.climb_level] || 0), 0) / reports.length;
+    const towerRate = reports.filter(r => r.data.teleop.climb_level !== 'No Attempt').length / reports.length * 100;
     const defenseRating = reports.reduce((acc, r) => acc + (r.data.defender_rating || 0), 0) / reports.length;
 
     // Determine role

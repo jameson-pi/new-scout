@@ -15,7 +15,7 @@ export interface TeamReliability {
     riskLevel: 'low' | 'medium' | 'high';
 }
 
-const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
 
 /**
  * Calculate reliability metrics for a team
@@ -40,7 +40,7 @@ export function calculateTeamReliability(reports: ScoutReport[]): TeamReliabilit
     const scores = reports.map(r => {
         const d = r.data;
         return (d.auto.fuel_scored * 1) + (d.teleop.fuel_scored * 1) +
-            (TELE_TOWER[d.teleop.tower_level] || 0) +
+            (TELE_TOWER[d.teleop.climb_level] || 0) +
             (d.auto.moved ? 3 : 0);
     });
 

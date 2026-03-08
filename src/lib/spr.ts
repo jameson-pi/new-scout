@@ -4,12 +4,12 @@
 export interface RebuiltData {
     auto: {
         fuel_scored: number;
-        tower_level: 'None' | 'Level1';
+        climb_level: 'No Attempt' | 'Level1';
         moved: boolean;
     };
     teleop: {
         fuel_scored: number;
-        tower_level: 'None' | 'Level1' | 'Level2' | 'Level3';
+        climb_level: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
     };
     notes?: string;
     mech_failure?: boolean;
@@ -113,14 +113,14 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
                 const d = r.data;
                 // Auto
                 reportedAuto += d.auto.fuel_scored * POINTS.auto.fuel;
-                reportedAuto += getTowerPoints(d.auto.tower_level, 'auto');
+                reportedAuto += getTowerPoints(d.auto.climb_level, 'auto');
                 if (d.auto.moved) reportedAuto += POINTS.auto.moved;
 
                 // Teleop (fuel only, tower is endgame)
                 reportedTele += d.teleop.fuel_scored * POINTS.tele.fuel;
 
                 // Endgame (Tower climb)
-                reportedEndgame += getTowerPoints(d.teleop.tower_level, 'tele');
+                reportedEndgame += getTowerPoints(d.teleop.climb_level, 'tele');
             });
 
             const totalError = (reportedAuto + reportedTele + reportedEndgame) - actualTotal;
@@ -176,14 +176,14 @@ export function calculateTeamEPA(reports: ScoutReport[]): number {
         const d = r.data;
         // Auto
         totalPoints += d.auto.fuel_scored * POINTS.auto.fuel;
-        totalPoints += getTowerPoints(d.auto.tower_level, 'auto');
+        totalPoints += getTowerPoints(d.auto.climb_level, 'auto');
         if (d.auto.moved) totalPoints += POINTS.auto.moved;
 
         // Teleop
         totalPoints += d.teleop.fuel_scored * POINTS.tele.fuel;
 
         // Endgame (Tower)
-        totalPoints += getTowerPoints(d.teleop.tower_level, 'tele');
+        totalPoints += getTowerPoints(d.teleop.climb_level, 'tele');
     });
 
     return totalPoints / reports.length;

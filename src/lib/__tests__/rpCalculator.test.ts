@@ -12,19 +12,19 @@ function createMockDistribution(
     overrides: Partial<{
         autoFuel: number;
         teleopFuel: number;
-        teleopTower: 'None' | 'Level1' | 'Level2' | 'Level3';
+        teleopTower: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
         moved: boolean;
     }> = {}
 ): TeamPerformanceDistribution {
     const pastMatches: RebuiltData[] = [{
         auto: {
             fuel_scored: overrides.autoFuel ?? 10,
-            tower_level: 'None',
+            climb_level: 'No Attempt',
             moved: overrides.moved ?? true,
         },
         teleop: {
             fuel_scored: overrides.teleopFuel ?? 20,
-            tower_level: overrides.teleopTower ?? 'Level1',
+            climb_level: overrides.teleopTower ?? 'Level1',
         },
     }];
 

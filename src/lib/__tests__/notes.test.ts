@@ -59,7 +59,7 @@ describe('notes', () => {
             const mockNote: TeamNote = {
                 teamKey: 'frc254',
                 note: 'Great shooter',
-                highlights: ['L4 MASTER'],
+                highlights: ['TOWER MASTER'],
                 updatedAt: 12345
             };
             const mockNotes = { 'frc254': mockNote };

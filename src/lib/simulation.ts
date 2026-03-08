@@ -29,8 +29,8 @@ const ITERATIONS = 10000;
 // REBUILT 2026 Scoring Constants
 const AUTO_FUEL = 1;
 const TELE_FUEL = 1;
-const AUTO_TOWER: Record<string, number> = { Level1: 15, None: 0 };
-const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+const AUTO_TOWER: Record<string, number> = { Level1: 15, 'No Attempt': 0 };
+const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
 
 /**
  * Runs the Monte Carlo simulation for a given set of remaining matches.
@@ -121,7 +121,7 @@ function simulateAlliance(teamKeys: string[], distributions: TeamPerformanceDist
     performances.forEach(p => {
         // Auto scoring
         const autoFuel = p.auto.fuel_scored * AUTO_FUEL;
-        const autoTower = AUTO_TOWER[p.auto.tower_level] || 0;
+        const autoTower = AUTO_TOWER[p.auto.climb_level] || 0;
         score += autoFuel + autoTower;
         autoFuelScored += p.auto.fuel_scored;
         if (p.auto.moved) {
@@ -134,7 +134,7 @@ function simulateAlliance(teamKeys: string[], distributions: TeamPerformanceDist
         score += teleFuel;
 
         // Endgame (Tower)
-        const towerPts = TELE_TOWER[p.teleop.tower_level] || 0;
+        const towerPts = TELE_TOWER[p.teleop.climb_level] || 0;
         score += towerPts;
         towerPoints += towerPts + autoTower;
 
@@ -162,7 +162,7 @@ function applyBonusRPs(iterationRPs: Record<string, number>, teamKeys: string[],
 
 function fallbackPerformance(): RebuiltData {
     return {
-        auto: { fuel_scored: 5, tower_level: 'None', moved: true },
-        teleop: { fuel_scored: 15, tower_level: 'Level1' }
+        auto: { fuel_scored: 5, climb_level: 'No Attempt', moved: true },
+        teleop: { fuel_scored: 15, climb_level: 'Level1' }
     };
 }

@@ -44,12 +44,12 @@ export function synthesizeReports(
     const synthetic: RebuiltData = {
         auto: {
             fuel_scored: weightedMean('fuel_scored', 'auto'),
-            tower_level: synthesizeTowerLevel(reports, models, 'auto') as 'None' | 'Level1',
+            climb_level: synthesizeTowerLevel(reports, models, 'auto') as 'No Attempt' | 'Level1',
             moved: reports.some(r => r.data.auto.moved)
         },
         teleop: {
             fuel_scored: weightedMean('fuel_scored', 'teleop'),
-            tower_level: synthesizeTowerLevel(reports, models, 'teleop') as 'None' | 'Level1' | 'Level2' | 'Level3'
+            climb_level: synthesizeTowerLevel(reports, models, 'teleop') as 'No Attempt' | 'Level1' | 'Level2' | 'Level3'
         }
     };
 
@@ -66,7 +66,7 @@ function synthesizeTowerLevel(
     reports.forEach(r => {
         const m = models[r.scoutId] || { variance: 10 };
         const weight = 1 / Math.max(m.variance, 0.1);
-        const level = (r.data as any)[period].tower_level;
+        const level = (r.data as any)[period].climb_level;
         votes[level] = (votes[level] || 0) + weight;
     });
 

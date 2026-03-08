@@ -14,12 +14,12 @@ function createMockReport(
     const data: RebuiltData = {
         auto: {
             fuel_scored: scores.fuel ?? 10,
-            tower_level: 'None',
+            climb_level: 'No Attempt',
             moved: true,
         },
         teleop: {
             fuel_scored: scores.fuel ?? 20,
-            tower_level: 'Level1',
+            climb_level: 'Level1',
         },
         mech_failure: mechFailure,
     };

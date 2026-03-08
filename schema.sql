@@ -1,77 +1,89 @@
 -- HowdyScout 2026 — REBUILT™ Edition
--- Azure SQL Schema for howdyscout2026
--- Server: sbrondel.database.windows.net
+-- Azure SQL: sbrondel.database.windows.net / howdyscout2026
+-- This file documents the REAL table structure.
+-- Tables are managed externally; this is reference-only.
 
 -- =============================================
--- Events lookup table
+-- frc6377Events  (READ-ONLY for powerbi user)
 -- =============================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Events' AND xtype='U')
-CREATE TABLE Events (
-    event_key       NVARCHAR(20)  NOT NULL PRIMARY KEY,
-    name            NVARCHAR(100) NOT NULL,
-    location        NVARCHAR(100) NOT NULL,
-    year            INT           NOT NULL DEFAULT 2026
-);
+-- internal_key   VARCHAR  PK
+-- event_key      VARCHAR  (e.g. '2026txcle', '2026howdy')
+-- event_name     VARCHAR  (e.g. 'Space City #1')
+-- start_date     VARCHAR
+-- end_date       VARCHAR
+-- alliance_picks VARCHAR  (nullable)
 
--- Seed known 2026 events
-MERGE Events AS target
-USING (VALUES
-    ('2026howdy',  'HowdyScout Practice',  'Houston, TX',  2026),
-    ('2026txcle', 'Space City #1',   'Houston, TX',  2026),
-    ('2026txman', 'Manor District',  'Manor, TX',    2026)
-) AS source (event_key, name, location, year)
-ON target.event_key = source.event_key
-WHEN NOT MATCHED THEN
-    INSERT (event_key, name, location, year)
-    VALUES (source.event_key, source.name, source.location, source.year);
+-- Seeded events used by HowdyScout:
+--   2026howdy  → HowdyScout Practice   (Houston, TX)
+--   2026txcle  → Space City #1         (Houston, TX)  ← TBA: 2026txcle
+--   2026txman  → Manor District        (Manor, TX)    ← TBA: 2026txman
 
 -- =============================================
--- Scout Reports table — REBUILT 2026
+-- frc6377MatchScouting  (READ + INSERT for powerbi user)
 -- =============================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ScoutReports' AND xtype='U')
-CREATE TABLE ScoutReports (
-    primary_key         NVARCHAR(100) NOT NULL PRIMARY KEY,
-    frc_team            INT           NOT NULL,
-    event_key           NVARCHAR(20)  NOT NULL,
-    match_key           NVARCHAR(50)  NOT NULL,
-    driver_station      NVARCHAR(10)  NULL,
-    comp_level          NVARCHAR(5)   NOT NULL DEFAULT 'qm',
-    match_number        INT           NOT NULL,
+-- id                     INT        IDENTITY PK
+-- primary_key            VARCHAR    '{team}-{match_key}-{scouted_by}'
+-- frc_team               VARCHAR    team number as string (no 'frc' prefix)
+-- event_key              VARCHAR    FK → frc6377Events.event_key
+-- match_key              VARCHAR    e.g. '2026txcle_qm5'
+-- driver_station         VARCHAR    e.g. 'red1', 'blue3'
+-- comp_level             VARCHAR    'qm' | 'qf' | 'sf' | 'f'
+-- match_number           INT
+-- auto_moved             VARCHAR    'Yes' | 'No'
+-- auto_fuel_scored       INT
+-- auto_fuel_missed       INT
+-- auto_climb_level       VARCHAR    'No Attempt' | 'Level1'
+-- auto_climb_position    VARCHAR    'No Attempt' | positional label
+-- tele_fuel_scored       INT
+-- tele_fuel_missed       INT
+-- tele_human_fuel_scored INT
+-- tele_human_fuel_missed INT
+-- tele_climb_level       VARCHAR    'No Attempt' | 'Level1' | 'Level2' | 'Level3'
+-- tele_climb_position    VARCHAR    'No Attempt' | positional label
+-- defender_rating        INT        0–5
+-- mech_failure           VARCHAR    'Yes' | 'No'
+-- scouted_by             VARCHAR
 
-    -- Autonomous
-    auto_moved          BIT           NOT NULL DEFAULT 0,
-    auto_fuel_scored    INT           NOT NULL DEFAULT 0,
-    auto_tower_level    NVARCHAR(10)  NOT NULL DEFAULT 'None',
+-- =============================================
+-- EventMatches  (schedule, READ-ONLY)
+-- =============================================
+-- ID             INT  IDENTITY PK
+-- internal_key   VARCHAR
+-- event_key      VARCHAR
+-- match_key      VARCHAR
+-- comp_level     VARCHAR
+-- match_number   INT
+-- blue1..blue3   VARCHAR  team numbers
+-- red1..red3     VARCHAR  team numbers
+-- predicted_time INT      (epoch ms, nullable)
 
-    -- Teleop
-    tele_fuel_scored    INT           NOT NULL DEFAULT 0,
-    tele_tower_level    NVARCHAR(10)  NOT NULL DEFAULT 'None',
+-- =============================================
+-- Teams
+-- =============================================
+-- frc_team     VARCHAR  PK (e.g. '254')
+-- name         VARCHAR
+-- city         VARCHAR
+-- state_prov   VARCHAR
+-- country      VARCHAR
+-- team_number  INT
 
-    -- Derived / calculated
-    auto_total          INT           NOT NULL DEFAULT 0,
-    tele_total          INT           NOT NULL DEFAULT 0,
-    tele_better         BIT           NOT NULL DEFAULT 0,
+-- =============================================
+-- TeamsAtEvent
+-- =============================================
+-- ID        INT  IDENTITY PK
+-- frc_team  VARCHAR
+-- event_key VARCHAR
 
-    -- Qualitative
-    hub_control         NVARCHAR(15)  NULL,       -- Dominant | Average | Weak
-    trench_capable      BIT           NOT NULL DEFAULT 0,
-    defender_rating     INT           NOT NULL DEFAULT 3,
-    mech_failure        BIT           NOT NULL DEFAULT 0,
-    other_notes         NVARCHAR(MAX) NULL,
-    scouted_by          NVARCHAR(100) NOT NULL,
-
-    submitted_at        DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
-
-    CONSTRAINT FK_ScoutReports_Events FOREIGN KEY (event_key) REFERENCES Events(event_key)
-);
-
--- Indexes for common queries
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_ScoutReports_EventKey')
-    CREATE INDEX IX_ScoutReports_EventKey   ON ScoutReports (event_key);
-
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_ScoutReports_TeamKey')
-    CREATE INDEX IX_ScoutReports_TeamKey    ON ScoutReports (frc_team, event_key);
-
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_ScoutReports_MatchKey')
-    CREATE INDEX IX_ScoutReports_MatchKey   ON ScoutReports (match_key);
-
+-- =============================================
+-- REBUILT 2026 Scoring Reference
+-- =============================================
+-- Auto:   FUEL in Hub → 1pt each
+--         Tower Level 1 → 15pts
+--         Mobility → 3pts
+-- Teleop: FUEL in Hub → 1pt each
+--         Tower Level 1 → 10pts
+--         Tower Level 2 → 20pts
+--         Tower Level 3 → 30pts
+-- RPs:    Energized (≥100 FUEL) = 1 RP
+--         Supercharged (≥360 FUEL) = 1 RP
+--         Traversal (≥50 Tower pts) = 1 RP

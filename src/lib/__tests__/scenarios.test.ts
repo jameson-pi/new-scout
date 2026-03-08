@@ -11,10 +11,10 @@ import { RebuiltData } from '../spr';
 function createMockDistribution(teamKey: string): TeamPerformanceDistribution {
     const pastMatches: RebuiltData[] = [{
         auto: {
-            fuel_scored: 10, tower_level: 'None', moved: true,
+            fuel_scored: 10, climb_level: 'No Attempt', moved: true,
         },
         teleop: {
-            fuel_scored: 20, tower_level: 'Level1',
+            fuel_scored: 20, climb_level: 'Level1',
         },
     }];
 

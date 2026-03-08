@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { saveTeamNote, getTeamNote, HIGHLIGHT_TAGS } from '@/lib/notes';
+import { getTeamStrategyAction } from '@/lib/actions';
 
 interface TeamDetailClientProps {
     eventKey: string;
@@ -48,16 +49,50 @@ interface TeamDetailClientProps {
         effectivenessVsTower: number;
         gamesDefended: number;
     };
-    aiNotes: string;
     matchHistory: { match: string; total: number; teleOP: number; auto: number }[];
+    pitReport: {
+        drivebase: string; codeLanguage: string; climb: string;
+        hopperCapacity: number | null; trench: string; bump: string;
+        canLob: string; canDoze: string; pickupFloor: string; pickupOutpost: string;
+        weightLbs: number | null; heightIn: number | null; widthIn: number | null; lengthIn: number | null;
+        climbPosition1: string; climbPosition2: string; climbPartners: number;
+        autoClimb: string; shiftTracking: string; turret: string;
+        kitbot: string; robotQuality: number; pitQuality: number;
+        humanPlayer: string; otherNotes: string; scoutedBy: string;
+        robotImageUrl: string | null;
+        hopperLengthIn: number | null; hopperWidthIn: number | null; hopperHeightIn: number | null;
+        bumpPractice: string; autoPrefStart: string; preferredDs: string;
+        kitbotModified: string; humanPlayerHeight: string;
+    } | null;
 }
 
 export default function TeamDetailClient({
     eventKey, teamKey, teamNum, teamName, teamReports, metrics, ourEPA, sbEPA,
-    reliability, consensus, synergyProfile, defenseProfile, aiNotes, matchHistory
+    reliability, consensus, synergyProfile, defenseProfile, matchHistory, pitReport
 }: TeamDetailClientProps) {
     const [note, setNote] = useState(() => getTeamNote(teamKey)?.note || '');
     const [highlights, setHighlights] = useState(() => getTeamNote(teamKey)?.highlights || []);
+    const [aiNotes, setAiNotes] = useState<string | null>(null);
+    const [aiLoading, setAiLoading] = useState(true);
+
+    useEffect(() => {
+        setAiLoading(true);
+        setAiNotes(null);
+        getTeamStrategyAction(
+            teamKey,
+            teamName,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            teamReports as any[],
+            pitReport as Record<string, unknown> | null
+        ).then(result => {
+            setAiNotes(result.replace(/\r\n/g, '\n'));
+        }).catch(() => {
+            setAiNotes('Intelligence link severed.');
+        }).finally(() => {
+            setAiLoading(false);
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [teamKey, eventKey, teamReports.length, pitReport?.drivebase]);
 
     const saveNote = () => {
         saveTeamNote(teamKey, note, highlights);
@@ -171,7 +206,7 @@ export default function TeamDetailClient({
                                 </div>
                             </div>
                         ) : (
-                            <p style={{ fontSize: '0.85rem', color: '#22c55e' }}>✓ All scouts agree on this team's capabilities</p>
+                                <p style={{ fontSize: '0.85rem', color: '#22c55e' }}>✓ All scouts agree on this team&apos;s capabilities</p>
                         )}
                     </div>
 
@@ -285,10 +320,23 @@ export default function TeamDetailClient({
                         <div className="flex items-center" style={{ gap: '1rem', marginBottom: '2rem' }}>
                             <span style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>AI Tactical Intel</span>
                             <div style={{ height: '1px', flex: 1, background: 'rgba(168, 85, 247, 0.1)' }}></div>
+                            {aiLoading && (
+                                <span style={{ fontSize: '9px', fontWeight: 950, color: '#8b5cf6', letterSpacing: '0.15em', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                                    ● ANALYZING
+                                </span>
+                            )}
                         </div>
-                        <div style={{ fontSize: '1.1rem', color: '#ccc', lineHeight: 1.8 }}>
-                            <ReactMarkdown>{aiNotes}</ReactMarkdown>
-                        </div>
+                        {aiLoading ? (
+                            <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                {[100, 85, 92, 70, 80].map((w, i) => (
+                                    <div key={i} style={{ height: '1rem', width: `${w}%`, borderRadius: '8px', background: 'rgba(139,92,246,0.12)', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ fontSize: '1.1rem', color: '#ccc', lineHeight: 1.8 }}>
+                                <ReactMarkdown>{aiNotes || 'No intel available.'}</ReactMarkdown>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -362,12 +410,137 @@ export default function TeamDetailClient({
                                     </div>
                                     <div>
                                         <p style={{ fontSize: '8px', fontWeight: 900, color: '#555', marginBottom: '0.25rem' }}>TELEOP</p>
-                                        <p style={{ color: '#fff', fontWeight: 700 }}>{r.data.teleop.fuel_scored || 0} Fuel | {r.data.teleop.tower_level}</p>
+                                        <p style={{ color: '#fff', fontWeight: 700 }}>{r.data.teleop.fuel_scored || 0} Fuel | {r.data.teleop.climb_level}</p>
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
+                </section>
+
+                {/* ── Pit Intel ── */}
+                <section className="reveal" style={{ marginBottom: '4rem' }}>
+                    <div className="flex justify-between items-center" style={{ marginBottom: '1.5rem' }}>
+                        <h2 style={{ fontSize: '11px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#444' }}>Pit Intel</h2>
+                        <Link href={`/pit-scout?event=${eventKey}&team=${teamKey}`} style={{ fontSize: '9px', fontWeight: 950, color: 'var(--primary)', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(139,92,246,0.1)', padding: '0.4rem 0.8rem', borderRadius: '8px' }}>
+                            {pitReport ? '✏️ EDIT PIT' : '+ SCOUT PIT'}
+                        </Link>
+                    </div>
+
+                    {!pitReport ? (
+                        <div className="glass" style={{ padding: '3rem', borderRadius: '24px', textAlign: 'center', opacity: 0.5 }}>
+                            <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤖</p>
+                            <p style={{ color: '#555', fontSize: '0.9rem', fontWeight: 700 }}>No pit scouting data yet.</p>
+                            <p style={{ color: '#444', fontSize: '0.75rem', marginTop: '0.5rem' }}>Visit the pit to collect robot specs before matches begin.</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+
+                            {/* Robot Photo + Quick Stats */}
+                            <div style={{ display: 'grid', gridTemplateColumns: pitReport.robotImageUrl ? '1.2fr 1fr' : '1fr', gap: '1rem', alignItems: 'start' }}>
+                                {pitReport.robotImageUrl && (
+                                    <div style={{ borderRadius: '20px', overflow: 'hidden', position: 'relative' }}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={pitReport.robotImageUrl} alt={`Team ${teamNum} robot`} style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', display: 'block' }} />
+                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.85))', padding: '1rem 1.25rem' }}>
+                                            <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Team {teamNum} · Scouted by {pitReport.scoutedBy}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                    <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                                        <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Quality</p>
+                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                            <div>
+                                                <p style={{ fontSize: '8px', color: '#444', marginBottom: '0.15rem' }}>ROBOT BUILD</p>
+                                                <div style={{ display: 'flex', gap: '2px' }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize: '1.1rem', color: i <= pitReport.robotQuality ? '#8b5cf6' : '#222' }}>★</span>)}</div>
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '8px', color: '#444', marginBottom: '0.15rem' }}>PIT ORG</p>
+                                                <div style={{ display: 'flex', gap: '2px' }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize: '1.1rem', color: i <= pitReport.pitQuality ? '#06b6d4' : '#222' }}>★</span>)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                                        <p style={{ fontSize: '9px', fontWeight: 950, color: '#eab308', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Tower Climb</p>
+                                        <p style={{ fontSize: '2rem', fontWeight: 950, fontStyle: 'italic', color: '#eab308', lineHeight: 1 }}>{pitReport.climb || '—'}</p>
+                                        <p style={{ fontSize: '9px', color: '#555', marginTop: '0.25rem' }}>{pitReport.climbPosition1} · {pitReport.climbPosition2}</p>
+                                        <p style={{ fontSize: '9px', color: '#555' }}>{pitReport.climbPartners} partner{pitReport.climbPartners !== 1 ? 's' : ''} · Auto: {pitReport.autoClimb}</p>
+                                    </div>
+                                    <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                                        <p style={{ fontSize: '9px', fontWeight: 950, color: '#a855f7', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Fuel Hopper</p>
+                                        <p style={{ fontSize: '2rem', fontWeight: 950, fontStyle: 'italic', color: '#a855f7', lineHeight: 1 }}>{pitReport.hopperCapacity ?? '—'}</p>
+                                        <p style={{ fontSize: '9px', color: '#555', marginTop: '0.25rem' }}>balls · max capacity</p>
+                                        {(pitReport.hopperLengthIn || pitReport.hopperWidthIn) && (
+                                            <p style={{ fontSize: '9px', color: '#444' }}>{pitReport.hopperLengthIn}&quot;L × {pitReport.hopperWidthIn}&quot;W × {pitReport.hopperHeightIn}&quot;H</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Specs grid */}
+                            <div className="glass" style={{ padding: '1.5rem', borderRadius: '20px' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1rem' }}>Robot Specs</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '1rem' }}>
+                                    {([
+                                        ['Drive', pitReport.drivebase],
+                                        ['Code', pitReport.codeLanguage],
+                                        ['Weight', pitReport.weightLbs ? `${pitReport.weightLbs} lbs` : null],
+                                        ['Height', pitReport.heightIn ? `${pitReport.heightIn}"` : null],
+                                        ['Width', pitReport.widthIn ? `${pitReport.widthIn}"` : null],
+                                        ['Length', pitReport.lengthIn ? `${pitReport.lengthIn}"` : null],
+                                        ['Kitbot', pitReport.kitbot],
+                                        ['Pref DS', pitReport.preferredDs],
+                                        ['Auto Start', pitReport.autoPrefStart],
+                                    ] as [string, string | null][]).map(([label, val]) => (
+                                        <div key={label}>
+                                            <p style={{ fontSize: '8px', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>{label}</p>
+                                            <p style={{ fontSize: '0.9rem', fontWeight: 950, color: val ? '#fff' : '#333', marginTop: '0.1rem' }}>{val || '—'}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                {pitReport.kitbotModified && <p style={{ fontSize: '10px', color: '#555', marginTop: '0.75rem', fontStyle: 'italic' }}>Mods: {pitReport.kitbotModified}</p>}
+                            </div>
+
+                            {/* Capabilities */}
+                            <div className="glass" style={{ padding: '1.5rem', borderRadius: '20px' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 950, color: 'var(--secondary)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1rem' }}>Capabilities</p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {([
+                                        ['Turret', pitReport.turret], ['Trench', pitReport.trench],
+                                        ['Bump', pitReport.bump], ['Bump Practiced', pitReport.bumpPractice],
+                                        ['Lob', pitReport.canLob], ['Doze', pitReport.canDoze],
+                                        ['Floor Pickup', pitReport.pickupFloor], ['Outpost Pickup', pitReport.pickupOutpost],
+                                        ['Shift Tracking', pitReport.shiftTracking], ['Auto Climb', pitReport.autoClimb],
+                                    ] as [string, string][]).map(([label, val]) => (
+                                        <span key={label} style={{ fontSize: '10px', fontWeight: 900, padding: '0.3rem 0.75rem', borderRadius: '8px', background: val === 'Yes' ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.03)', color: val === 'Yes' ? '#22c55e' : '#444', border: `1px solid ${val === 'Yes' ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.06)'}` }}>
+                                            {val === 'Yes' ? '● ' : '○ '}{label}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Human player + notes */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Human Player</p>
+                                    <p style={{ fontSize: '1rem', fontWeight: 950, color: '#fff' }}>{pitReport.humanPlayer || '—'}</p>
+                                    {pitReport.humanPlayerHeight && <p style={{ fontSize: '10px', color: '#555', marginTop: '0.15rem' }}>Height: {pitReport.humanPlayerHeight}</p>}
+                                </div>
+                                <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Scouted By</p>
+                                    <p style={{ fontSize: '1rem', fontWeight: 950, color: '#fff' }}>{pitReport.scoutedBy}</p>
+                                </div>
+                            </div>
+
+                            {pitReport.otherNotes && (
+                                <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px', borderLeft: '3px solid rgba(139,92,246,0.4)' }}>
+                                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#555', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Pit Notes</p>
+                                    <p style={{ fontSize: '0.9rem', color: '#aaa', lineHeight: 1.6, fontStyle: 'italic' }}>&ldquo;{pitReport.otherNotes}&rdquo;</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </section>
 
             </div>

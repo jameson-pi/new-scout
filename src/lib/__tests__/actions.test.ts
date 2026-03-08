@@ -79,26 +79,26 @@ describe('actions (SQL)', () => {
             expect(result.success).toBe(true);
         });
 
-        it('should correctly set auto_total input', async () => {
-            // auto: 5 fuel + moved = 8pts
-            const report = { ...baseReport, auto: { fuel: 5, towerLevel: 'None', moved: true }, tele: { fuel: 0, towerLevel: 'None' } };
+        it('should set auto_climb_level input correctly', async () => {
+            const report = { ...baseReport, auto: { fuel: 5, towerLevel: 'Level1', moved: true }, tele: { fuel: 0, towerLevel: 'No Attempt' } };
             await saveScoutReport(report);
-            const autoTotalCall = dbMocks.input.mock.calls.find((c: any[]) => c[0] === 'auto_total');
-            expect(autoTotalCall).toBeDefined();
-            expect(autoTotalCall![2]).toBe(8); // 5 fuel + 3 mobility
+            const climbCall = dbMocks.input.mock.calls.find((c: any[]) => c[0] === 'auto_climb_level');
+            expect(climbCall).toBeDefined();
+            expect(climbCall![2]).toBe('Level1');
         });
 
-        it('should correctly compute Level1 auto tower (15pts)', async () => {
-            const report = { ...baseReport, auto: { fuel: 0, towerLevel: 'Level1', moved: false }, tele: { fuel: 0, towerLevel: 'None' } };
+        it('should set tele_climb_level input correctly', async () => {
+            const report = { ...baseReport, tele: { fuel: 0, towerLevel: 'Level3' } };
             await saveScoutReport(report);
-            const autoTotalCall = dbMocks.input.mock.calls.find((c: any[]) => c[0] === 'auto_total');
-            expect(autoTotalCall![2]).toBe(15);
+            const climbCall = dbMocks.input.mock.calls.find((c: any[]) => c[0] === 'tele_climb_level');
+            expect(climbCall).toBeDefined();
+            expect(climbCall![2]).toBe('Level3');
         });
 
-        it('should strip frc prefix from team number', async () => {
+        it('should store frc_team as string without frc prefix', async () => {
             await saveScoutReport(baseReport);
             const frcInput = dbMocks.input.mock.calls.find((c: any[]) => c[0] === 'frc_team');
-            expect(frcInput![2]).toBe(254);
+            expect(frcInput![2]).toBe('254');
         });
 
         it('should default eventKey to 2026txcle when not provided', async () => {

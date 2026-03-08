@@ -42,8 +42,8 @@ export function calculateConsensus(reports: ScoutReport[]): ConsensusMetric {
         { name: 'Auto Fuel', getter: (r: ScoutReport) => r.data.auto.fuel_scored },
         { name: 'Teleop Fuel', getter: (r: ScoutReport) => r.data.teleop.fuel_scored },
         { name: 'Tower', getter: (r: ScoutReport) => {
-            const levels: Record<string, number> = { None: 0, Level1: 1, Level2: 2, Level3: 3 };
-            return levels[r.data.teleop.tower_level] || 0;
+            const levels: Record<string, number> = { 'No Attempt': 0, Level1: 1, Level2: 2, Level3: 3 };
+            return levels[r.data.teleop.climb_level] || 0;
         }},
         { name: 'Defense', getter: (r: ScoutReport) => r.data.defender_rating || 0 },
     ];

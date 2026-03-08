@@ -7,19 +7,19 @@ function createMockReport(
     overrides: Partial<{
         autoFuel: number;
         teleopFuel: number;
-        autoTower: 'None' | 'Level1';
-        teleopTower: 'None' | 'Level1' | 'Level2' | 'Level3';
+        autoTower: 'No Attempt' | 'Level1';
+        teleopTower: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
     }> = {}
 ): ScoutReport {
     const data: RebuiltData = {
         auto: {
             fuel_scored: overrides.autoFuel ?? 10,
-            tower_level: overrides.autoTower ?? 'None',
+            climb_level: overrides.autoTower ?? 'No Attempt',
             moved: true,
         },
         teleop: {
             fuel_scored: overrides.teleopFuel ?? 20,
-            tower_level: overrides.teleopTower ?? 'Level1',
+            climb_level: overrides.teleopTower ?? 'Level1',
         },
     };
 
@@ -123,7 +123,7 @@ describe('synthesis', () => {
                 scout3: { scoutId: 'scout3', bias: 0, variance: 1 },
             };
             const result = synthesizeReports(reports, models);
-            expect(result.teleop.tower_level).toBe('Level3');
+            expect(result.teleop.climb_level).toBe('Level3');
         });
 
         it('should weight tower vote by inverse variance', () => {
@@ -136,7 +136,7 @@ describe('synthesis', () => {
                 scout2: { scoutId: 'scout2', bias: 0, variance: 100 },
             };
             const result = synthesizeReports(reports, models);
-            expect(result.teleop.tower_level).toBe('Level3');
+            expect(result.teleop.climb_level).toBe('Level3');
         });
 
         it('should use default high variance for unknown scouts', () => {
@@ -162,10 +162,10 @@ describe('synthesis', () => {
             };
             const result = synthesizeReports(reports, models);
             expect(result.auto.fuel_scored).toBeDefined();
-            expect(result.auto.tower_level).toBeDefined();
+            expect(result.auto.climb_level).toBeDefined();
             expect(result.auto.moved).toBeDefined();
             expect(result.teleop.fuel_scored).toBeDefined();
-            expect(result.teleop.tower_level).toBeDefined();
+            expect(result.teleop.climb_level).toBeDefined();
         });
     });
 });

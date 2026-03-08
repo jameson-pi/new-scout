@@ -12,19 +12,19 @@ function createMockDistribution(
     performances: Array<Partial<{
         autoFuel: number;
         teleopFuel: number;
-        teleopTower: 'None' | 'Level1' | 'Level2' | 'Level3';
+        teleopTower: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
         moved: boolean;
     }>> = [{}]
 ): TeamPerformanceDistribution {
     const pastMatches: RebuiltData[] = performances.map(perf => ({
         auto: {
             fuel_scored: perf.autoFuel ?? 10,
-            tower_level: 'None' as const,
+            climb_level: 'No Attempt' as const,
             moved: perf.moved ?? true,
         },
         teleop: {
             fuel_scored: perf.teleopFuel ?? 20,
-            tower_level: perf.teleopTower ?? 'Level1' as const,
+            climb_level: perf.teleopTower ?? 'Level1' as const,
         },
     }));
 

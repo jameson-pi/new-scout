@@ -24,8 +24,8 @@ const ITERATIONS = 500;
 // REBUILT 2026 Scoring Constants
 const AUTO_FUEL = 1;
 const TELE_FUEL = 1;
-const AUTO_TOWER: Record<string, number> = { Level1: 15, None: 0 };
-const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+const AUTO_TOWER: Record<string, number> = { Level1: 15, 'No Attempt': 0 };
+const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
 
 /**
  * Calculate RP probabilities for a match
@@ -106,7 +106,7 @@ function simulateAllianceForRP(teamKeys: string[], distributions: TeamPerformanc
 
         // Auto scoring
         const autoFuel = p.auto.fuel_scored * AUTO_FUEL;
-        const autoTower = AUTO_TOWER[p.auto.tower_level] || 0;
+        const autoTower = AUTO_TOWER[p.auto.climb_level] || 0;
         score += autoFuel + autoTower;
         if (p.auto.moved) score += 3;
 
@@ -115,7 +115,7 @@ function simulateAllianceForRP(teamKeys: string[], distributions: TeamPerformanc
         score += teleFuel;
 
         // Endgame (Tower)
-        const teleTower = TELE_TOWER[p.teleop.tower_level] || 0;
+        const teleTower = TELE_TOWER[p.teleop.climb_level] || 0;
         score += teleTower;
 
         // Track totals

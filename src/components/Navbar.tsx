@@ -16,7 +16,8 @@ export default function Navbar() {
 
                 <div className="flex gap-8 items-center mobile-hide">
                     <NavLink href="/" active={pathname === '/'}>MISSION CONTROL</NavLink>
-                    <NavLink href="/scout" active={pathname === '/scout'}>FIELD TERMINAL</NavLink>
+                    <NavLink href="/scout" active={pathname.startsWith('/scout')}>FIELD SCOUT</NavLink>
+                    <NavLink href="/pit-scout" active={pathname.startsWith('/pit-scout')}>PIT SCOUT</NavLink>
                 </div>
 
                 <div className="flex items-center gap-4">

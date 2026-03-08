@@ -100,14 +100,14 @@ function simulateAllianceScore(teamKeys: string[], distributions: TeamPerformanc
 
         // Auto
         score += p.auto.fuel_scored * AUTO_FUEL;
-        score += AUTO_TOWER[p.auto.tower_level] || 0;
+        score += AUTO_TOWER[p.auto.climb_level] || 0;
         if (p.auto.moved) score += 3;
 
         // Teleop
         score += p.teleop.fuel_scored * TELE_FUEL;
 
         // Endgame (Tower)
-        score += TELE_TOWER[p.teleop.tower_level] || 0;
+        score += TELE_TOWER[p.teleop.climb_level] || 0;
     });
 
     return score;

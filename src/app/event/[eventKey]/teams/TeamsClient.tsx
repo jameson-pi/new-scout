@@ -10,6 +10,7 @@ interface TeamData {
     name: string;
     ourEPA: number;
     sbEPA: number | null;
+    matchesScouted: number;
     failureRate: number;
     consistencyScore: number;
     riskLevel: 'low' | 'medium' | 'high';
@@ -24,13 +25,16 @@ interface TeamsClientProps {
 }
 
 export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
-    const [sortBy, setSortBy] = useState<'epa' | 'synergy' | 'reliability'>('epa');
-    const [showExportModal, setShowExportModal] = useState(false);
+    const [sortBy, setSortBy] = useState<'epa' | 'synergy' | 'reliability' | 'number'>('epa');
+    const [showUnscouted, setShowUnscouted] = useState(true);
 
-    const sortedTeams = [...teams].sort((a, b) => {
+    const filteredTeams = showUnscouted ? teams : teams.filter(t => t.matchesScouted > 0);
+
+    const sortedTeams = [...filteredTeams].sort((a, b) => {
         if (sortBy === 'epa') return b.ourEPA - a.ourEPA;
         if (sortBy === 'synergy') return b.synergyScore - a.synergyScore;
         if (sortBy === 'reliability') return a.failureRate - b.failureRate;
+        if (sortBy === 'number') return a.teamNum - b.teamNum;
         return 0;
     });
 
@@ -46,7 +50,6 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
             notes: t.strengths.join(', ')
         }));
         exportToCSV(exportData, `${eventKey}_teams`);
-        setShowExportModal(false);
     };
 
     const getRiskColor = (risk: string) => {
@@ -78,7 +81,11 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                             <h1 className="text-gradient" style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.05em', lineHeight: 1 }}>
                                 MISSION TEAMS
                             </h1>
-                            <p style={{ color: '#888', fontSize: '1rem', fontWeight: 500 }}>{teams.length} Teams • EPA + Reliability + Synergy Analysis</p>
+                            <p style={{ color: '#888', fontSize: '1rem', fontWeight: 500 }}>
+                                {teams.length} Teams &nbsp;·&nbsp;
+                                <span style={{ color: 'var(--primary)' }}>{teams.filter(t => t.matchesScouted > 0).length} scouted</span>
+                                &nbsp;·&nbsp; EPA + Reliability + Synergy
+                            </p>
                         </div>
                         <button
                             onClick={handleExport}
@@ -98,10 +105,10 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                     </div>
                 </header>
 
-                {/* Sort Controls */}
-                <div className="glass" style={{ padding: '1rem', borderRadius: '20px', marginBottom: '2rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 900, color: '#888', alignSelf: 'center', marginRight: '1rem' }}>SORT BY:</span>
-                    {(['epa', 'synergy', 'reliability'] as const).map(sort => (
+                {/* Controls */}
+                <div className="glass" style={{ padding: '1rem', borderRadius: '20px', marginBottom: '2rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 900, color: '#888', marginRight: '0.5rem' }}>SORT:</span>
+                    {(['epa', 'synergy', 'reliability', 'number'] as const).map(sort => (
                         <button
                             key={sort}
                             onClick={() => setSortBy(sort)}
@@ -117,68 +124,99 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                                 textTransform: 'uppercase'
                             }}
                         >
-                            {sort === 'epa' ? '📊 EPA' : sort === 'synergy' ? '🤝 Synergy' : '⚙️ Reliability'}
+                            {sort === 'epa' ? '📊 EPA' : sort === 'synergy' ? '🤝 Synergy' : sort === 'reliability' ? '⚙️ Reliability' : '#️⃣ Number'}
                         </button>
                     ))}
+                    <div style={{ marginLeft: 'auto' }}>
+                        <button
+                            onClick={() => setShowUnscouted(v => !v)}
+                            style={{
+                                background: showUnscouted ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)',
+                                color: showUnscouted ? '#a855f7' : '#666',
+                                border: `1px solid ${showUnscouted ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                                padding: '0.5rem 1rem',
+                                borderRadius: '10px',
+                                fontWeight: 900,
+                                fontSize: '0.75rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {showUnscouted ? '👁 ALL TEAMS' : '🔍 SCOUTED ONLY'}
+                        </button>
+                    </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                     {sortedTeams.map((t, i) => {
-                        const diff = t.sbEPA != null ? (t.ourEPA - t.sbEPA).toFixed(1) : '0.0';
-                        const diffColor = parseFloat(diff) > 0 ? '#22c55e' : parseFloat(diff) < 0 ? '#ef4444' : '#888';
-
+                        const unscouted = t.matchesScouted === 0;
                         return (
                             <Link key={t.teamKey} href={`/event/${eventKey}/team/${t.teamKey}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                <div className="glass" style={{ padding: '2rem', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                                <div className="glass" style={{ padding: '2rem', borderRadius: '30px', border: `1px solid ${unscouted ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)'}`, position: 'relative', opacity: unscouted ? 0.65 : 1 }}>
                                     {/* Rank Badge */}
-                                    <div style={{ position: 'absolute', top: '-10px', left: '20px', background: 'var(--primary)', color: '#000', padding: '0.25rem 0.75rem', borderRadius: '20px', fontWeight: 950, fontSize: '0.75rem' }}>
+                                    <div style={{ position: 'absolute', top: '-10px', left: '20px', background: unscouted ? '#333' : 'var(--primary)', color: unscouted ? '#888' : '#000', padding: '0.25rem 0.75rem', borderRadius: '20px', fontWeight: 950, fontSize: '0.75rem' }}>
                                         #{i + 1}
                                     </div>
 
-                                    {/* Role Badge */}
-                                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: getRoleBadge(t.role), color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '8px', fontSize: '8px', fontWeight: 900, textTransform: 'uppercase' }}>
-                                        {t.role.replace('_', ' ')}
+                                    {/* Unscouted badge OR Role badge */}
+                                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: unscouted ? 'rgba(255,255,255,0.05)' : getRoleBadge(t.role), color: unscouted ? '#555' : '#fff', padding: '0.25rem 0.5rem', borderRadius: '8px', fontSize: '8px', fontWeight: 900, textTransform: 'uppercase' }}>
+                                        {unscouted ? 'NOT YET SCOUTED' : t.role.replace('_', ' ')}
                                     </div>
 
                                     <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
-                                        <p style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.15em' }}>{t.teamNum}</p>
-                                        <h3 style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', color: '#fff', lineHeight: 1.1 }}>{t.name}</h3>
+                                        <p style={{ fontSize: '11px', fontWeight: 950, color: unscouted ? '#555' : 'var(--primary)', letterSpacing: '0.15em' }}>{t.teamNum}</p>
+                                        <h3 style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', color: unscouted ? '#666' : '#fff', lineHeight: 1.1 }}>{t.name}</h3>
                                     </div>
 
-                                    {/* Stats Grid */}
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
-                                        <div>
-                                            <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Our EPA</p>
-                                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{t.ourEPA.toFixed(1)}</p>
+                                    {unscouted ? (
+                                        /* Pre-event: show Statbotics EPA if available */
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div>
+                                                <p style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Statbotics EPA</p>
+                                                <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#888' }}>{t.sbEPA?.toFixed(1) ?? '—'}</p>
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Matches Scouted</p>
+                                                <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#555' }}>0</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>SB EPA</p>
-                                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#aaa' }}>{t.sbEPA?.toFixed(1) || 'N/A'}</p>
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Synergy</p>
-                                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--secondary)' }}>{t.synergyScore.toFixed(0)}</p>
-                                        </div>
-                                    </div>
+                                    ) : (
+                                        <>
+                                            {/* Stats Grid */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                                                <div>
+                                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Our EPA</p>
+                                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{t.ourEPA.toFixed(1)}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>SB EPA</p>
+                                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#aaa' }}>{t.sbEPA?.toFixed(1) ?? 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Scouted</p>
+                                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--secondary)' }}>{t.matchesScouted}</p>
+                                                </div>
+                                            </div>
 
-                                    {/* Reliability Bar */}
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <div className="flex justify-between" style={{ marginBottom: '0.25rem' }}>
-                                            <span style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Reliability</span>
-                                            <span style={{ fontSize: '9px', fontWeight: 900, color: getRiskColor(t.riskLevel) }}>{t.riskLevel.toUpperCase()} RISK</span>
-                                        </div>
-                                        <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px' }}>
-                                            <div style={{ height: '100%', width: `${100 - t.failureRate * 100}%`, background: getRiskColor(t.riskLevel), borderRadius: '3px' }}></div>
-                                        </div>
-                                    </div>
+                                            {/* Reliability Bar */}
+                                            <div style={{ marginBottom: '1rem' }}>
+                                                <div className="flex justify-between" style={{ marginBottom: '0.25rem' }}>
+                                                    <span style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Reliability</span>
+                                                    <span style={{ fontSize: '9px', fontWeight: 900, color: getRiskColor(t.riskLevel) }}>{t.riskLevel.toUpperCase()} RISK</span>
+                                                </div>
+                                                <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px' }}>
+                                                    <div style={{ height: '100%', width: `${100 - t.failureRate * 100}%`, background: getRiskColor(t.riskLevel), borderRadius: '3px' }}></div>
+                                                </div>
+                                            </div>
 
-                                    {/* Strengths */}
-                                    {t.strengths.length > 0 && (
-                                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                                            {t.strengths.map(s => (
-                                                <span key={s} style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.5rem', borderRadius: '5px', color: '#aaa' }}>{s}</span>
-                                            ))}
-                                        </div>
+                                            {/* Strengths */}
+                                            {t.strengths.length > 0 && (
+                                                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                                                    {t.strengths.map(s => (
+                                                        <span key={s} style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.5rem', borderRadius: '5px', color: '#aaa' }}>{s}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </Link>

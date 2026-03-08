@@ -21,6 +21,24 @@ interface TeamProfile {
     trenchCapable: string;
     failures: number;
     notes: string;
+    // Pit scouting data
+    pit?: {
+        drivebase?: string;
+        climb?: string;
+        hopperCapacity?: number | null;
+        trench?: string;
+        bump?: string;
+        canLob?: string;
+        turret?: string;
+        shiftTracking?: string;
+        pickupFloor?: string;
+        pickupOutpost?: string;
+        autoClimb?: string;
+        robotQuality?: number;
+        weightLbs?: number | null;
+        heightIn?: number | null;
+        otherNotes?: string;
+    } | null;
 }
 
 interface Props {
@@ -118,10 +136,13 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
                                 <div style={{ textAlign: 'right' }}>
                                     <p style={{ fontSize: '9px', fontWeight: 950, color: '#aaa' }}>HUB: {p.hubControl?.toUpperCase()}</p>
                                     <p style={{ fontSize: '9px', fontWeight: 950, color: '#22c55e' }}>AUTO FUEL: {p.autoFuel}</p>
+                                    {p.pit && (
+                                        <span style={{ fontSize: '8px', fontWeight: 950, background: 'rgba(168,85,247,0.2)', color: '#a855f7', padding: '0.15rem 0.4rem', borderRadius: '6px', marginTop: '0.3rem', display: 'inline-block' }}>PIT ✓</span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: p.pit ? '1rem' : '2rem' }}>
                                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '15px', textAlign: 'center' }}>
                                     <p style={{ fontSize: '7px', fontWeight: 950, color: '#888' }}>AUTO FUEL</p>
                                     <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.avgAutoFuel}</p>
@@ -147,6 +168,21 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
                                     <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{p.avgDefense}</p>
                                 </div>
                             </div>
+
+                            {/* Pit Scouting Summary */}
+                            {p.pit && (
+                                <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(168,85,247,0.06)', borderRadius: '12px', border: '1px solid rgba(168,85,247,0.15)' }}>
+                                    <p style={{ fontSize: '8px', fontWeight: 950, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Pit Intel</p>
+                                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                        {p.pit.drivebase && <span style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(255,255,255,0.06)', color: '#ccc', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>{p.pit.drivebase}</span>}
+                                        {p.pit.climb && p.pit.climb !== 'No Attempt' && <span style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(234,179,8,0.12)', color: '#eab308', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>Max: {p.pit.climb}</span>}
+                                        {p.pit.hopperCapacity != null && <span style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(168,85,247,0.12)', color: '#c084fc', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>Hopper: {p.pit.hopperCapacity}</span>}
+                                        {p.pit.turret === 'Yes' && <span style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(34,197,94,0.12)', color: '#22c55e', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>Turret</span>}
+                                        {p.pit.canLob === 'Yes' && <span style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(6,182,212,0.12)', color: '#06b6d4', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>Lob</span>}
+                                        {p.pit.robotQuality != null && <span style={{ fontSize: '8px', fontWeight: 900, background: 'rgba(255,255,255,0.06)', color: '#aaa', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>Quality: {p.pit.robotQuality}/5</span>}
+                                    </div>
+                                </div>
+                            )}
 
                             <div style={{ position: 'relative' }}>
                                 <p style={{ fontSize: '8px', fontWeight: 950, color: selectedAlliance === 'red' ? '#ef4444' : '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Intelligence Overrides</p>
