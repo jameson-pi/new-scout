@@ -15,6 +15,7 @@ interface TeamData {
     avgDefense: number;
     consistencyScore: number;
     synergyScore: number;
+    allNotes?: string[];
 }
 
 interface CompareClientProps {
@@ -190,6 +191,30 @@ export default function CompareClient({ eventKey, teams }: CompareClientProps) {
                                 })}
                             </div>
                         ))}
+
+                        {/* Scouter & Pit Notes */}
+                        {comparedTeams.some(t => t.allNotes && t.allNotes.length > 0) && (
+                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1rem' }}>Scouter & Pit Intel</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem' }}>
+                                    <div></div>
+                                    {comparedTeams.map(t => (
+                                        <div key={t.teamKey} style={{ display: 'grid', gap: '0.4rem' }}>
+                                            {t.allNotes && t.allNotes.length > 0 ? (
+                                                t.allNotes.map((note, i) => (
+                                                    <p key={i} style={{ fontSize: '0.75rem', color: note.startsWith('[PIT]') ? '#a855f7' : '#888', lineHeight: 1.5, fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.75rem', borderRadius: '8px', borderLeft: `2px solid ${note.startsWith('[PIT]') ? 'rgba(168,85,247,0.4)' : 'rgba(255,255,255,0.1)'}` }}>
+                                                        &ldquo;{note.replace('[PIT] ', '')}&rdquo;
+                                                        {note.startsWith('[PIT]') && <span style={{ fontSize: '8px', color: '#a855f7', fontStyle: 'normal', fontWeight: 950, marginLeft: '0.4rem' }}>PIT</span>}
+                                                    </p>
+                                                ))
+                                            ) : (
+                                                <p style={{ fontSize: '0.75rem', color: '#333', fontStyle: 'italic' }}>No notes yet</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

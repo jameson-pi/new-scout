@@ -39,17 +39,42 @@ export function calculateTeamReliability(reports: ScoutReport[]): TeamReliabilit
     // Calculate consistency based on score variance (REBUILT 2026 scoring)
     const scores = reports.map(r => {
         const d = r.data;
-        return (d.auto.fuel_scored * 1) + (d.teleop.fuel_scored * 1) +
+        return (d.auto.fuel_scored) + (d.teleop.fuel_scored) +
             (TELE_TOWER[d.teleop.climb_level] || 0) +
             (d.auto.moved ? 3 : 0);
     });
 
-    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-    const variance = scores.reduce((acc, s) => acc + Math.pow(s - avgScore, 2), 0) / scores.length;
-    const stdDev = Math.sqrt(variance);
+    const n = scores.length;
+    const sorted = [...scores].sort((a, b) => a - b);
 
-    // Consistency: lower std dev = higher consistency
-    const consistencyScore = Math.max(0, Math.min(100, 100 - (stdDev * 3)));
+    // Median
+    const median = n % 2 === 0
+        ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+        : sorted[Math.floor(n / 2)];
+
+    // IQR (interquartile range) — robust to outliers unlike stdDev
+    const q1 = sorted[Math.floor(n * 0.25)];
+    const q3 = sorted[Math.ceil(n * 0.75) - 1] ?? sorted[sorted.length - 1];
+    const iqr = (q3 ?? 0) - (q1 ?? 0);
+
+    // Relative IQR (IQR / median) normalises for team output level.
+    // A team scoring consistently ~150 with ±10 swing → rIQR ≈ 0.07 → very consistent.
+    // A team all over the place 30–200 → rIQR ≈ 1.0 → inconsistent.
+    let rawConsistency: number;
+    if (median > 5) {
+        const rIQR = iqr / median;           // 0 = perfect, 1+ = chaotic
+        rawConsistency = Math.max(0, Math.min(100, 100 - (rIQR * 80)));
+    } else {
+        rawConsistency = Math.max(0, Math.min(100, 100 - (iqr * 3)));
+    }
+
+    // Failure rate penalty — a team that breaks often is never truly consistent
+    const failurePenalty = failureRate * 40;
+    rawConsistency = Math.max(0, rawConsistency - failurePenalty);
+
+    // Confidence weight: 1 match → regress to 50 (unknown), 4+ → fully trust
+    const confidence = Math.min(1, (n - 1) / 3); // 0 @ n=1, 1.0 @ n=4+
+    const consistencyScore = Math.round(confidence * rawConsistency + (1 - confidence) * 50);
 
     // Risk level based on failure rate
     const riskLevel = failureRate >= 0.25 ? 'high' : failureRate >= 0.1 ? 'medium' : 'low';

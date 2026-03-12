@@ -16,6 +16,7 @@ export async function saveScoutReport(report: any) {
         const autoMoved: string    = (report.auto?.moved) ? 'Yes' : 'No';
         const mechFailure: string  = (report.mech_failure) ? 'Yes' : 'No';
         const defenderRating: number = Number(report.defender_rating) || 0;
+        const otherNotes: string   = String(report.notes || report.other_notes || '').trim();
 
         const teamNum = String(report.team).replace('frc', '');
         const eventKey: string   = report.eventKey || '2026txcle';
@@ -79,6 +80,29 @@ export async function saveScoutReport(report: any) {
                         defender_rating  = @defender_rating,
                         mech_failure     = @mech_failure,
                         scouted_by       = @scouted_by;
+            `);
+
+        // Save notes to frc6377MatchScoutingPrivate (the dedicated notes table)
+        const privateKey = `${teamNum}-${matchKey}-${driverStation}-${scoutedBy}`;
+        await pool.request()
+            .input('private_key',    sql.NVarChar(200), privateKey)
+            .input('frc_team',       sql.NVarChar(10),  teamNum)
+            .input('event_key',      sql.NVarChar(20),  eventKey)
+            .input('match_key',      sql.NVarChar(50),  matchKey)
+            .input('driver_station', sql.NVarChar(10),  driverStation)
+            .input('comp_level',     sql.NVarChar(5),   compLevel)
+            .input('match_number',   sql.Int,           matchNumber)
+            .input('scouted_by',     sql.NVarChar(100), scoutedBy)
+            .input('other_notes',    sql.NVarChar(4000), otherNotes)
+            .query(`
+                MERGE frc6377MatchScoutingPrivate AS target
+                USING (SELECT @private_key AS primary_key) AS source
+                    ON target.primary_key = source.primary_key
+                WHEN NOT MATCHED THEN
+                    INSERT (primary_key, frc_team, event_key, match_key, driver_station, comp_level, match_number, scouted_by, other_notes)
+                    VALUES (@private_key, @frc_team, @event_key, @match_key, @driver_station, @comp_level, @match_number, @scouted_by, @other_notes)
+                WHEN MATCHED THEN
+                    UPDATE SET other_notes = @other_notes, scouted_by = @scouted_by;
             `);
 
         return { success: true };
@@ -190,6 +214,184 @@ export async function savePitReport(report: Record<string, unknown>) {
         return { success: false, error: String(e) };
     }
 }
+
+// ---------------------------------------------------------------------------
+// Full Export — all teams raw data + analysis + pit + EPA
+// ---------------------------------------------------------------------------
+
+export interface TeamExportRow {
+    teamNumber: number;
+    teamName: string;
+    rank: number | null;
+    wins: number;
+    losses: number;
+    ties: number;
+    rankingPoints: number;
+    ourEPA: number;
+    sbEPA: number | null;
+    matchesScouted: number;
+    failureRate: number;
+    consistencyScore: number;
+    riskLevel: string;
+    synergyScore: number;
+    role: string;
+    strengths: string[];
+    allNotes: string[];
+    // Pit scouting fields
+    pitDrivebase: string;
+    pitClimb: string;
+    pitClimbPartners: number;
+    pitAutoClimb: string;
+    pitHopperCapacity: number | null;
+    pitTrench: string;
+    pitBump: string;
+    pitCanLob: string;
+    pitCanDoze: string;
+    pitPickupFloor: string;
+    pitPickupOutpost: string;
+    pitKitbot: string;
+    pitRobotQuality: number;
+    pitPitQuality: number;
+    pitNotes: string;
+    // Raw match data (JSON string in CSV, array in JSON)
+    matchData: Array<{
+        matchKey: string;
+        autoFuel: number;
+        teleFuel: number;
+        autoClimb: string;
+        teleClimb: string;
+        mechFailure: boolean;
+        defenderRating: number;
+        notes: string;
+    }>;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export async function exportAllTeamsAction(eventKey: string): Promise<TeamExportRow[]> {
+    try {
+        const [
+            { getMissionData, getEventTeamList, getAllPitReports },
+            { getEventTeams },
+            { getStatboticsEvent },
+            { calculateTeamEPA },
+            { calculateAllTeamReliability },
+            { generatePickList },
+        ] = await Promise.all([
+            import('./data'),
+            import('./tba'),
+            import('./statbotics'),
+            import('./spr'),
+            import('./reliability'),
+            import('./pickList'),
+        ]);
+
+        const [{ reports }, tbaTeams, statboticsData, pitReports] = await Promise.all([
+            getMissionData(eventKey),
+            getEventTeams(eventKey),
+            getStatboticsEvent(eventKey),
+            getAllPitReports(eventKey),
+        ]);
+
+        const rosterList = await getEventTeamList(eventKey, tbaTeams);
+
+        const teamNameMap: Record<string, string> = {};
+        tbaTeams.forEach((t: { key: string; nickname?: string; team_number?: number }) => {
+            teamNameMap[t.key] = t.nickname || String(t.team_number);
+        });
+        rosterList.forEach((r: { teamKey: string; name: string }) => {
+            if (!teamNameMap[r.teamKey]) teamNameMap[r.teamKey] = r.name;
+        });
+
+        const reliabilityData = calculateAllTeamReliability(reports);
+        const pickListData = generatePickList(reports, reliabilityData);
+
+        const allScoutedKeys = Array.from(new Set(reports.map((r: any) => r.teamKey)));
+        const rosterKeys = new Set(rosterList.map((r: any) => r.teamKey));
+        const allTeamKeys = [
+            ...rosterList.map((r: any) => r.teamKey),
+            ...allScoutedKeys.filter((k: any) => !rosterKeys.has(k)),
+        ];
+
+        const rows: TeamExportRow[] = Array.from(new Set(allTeamKeys)).map(teamKey => {
+            const teamNum = parseInt(teamKey.replace('frc', ''), 10);
+            const teamReports = reports.filter((r: any) => r.teamKey === teamKey);
+            const ourEPA = calculateTeamEPA(teamReports);
+
+            const sbData = (statboticsData as any[]).find((s: any) => s.team === teamNum);
+            const sbEPA = sbData?.epa?.breakdown?.total_points ?? null;
+
+            const reliability = reliabilityData.find((r: any) => r.teamKey === teamKey);
+            const synergy = pickListData.find((p: any) => p.teamKey === teamKey);
+            const pit = pitReports.find((p: any) => p.teamKey === teamKey);
+
+            const matchNotes = teamReports.map((r: any) => r.data?.notes).filter(Boolean) as string[];
+            const allNotes = [
+                ...(pit?.otherNotes ? [pit.otherNotes] : []),
+                ...matchNotes,
+            ];
+
+            const matchData = teamReports.map((r: any) => ({
+                matchKey: r.matchKey,
+                autoFuel: r.data?.auto?.fuel_scored ?? 0,
+                teleFuel: r.data?.teleop?.fuel_scored ?? 0,
+                autoClimb: r.data?.auto?.climb_level ?? 'No Attempt',
+                teleClimb: r.data?.teleop?.climb_level ?? 'No Attempt',
+                mechFailure: r.data?.mech_failure ?? false,
+                defenderRating: r.data?.defender_rating ?? 0,
+                notes: r.data?.notes ?? '',
+            }));
+
+            const sbRecord = sbData?.record?.qual ?? {};
+
+            return {
+                teamNumber: teamNum,
+                teamName: teamNameMap[teamKey] || `Team ${teamNum}`,
+                rank: sbRecord?.rank ?? null,
+                wins: sbRecord?.wins ?? 0,
+                losses: sbRecord?.losses ?? 0,
+                ties: sbRecord?.ties ?? 0,
+                rankingPoints: sbRecord?.rps ?? 0,
+                ourEPA,
+                sbEPA,
+                matchesScouted: teamReports.length,
+                failureRate: reliability?.failureRate ?? 0,
+                consistencyScore: reliability?.consistencyScore ?? 50,
+                riskLevel: reliability?.riskLevel ?? 'medium',
+                synergyScore: synergy?.synergyScore ?? 0,
+                role: synergy?.role ?? 'balanced',
+                strengths: synergy?.strengths ?? [],
+                allNotes,
+                pitDrivebase: pit?.drivebase ?? '',
+                pitClimb: pit?.climb ?? '',
+                pitClimbPartners: pit?.climbPartners ?? 0,
+                pitAutoClimb: pit?.autoClimb ?? '',
+                pitHopperCapacity: pit?.hopperCapacity ?? null,
+                pitTrench: pit?.trench ?? '',
+                pitBump: pit?.bump ?? '',
+                pitCanLob: pit?.canLob ?? '',
+                pitCanDoze: pit?.canDoze ?? '',
+                pitPickupFloor: pit?.pickupFloor ?? '',
+                pitPickupOutpost: pit?.pickupOutpost ?? '',
+                pitKitbot: pit?.kitbot ?? '',
+                pitRobotQuality: pit?.robotQuality ?? 0,
+                pitPitQuality: pit?.pitQuality ?? 0,
+                pitNotes: pit?.otherNotes ?? '',
+                matchData,
+            };
+        }).sort((a, b) => {
+            if (a.matchesScouted > 0 && b.matchesScouted === 0) return -1;
+            if (a.matchesScouted === 0 && b.matchesScouted > 0) return 1;
+            if (a.matchesScouted > 0) return b.ourEPA - a.ourEPA;
+            return a.teamNumber - b.teamNumber;
+        });
+
+        return rows;
+    } catch (e) {
+        console.error('[Export] exportAllTeamsAction error:', e);
+        return [];
+    }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function getTeamStrategyAction(
     teamKey: string,

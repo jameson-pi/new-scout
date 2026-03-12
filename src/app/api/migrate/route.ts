@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getPool, sql } from '@/lib/db';
+import { getPool } from '@/lib/db';
 
 export async function GET() {
     try {
         const pool = await getPool();
+
+        // Ensure robot_image_url on pit table
         await pool.request().query(`
             IF NOT EXISTS (
                 SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
@@ -11,7 +13,18 @@ export async function GET() {
             )
             ALTER TABLE frc6377TeamScoutingPrivate ADD robot_image_url varchar(max) NULL
         `);
-        return NextResponse.json({ ok: true, message: 'robot_image_url column ensured' });
+
+        // Ensure other_notes on pit table
+        await pool.request().query(`
+            IF NOT EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME='frc6377TeamScoutingPrivate' AND COLUMN_NAME='other_notes'
+            )
+            ALTER TABLE frc6377TeamScoutingPrivate ADD other_notes NVARCHAR(MAX) NULL
+        `);
+
+
+        return NextResponse.json({ ok: true, message: 'All columns ensured' });
     } catch (e) {
         return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
     }

@@ -17,15 +17,47 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
     if (!match) return <div>Match Not Found</div>;
 
     const alliances = match.alliances;
+    const isPlayed = match.alliances?.red?.score != null && match.alliances.red.score >= 0;
+    const matchNumber = parseInt(matchKey.split('_qm').pop() || '0');
 
-    const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0 };
+    const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0, 'No Attempt': 0 };
+
+    // Reports for THIS specific match only
+    const matchReports = reports.filter(r => r.matchKey === matchKey);
+
+    // Per-robot predicted score = EPA from all reports BEFORE this match
+    function getRobotPrediction(teamKey: string): { predictedPts: number; predictedAuto: number; predictedTele: number; predictedTower: number; sampleSize: number } {
+        const priorReports = reports.filter(r =>
+            r.teamKey === teamKey &&
+            parseInt(r.matchKey.split('_qm').pop() || '0') < matchNumber
+        );
+        if (priorReports.length === 0) {
+            // Fall back to all reports if no prior ones (e.g. first match)
+            const allTeamReports = reports.filter(r => r.teamKey === teamKey);
+            if (allTeamReports.length === 0) return { predictedPts: 0, predictedAuto: 0, predictedTele: 0, predictedTower: 0, sampleSize: 0 };
+            const n = allTeamReports.length;
+            const autoFuel = allTeamReports.reduce((s, r) => s + r.data.auto.fuel_scored, 0) / n;
+            const teleFuel = allTeamReports.reduce((s, r) => s + r.data.teleop.fuel_scored, 0) / n;
+            const tower = allTeamReports.reduce((s, r) => s + (TELE_TOWER[r.data.teleop.climb_level] || 0), 0) / n;
+            return { predictedPts: Math.round(autoFuel + teleFuel + tower), predictedAuto: Math.round(autoFuel), predictedTele: Math.round(teleFuel), predictedTower: Math.round(tower), sampleSize: n };
+        }
+        const n = priorReports.length;
+        const autoFuel = priorReports.reduce((s, r) => s + r.data.auto.fuel_scored, 0) / n;
+        const teleFuel = priorReports.reduce((s, r) => s + r.data.teleop.fuel_scored, 0) / n;
+        const tower = priorReports.reduce((s, r) => s + (TELE_TOWER[r.data.teleop.climb_level] || 0), 0) / n;
+        return { predictedPts: Math.round(autoFuel + teleFuel + tower), predictedAuto: Math.round(autoFuel), predictedTele: Math.round(teleFuel), predictedTower: Math.round(tower), sampleSize: n };
+    }
+
+    // Build alliance predicted totals
+    const redPredicted = alliances.red.team_keys.reduce((s: number, tk: string) => s + getRobotPrediction(tk).predictedPts, 0);
+    const bluePredicted = alliances.blue.team_keys.reduce((s: number, tk: string) => s + getRobotPrediction(tk).predictedPts, 0);
 
     const getProfiles = (teams: string[]) => teams.map(teamKey => {
         const teamReports = reports.filter(r => r.teamKey === teamKey);
         const count = teamReports.length || 1;
         const pit = pitReports.find(p => p.teamKey === teamKey) || null;
-
-        // Hub control assessment
+        const thisMatchReport = matchReports.find(r => r.teamKey === teamKey) || null;
+        const predicted = getRobotPrediction(teamKey);
         const hubDominant = teamReports.filter(r => r.data.hub_control === 'Dominant').length;
         const hubControl = hubDominant > count / 2 ? 'Dominant' : 'Average';
 
@@ -45,6 +77,20 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
             trenchCapable: teamReports.some(r => r.data.trench_capable) ? 'Yes' : (pit?.trench === 'Yes' ? 'Yes' : 'No'),
             failures: teamReports.filter(r => r.data.mech_failure).length,
             notes: teamReports.map(r => r.data.notes).filter(Boolean).slice(0, 5).join(' | '),
+            predicted,
+            // Actual this-match data (null if not scouted)
+            actual: thisMatchReport ? {
+                autoFuel: thisMatchReport.data.auto.fuel_scored,
+                teleFuel: thisMatchReport.data.teleop.fuel_scored,
+                autoClimb: thisMatchReport.data.auto.climb_level,
+                teleClimb: thisMatchReport.data.teleop.climb_level,
+                towerPts: TELE_TOWER[thisMatchReport.data.teleop.climb_level] || 0,
+                autoMoved: thisMatchReport.data.auto.moved,
+                mechFailure: thisMatchReport.data.mech_failure || false,
+                defenderRating: thisMatchReport.data.defender_rating || 0,
+                notes: thisMatchReport.data.notes || '',
+                scoutedBy: thisMatchReport.scoutId,
+            } : null,
             pit: pit ? {
                 drivebase: pit.drivebase,
                 climb: pit.climb,
@@ -68,6 +114,34 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
     const redProfiles = getProfiles(alliances.red.team_keys);
     const blueProfiles = getProfiles(alliances.blue.team_keys);
 
+    // TBA official score breakdown for played matches
+    const tbaResult = isPlayed ? {
+        redScore: match.alliances.red.score as number,
+        blueScore: match.alliances.blue.score as number,
+        winner: (match.alliances.red.score > match.alliances.blue.score ? 'red'
+            : match.alliances.blue.score > match.alliances.red.score ? 'blue' : 'tie') as 'red' | 'blue' | 'tie',
+        red: {
+            autoPoints: match.score_breakdown?.red?.autoPoints ?? null,
+            teleopPoints: match.score_breakdown?.red?.teleopPoints ?? null,
+            endgamePoints: match.score_breakdown?.red?.endgamePoints ?? null,
+            fuelPoints: match.score_breakdown?.red?.fuelPoints ?? null,
+            autoFuelPoints: match.score_breakdown?.red?.autoFuelPoints ?? null,
+            teleopFuelPoints: match.score_breakdown?.red?.teleopFuelPoints ?? null,
+            towerEndgamePoints: match.score_breakdown?.red?.towerEndgamePoints ?? null,
+            rp: match.score_breakdown?.red?.rp ?? null,
+        },
+        blue: {
+            autoPoints: match.score_breakdown?.blue?.autoPoints ?? null,
+            teleopPoints: match.score_breakdown?.blue?.teleopPoints ?? null,
+            endgamePoints: match.score_breakdown?.blue?.endgamePoints ?? null,
+            fuelPoints: match.score_breakdown?.blue?.fuelPoints ?? null,
+            autoFuelPoints: match.score_breakdown?.blue?.autoFuelPoints ?? null,
+            teleopFuelPoints: match.score_breakdown?.blue?.teleopFuelPoints ?? null,
+            towerEndgamePoints: match.score_breakdown?.blue?.towerEndgamePoints ?? null,
+            rp: match.score_breakdown?.blue?.rp ?? null,
+        },
+    } : null;
+
     return (
         <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
             <div className="mx-auto" style={{ maxWidth: '1200px', display: 'grid', gap: '3rem' }}>
@@ -78,11 +152,11 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
                     </Link>
                     <div className="flex justify-between items-end">
                         <h1 className="text-gradient" style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-                            STRATEGY<span className="text-primary">TERMINAL</span>
+                            {isPlayed ? 'MATCH BREAKDOWN' : 'STRATEGY'}<span className="text-primary">{isPlayed ? '' : 'TERMINAL'}</span>
                         </h1>
                         <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>Match Identifier</p>
-                            <p style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>{matchKey.split('_qm').pop()?.toUpperCase()}</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>QM{matchKey.split('_qm').pop()?.toUpperCase()}</p>
                         </div>
                     </div>
                 </header>
@@ -92,6 +166,10 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
                     eventKey={eventKey}
                     redProfiles={redProfiles}
                     blueProfiles={blueProfiles}
+                    isPlayed={isPlayed}
+                    tbaResult={tbaResult}
+                    redPredicted={redPredicted}
+                    bluePredicted={bluePredicted}
                 />
 
                 <footer style={{ marginTop: '4rem', padding: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>

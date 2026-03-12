@@ -113,7 +113,7 @@ export async function generateMatchStrategy(
         const cacheKey = `match-${matchKey}-${alliance}`;
         return withCache(cacheKey, async () => {
             const response = await client.chat.send({
-                model: 'google/gemini-3-flash-preview',
+                model: 'deepseek/deepseek-v3.2-speciale',
                 messages: [
                     { role: 'system', content: 'You are an FRC Elite Strategy Analyst for REBUILT 2026.' },
                     { role: 'user', content: prompt }
@@ -163,7 +163,7 @@ export async function generateAllianceDraft(targetTeam: string, allTeamsData: an
         const cacheKey = `draft-${targetTeam}-${allTeamsData.length}`;
         return withCache(cacheKey, async () => {
             const response = await client.chat.send({
-                model: 'google/gemini-3-flash-preview',
+                model: 'deepseek/deepseek-v3.2-speciale',
                 messages: [
                     { role: 'system', content: 'You are an FRC Strategy Specialist for REBUILT 2026.' },
                     { role: 'user', content: prompt }
@@ -208,7 +208,7 @@ export async function generateEventStrategy(eventKey: string, topTeams: any[]) {
         const cacheKey = `event-${eventKey}-${topTeams[0]?.teamKey}`;
         return withCache(cacheKey, async () => {
             const response = await client.chat.send({
-                model: 'google/gemini-3-flash-preview',
+                model: 'deepseek/deepseek-v3.2-speciale',
                 messages: [
                     { role: 'system', content: 'You are an FRC Lead Strategic Analyst for REBUILT 2026.' },
                     { role: 'user', content: prompt }
@@ -293,7 +293,7 @@ Pit Scouting Intel:
         const cacheKey = `team-${teamKey}-${reports.length}-${pitFingerprint}`;
         return withCache(cacheKey, async () => {
             const response = await client.chat.send({
-                model: 'google/gemini-3-flash-preview',
+                model: 'deepseek/deepseek-v3.2-speciale',
                 messages: [
                     { role: 'system', content: 'You are an FRC Lead Tactical Scout for REBUILT 2026.' },
                     { role: 'user', content: prompt }

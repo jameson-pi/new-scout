@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { exportToCSV, ExportableTeam } from '@/lib/export';
+import { exportToCSV, ExportableTeam, exportAllTeamsToCSV, exportAllTeamsToJSON, exportAllTeamsToTextReport } from '@/lib/export';
+import { exportAllTeamsAction } from '@/lib/actions';
 
 interface TeamData {
     teamKey: string;
@@ -17,6 +18,8 @@ interface TeamData {
     synergyScore: number;
     role: string;
     strengths: string[];
+    allNotes?: string[];
+    hasPit?: boolean;
 }
 
 interface TeamsClientProps {
@@ -27,6 +30,7 @@ interface TeamsClientProps {
 export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
     const [sortBy, setSortBy] = useState<'epa' | 'synergy' | 'reliability' | 'number'>('epa');
     const [showUnscouted, setShowUnscouted] = useState(true);
+    const [exportAllLoading, setExportAllLoading] = useState<null | 'csv' | 'json' | 'txt'>(null);
 
     const filteredTeams = showUnscouted ? teams : teams.filter(t => t.matchesScouted > 0);
 
@@ -50,6 +54,21 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
             notes: t.strengths.join(', ')
         }));
         exportToCSV(exportData, `${eventKey}_teams`);
+    };
+
+    const handleExportAll = async (format: 'csv' | 'json' | 'txt') => {
+        setExportAllLoading(format);
+        try {
+            const data = await exportAllTeamsAction(eventKey);
+            if (format === 'csv') exportAllTeamsToCSV(data, eventKey);
+            else if (format === 'json') exportAllTeamsToJSON(data, eventKey);
+            else exportAllTeamsToTextReport(data, eventKey);
+        } catch (e) {
+            console.error('Export all failed:', e);
+            alert('Export failed — check console for details.');
+        } finally {
+            setExportAllLoading(null);
+        }
     };
 
     const getRiskColor = (risk: string) => {
@@ -87,21 +106,61 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                                 &nbsp;·&nbsp; EPA + Reliability + Synergy
                             </p>
                         </div>
-                        <button
-                            onClick={handleExport}
-                            style={{
-                                background: 'var(--secondary)',
-                                color: '#000',
-                                border: 'none',
-                                padding: '0.75rem 1.5rem',
-                                borderRadius: '15px',
-                                fontWeight: 950,
-                                cursor: 'pointer',
-                                fontSize: '0.8rem'
-                            }}
-                        >
-                            📥 EXPORT CSV
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-end' }}>
+                            {/* Quick export (current view) */}
+                            <button
+                                onClick={handleExport}
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    color: '#aaa',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '10px',
+                                    fontWeight: 900,
+                                    cursor: 'pointer',
+                                    fontSize: '0.75rem',
+                                    letterSpacing: '0.05em',
+                                }}
+                            >
+                                📊 QUICK CSV (current view)
+                            </button>
+
+                            {/* Export All group */}
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <span style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase', marginRight: '0.25rem' }}>Export All:</span>
+                                {([
+                                    { fmt: 'csv' as const, label: '📥 CSV', color: '#22c55e' },
+                                    { fmt: 'json' as const, label: '{ } JSON', color: '#3b82f6' },
+                                    { fmt: 'txt' as const, label: '📄 Report', color: '#a855f7' },
+                                ] as const).map(({ fmt, label, color }) => (
+                                    <button
+                                        key={fmt}
+                                        onClick={() => handleExportAll(fmt)}
+                                        disabled={exportAllLoading !== null}
+                                        style={{
+                                            background: exportAllLoading === fmt
+                                                ? `rgba(${fmt === 'csv' ? '34,197,94' : fmt === 'json' ? '59,130,246' : '168,85,247'},0.15)`
+                                                : 'rgba(255,255,255,0.03)',
+                                            color: exportAllLoading === fmt ? color : '#888',
+                                            border: `1px solid ${exportAllLoading === fmt ? color : 'rgba(255,255,255,0.08)'}`,
+                                            padding: '0.6rem 1.1rem',
+                                            borderRadius: '12px',
+                                            fontWeight: 950,
+                                            cursor: exportAllLoading !== null ? 'not-allowed' : 'pointer',
+                                            fontSize: '0.75rem',
+                                            letterSpacing: '0.05em',
+                                            transition: 'all 0.2s',
+                                            opacity: exportAllLoading !== null && exportAllLoading !== fmt ? 0.4 : 1,
+                                        }}
+                                    >
+                                        {exportAllLoading === fmt ? '⏳ Loading…' : label}
+                                    </button>
+                                ))}
+                            </div>
+                            <p style={{ fontSize: '9px', color: '#444', fontWeight: 700 }}>
+                                CSV = Excel-ready &nbsp;·&nbsp; JSON = raw data &nbsp;·&nbsp; Report = readable .txt
+                            </p>
+                        </div>
                     </div>
                 </header>
 
@@ -158,8 +217,11 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                                     </div>
 
                                     {/* Unscouted badge OR Role badge */}
-                                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: unscouted ? 'rgba(255,255,255,0.05)' : getRoleBadge(t.role), color: unscouted ? '#555' : '#fff', padding: '0.25rem 0.5rem', borderRadius: '8px', fontSize: '8px', fontWeight: 900, textTransform: 'uppercase' }}>
-                                        {unscouted ? 'NOT YET SCOUTED' : t.role.replace('_', ' ')}
+                                    <div style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                        {t.hasPit && <span style={{ background: 'rgba(168,85,247,0.2)', color: '#a855f7', padding: '0.2rem 0.4rem', borderRadius: '6px', fontSize: '8px', fontWeight: 900 }}>PIT ✓</span>}
+                                        <span style={{ background: unscouted ? 'rgba(255,255,255,0.05)' : getRoleBadge(t.role), color: unscouted ? '#555' : '#fff', padding: '0.25rem 0.5rem', borderRadius: '8px', fontSize: '8px', fontWeight: 900, textTransform: 'uppercase' }}>
+                                            {unscouted ? 'NOT YET SCOUTED' : t.role.replace('_', ' ')}
+                                        </span>
                                     </div>
 
                                     <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
@@ -169,15 +231,25 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
 
                                     {unscouted ? (
                                         /* Pre-event: show Statbotics EPA if available */
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                            <div>
-                                                <p style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Statbotics EPA</p>
-                                                <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#888' }}>{t.sbEPA?.toFixed(1) ?? '—'}</p>
+                                        <div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <div>
+                                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Statbotics EPA</p>
+                                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#888' }}>{t.sbEPA?.toFixed(1) ?? '—'}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Matches Scouted</p>
+                                                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#555' }}>0</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Matches Scouted</p>
-                                                <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#555' }}>0</p>
-                                            </div>
+                                            {t.allNotes && t.allNotes.length > 0 && (
+                                                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <p style={{ fontSize: '8px', fontWeight: 900, color: '#555', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Pit Notes</p>
+                                                    <p style={{ fontSize: '0.75rem', color: '#666', lineHeight: 1.4, fontStyle: 'italic' }}>
+                                                        &ldquo;{t.allNotes[0].substring(0, 80)}{t.allNotes[0].length > 80 ? '...' : ''}&rdquo;
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <>
@@ -214,6 +286,18 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                                                     {t.strengths.map(s => (
                                                         <span key={s} style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(255,255,255,0.05)', padding: '0.25rem 0.5rem', borderRadius: '5px', color: '#aaa' }}>{s}</span>
                                                     ))}
+                                                </div>
+                                            )}
+
+                                            {/* Latest note preview */}
+                                            {t.allNotes && t.allNotes.length > 0 && (
+                                                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <p style={{ fontSize: '8px', fontWeight: 900, color: '#444', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                                                        Latest Intel {t.allNotes.length > 1 ? `(+${t.allNotes.length - 1} more)` : ''}
+                                                    </p>
+                                                    <p style={{ fontSize: '0.75rem', color: '#777', lineHeight: 1.4, fontStyle: 'italic' }}>
+                                                        &ldquo;{t.allNotes[0].substring(0, 80)}{t.allNotes[0].length > 80 ? '...' : ''}&rdquo;
+                                                    </p>
                                                 </div>
                                             )}
                                         </>

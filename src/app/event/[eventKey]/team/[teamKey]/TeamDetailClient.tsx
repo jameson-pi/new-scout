@@ -390,6 +390,44 @@ export default function TeamDetailClient({
                     </div>
                 </section>
 
+                {/* ── Compiled Field Intel (all scouter notes) ── */}
+                {(() => {
+                    const notedReports = teamReports.filter(r => r.data.notes && r.data.notes.trim().length > 0);
+                    if (notedReports.length === 0) return null;
+                    return (
+                        <section className="reveal" style={{ marginBottom: '4rem' }}>
+                            <h2 style={{ fontSize: '11px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#444', marginBottom: '1.5rem' }}>
+                                Field Intel
+                                <span style={{ marginLeft: '0.75rem', fontSize: '9px', color: 'var(--primary)', background: 'rgba(139,92,246,0.12)', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
+                                    {notedReports.length} note{notedReports.length !== 1 ? 's' : ''}
+                                </span>
+                            </h2>
+                            <div className="glass" style={{ padding: '1.5rem 2rem', borderRadius: '30px', display: 'grid', gap: '1rem' }}>
+                                {notedReports.map((r, i) => (
+                                    <div key={`note-${r.matchKey}-${i}`} style={{ display: 'grid', gap: '0.4rem', paddingBottom: i < notedReports.length - 1 ? '1rem' : 0, borderBottom: i < notedReports.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', minWidth: '32px' }}>
+                                                Q{r.matchKey.split('_qm').pop()}
+                                            </span>
+                                            <span style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                                {r.scoutId}
+                                            </span>
+                                            {r.data.mech_failure && (
+                                                <span style={{ fontSize: '8px', fontWeight: 950, color: '#ef4444', background: 'rgba(239,68,68,0.1)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                                    ⚠ MECH FAILURE
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p style={{ fontSize: '0.875rem', color: '#bbb', lineHeight: 1.6, fontStyle: 'italic', paddingLeft: '44px' }}>
+                                            &ldquo;{r.data.notes}&rdquo;
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    );
+                })()}
+
                 {/* Match Data Logs */}
                 <section className="reveal" style={{ marginBottom: '4rem' }}>
                     <h2 style={{ fontSize: '11px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#444', marginBottom: '1.5rem' }}>Match Data Logs</h2>
@@ -413,6 +451,12 @@ export default function TeamDetailClient({
                                         <p style={{ color: '#fff', fontWeight: 700 }}>{r.data.teleop.fuel_scored || 0} Fuel | {r.data.teleop.climb_level}</p>
                                     </div>
                                 </div>
+                                {r.data.notes && (
+                                    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <p style={{ fontSize: '8px', fontWeight: 900, color: '#444', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Scout Notes</p>
+                                        <p style={{ fontSize: '0.8rem', color: '#888', lineHeight: 1.5, fontStyle: 'italic' }}>&ldquo;{r.data.notes}&rdquo;</p>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

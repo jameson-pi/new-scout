@@ -30,7 +30,8 @@ function rowToScoutReport(row: any): ScoutReport {
         auto: {
             fuel_scored: Number(row.auto_fuel_scored) || 0,
             climb_level: parseClimbLevel(row.auto_climb_level, true) as 'No Attempt' | 'Level1',
-            moved: row.auto_moved === 'Yes' || row.auto_moved === true || row.auto_moved === 1,
+            moved: row.auto_moved === 'Yes' || row.auto_moved === true || row.auto_moved === 1
+                || (Number(row.auto_fuel_scored) || 0) > 0,
         },
         teleop: {
             fuel_scored: Number(row.tele_fuel_scored) || 0,
@@ -67,16 +68,21 @@ export async function loadEventReports(eventKey: string): Promise<ScoutReport[]>
             .input('eventKey', sql.NVarChar(20), eventKey)
             .query(`
                 SELECT
-                    frc_team, match_key, driver_station, scouted_by,
-                    auto_fuel_scored, auto_climb_level, auto_moved,
-                    tele_fuel_scored, tele_climb_level,
-                    mech_failure, defender_rating,
-                    NULL AS other_notes,
+                    m.frc_team, m.match_key, m.driver_station, m.scouted_by,
+                    m.auto_fuel_scored, m.auto_climb_level, m.auto_moved,
+                    m.tele_fuel_scored, m.tele_climb_level,
+                    m.mech_failure, m.defender_rating,
+                    ISNULL(p.other_notes, '') AS other_notes,
                     NULL AS hub_control,
                     0    AS trench_capable
-                FROM frc6377MatchScouting
-                WHERE LOWER(event_key) = LOWER(@eventKey)
-                ORDER BY match_number ASC, frc_team ASC
+                FROM frc6377MatchScouting m
+                LEFT JOIN frc6377MatchScoutingPrivate p
+                    ON p.match_key      = m.match_key
+                   AND p.frc_team       = m.frc_team
+                   AND p.driver_station = m.driver_station
+                   AND p.scouted_by     = m.scouted_by
+                WHERE LOWER(m.event_key) = LOWER(@eventKey)
+                ORDER BY m.match_number ASC, m.frc_team ASC
             `);
 
         return result.recordset.map(rowToScoutReport);

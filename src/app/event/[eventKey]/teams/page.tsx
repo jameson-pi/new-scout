@@ -1,4 +1,4 @@
-import { getMissionData, getEventTeamList } from '@/lib/data';
+import { getMissionData, getEventTeamList, getAllPitReports } from '@/lib/data';
 import { getEventTeams } from '@/lib/tba';
 import { getStatboticsEvent } from '@/lib/statbotics';
 import { calculateTeamEPA } from '@/lib/spr';
@@ -9,10 +9,11 @@ import TeamsClient from './TeamsClient';
 export default async function TeamsListPage({ params }: { params: Promise<{ eventKey: string }> }) {
     const { eventKey } = await params;
 
-    const [{ reports }, tbaTeams, statboticsData] = await Promise.all([
+    const [{ reports }, tbaTeams, statboticsData, pitReports] = await Promise.all([
         getMissionData(eventKey),
         getEventTeams(eventKey),
         getStatboticsEvent(eventKey),
+        getAllPitReports(eventKey),
     ]);
 
     // Full roster — works even before matches are played
@@ -49,6 +50,14 @@ export default async function TeamsListPage({ params }: { params: Promise<{ even
 
         const reliability = reliabilityData.find(r => r.teamKey === teamKey);
         const synergy = pickListData.find(p => p.teamKey === teamKey);
+        const pit = pitReports.find(p => p.teamKey === teamKey);
+
+        // Collect all notes: pit notes + match scouter notes
+        const matchNotes = teamReports.map(r => r.data.notes).filter((n): n is string => !!n);
+        const allNotes = [
+            ...(pit?.otherNotes ? [pit.otherNotes] : []),
+            ...matchNotes,
+        ];
 
         return {
             teamKey,
@@ -63,6 +72,8 @@ export default async function TeamsListPage({ params }: { params: Promise<{ even
             synergyScore: synergy?.synergyScore ?? 0,
             role: synergy?.role ?? 'balanced',
             strengths: synergy?.strengths ?? [],
+            allNotes,
+            hasPit: !!pit,
         };
     }).sort((a, b) => {
         // Scouted teams first by EPA, then unscouted by team number
