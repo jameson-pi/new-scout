@@ -3,7 +3,7 @@
  */
 
 import type { TeamExportRow } from './actions';
-import { ScouterStats } from './spr';
+import type { ScouterStats } from './types/scouting';
 
 // ---------------------------------------------------------------------------
 // Full All-Teams Export helpers (client-side)
