@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { ScoutReport } from '@/lib/spr';
+import { ScoutReport } from '@/lib/types/scouting';
 
 interface TrendChartProps {
     reports: ScoutReport[];

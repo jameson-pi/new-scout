@@ -1,12 +1,13 @@
-import { ScoutReport, RebuiltData } from './spr';
-import { getEventMatches } from './tba';
+import { ScoutReport, RebuiltData, TBAMatchResult, TBAMatchRaw } from './types/scouting';
+import { getEventMatches, TBAMatch } from './tba';
+import 'server-only';
 import { getPool, sql } from './db';
 
 // Simple in-memory cache for query results (1 minute TTL in production)
-const queryCache = new Map<string, { data: any; timestamp: number }>();
+const queryCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL = 60000; // 1 minute
 
-function getCacheKey(...args: any[]): string {
+function getCacheKey(...args: unknown[]): string {
     return args.map(arg => String(arg)).join(':');
 }
 
@@ -45,31 +46,31 @@ function parseHubControl(val: string | null | undefined): 'Dominant' | 'Average'
     return undefined;
 }
 
-function rowToScoutReport(row: any): ScoutReport {
-    const driverStation: string = row.driver_station ?? '';
+function rowToScoutReport(row: Record<string, unknown>): ScoutReport {
+    const driverStation: string = String(row.driver_station ?? '');
     const alliance = driverStation.startsWith('red') ? 'red' : 'blue';
 
     const data: RebuiltData = {
         auto: {
             fuel_scored: Number(row.auto_fuel_scored) || 0,
-            climb_level: parseClimbLevel(row.auto_climb_level, true) as 'No Attempt' | 'Level1',
+            climb_level: parseClimbLevel(String(row.auto_climb_level ?? ''), true) as 'No Attempt' | 'Level1',
             moved: row.auto_moved === 'Yes' || row.auto_moved === true || row.auto_moved === 1
                 || (Number(row.auto_fuel_scored) || 0) > 0,
         },
         teleop: {
             fuel_scored: Number(row.tele_fuel_scored) || 0,
-            climb_level: parseClimbLevel(row.tele_climb_level, false) as 'No Attempt' | 'Level1' | 'Level2' | 'Level3',
+            climb_level: parseClimbLevel(String(row.tele_climb_level ?? ''), false) as 'No Attempt' | 'Level1' | 'Level2' | 'Level3',
         },
-        notes: row.other_notes || '',
+        notes: String(row.other_notes || ''),
         mech_failure: row.mech_failure === 'Yes' || row.mech_failure === true || row.mech_failure === 1,
         defender_rating: Number(row.defender_rating) || 0,
-        hub_control: parseHubControl(row.hub_control),
+        hub_control: parseHubControl(row.hub_control as string),
         trench_capable: row.trench_capable === true || row.trench_capable === 1,
     };
 
     return {
-        scoutId: row.scouted_by ?? '',
-        matchKey: row.match_key ?? '',
+        scoutId: String(row.scouted_by ?? ''),
+        matchKey: String(row.match_key ?? ''),
         teamKey: `frc${row.frc_team}`,
         alliance: alliance as 'red' | 'blue',
         data,
@@ -118,9 +119,9 @@ export async function loadEventReports(eventKey: string): Promise<ScoutReport[]>
 /**
  * Unified getter for Simulation, SPR, and Dashboard
  */
-export async function getMissionData(eventKey: string = '2026txcle'): Promise<{ reports: ScoutReport[], tbaMatches: Record<string, any>, tbaMatchesRaw: any[] }> {
+export async function getMissionData(eventKey: string = '2026txcle'): Promise<{ reports: ScoutReport[], tbaMatches: Record<string, TBAMatchResult>, tbaMatchesRaw: TBAMatch[] }> {
     const cacheKey = getCacheKey('mission', eventKey);
-    const cached = getCached<{ reports: ScoutReport[], tbaMatches: Record<string, any>, tbaMatchesRaw: any[] }>(cacheKey);
+    const cached = getCached<{ reports: ScoutReport[], tbaMatches: Record<string, TBAMatchResult>, tbaMatchesRaw: TBAMatch[] }>(cacheKey);
     if (cached) return cached;
 
     const [reports, tbaMatchesRaw] = await Promise.all([
@@ -128,8 +129,8 @@ export async function getMissionData(eventKey: string = '2026txcle'): Promise<{ 
         getEventMatches(eventKey),
     ]);
 
-    const tbaMatches: Record<string, any> = {};
-    tbaMatchesRaw.forEach((m: any) => {
+    const tbaMatches: Record<string, TBAMatchResult> = {};
+    tbaMatchesRaw.forEach((m: TBAMatch) => {
         tbaMatches[m.key] = {
             matchKey: m.key,
             alliances: {
@@ -149,7 +150,7 @@ export async function getMissionData(eventKey: string = '2026txcle'): Promise<{ 
         };
     });
 
-    return setCached<{ reports: ScoutReport[], tbaMatches: Record<string, any>, tbaMatchesRaw: any[] }>(cacheKey, { reports, tbaMatches, tbaMatchesRaw });
+    return setCached<{ reports: ScoutReport[], tbaMatches: Record<string, TBAMatchResult>, tbaMatchesRaw: TBAMatch[] }>(cacheKey, { reports, tbaMatches, tbaMatchesRaw });
 }
 
 export async function getEventSchedule(eventKey: string = '2026txcle') {
@@ -166,11 +167,11 @@ export async function getEventSchedule(eventKey: string = '2026txcle') {
                 ORDER BY match_number ASC
             `);
         if (result.recordset.length > 0) {
-            return result.recordset.map((m: any) => ({
-                key: m.match_key,
-                matchNumber: m.match_number,
-                red: [m.red1, m.red2, m.red3].filter(Boolean),
-                blue: [m.blue1, m.blue2, m.blue3].filter(Boolean),
+            return result.recordset.map((m: Record<string, unknown>) => ({
+                key: String(m.match_key),
+                matchNumber: Number(m.match_number),
+                red: [m.red1, m.red2, m.red3].filter((t): t is string => typeof t === 'string' && !!t),
+                blue: [m.blue1, m.blue2, m.blue3].filter((t): t is string => typeof t === 'string' && !!t),
             }));
         }
     } catch (e) {
@@ -180,14 +181,14 @@ export async function getEventSchedule(eventKey: string = '2026txcle') {
     // Fall back to TBA
     const tbaMatchesRaw = await getEventMatches(eventKey);
     return tbaMatchesRaw
-        .filter((m: any) => m.comp_level === 'qm')
-        .map((m: any) => ({
+        .filter((m: TBAMatch) => m.comp_level === 'qm')
+        .map((m: TBAMatch) => ({
             key: m.key,
             matchNumber: m.match_number,
             red: m.alliances.red.team_keys,
             blue: m.alliances.blue.team_keys,
         }))
-        .sort((a: any, b: any) => a.matchNumber - b.matchNumber);
+        .sort((a, b) => a.matchNumber - b.matchNumber);
 }
 
 export async function getUniqueScouters(eventKey: string = '2026txcle'): Promise<string[]> {
@@ -203,7 +204,7 @@ export async function getUniqueScouters(eventKey: string = '2026txcle'): Promise
                   AND scouted_by <> ''
                 ORDER BY scouted_by ASC
             `);
-        return result.recordset.map((r: any) => r.scouted_by as string);
+        return result.recordset.map((r: Record<string, unknown>) => r.scouted_by as string);
     } catch (e) {
         console.error(`[DB] Error loading scouters for ${eventKey}:`, e);
         return [];
@@ -239,13 +240,13 @@ export async function getEventTeamList(
             `);
 
         if (result.recordset.length > 0) {
-            return result.recordset.map((r: any) => {
+            return result.recordset.map((r: Record<string, unknown>) => {
                 const num = Number(r.frc_team);
                 const key = `frc${r.frc_team}`;
                 return {
                     teamKey: key,
                     teamNum: num,
-                    name: nameMap[key] || r.name || String(r.frc_team),
+                    name: String(nameMap[key] || r.name || String(r.frc_team)),
                 };
             });
         }
@@ -390,10 +391,10 @@ export async function getAllPitReports(eventKey: string): Promise<PitReport[]> {
             .input('eventKey', sql.NVarChar(20), eventKey)
             .query(`
                 SELECT * FROM frc6377TeamScoutingPrivate
-                WHERE event_key = @event_key
+                WHERE event_key = @eventKey
                 ORDER BY TRY_CAST(frc_team AS INT) ASC
             `);
-        return result.recordset.map((r: any) => rowToPitReport(r as Record<string, unknown>));
+        return result.recordset.map((r: Record<string, unknown>) => rowToPitReport(r));
     } catch (e) {
         console.warn(`[DB] getAllPitReports error for ${eventKey}:`, e);
         return [];
@@ -431,5 +432,3 @@ export async function getAvailableEvents(): Promise<{ key: string; name: string;
         { key: '2026txman', name: 'Manor District',      location: 'Manor, TX' },
     ];
 }
-
-

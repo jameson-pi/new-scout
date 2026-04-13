@@ -8,7 +8,7 @@
  * - Outlier detection (Z-score analysis)
  */
 
-import { ScoutReport } from './spr';
+import { ScoutReport } from './types/scouting';
 
 export interface AnomalyFlags {
   score: number; // 0-100, higher = more suspicious
@@ -252,5 +252,4 @@ export function getSuspicionSummary(anomalies: AnomalyFlags): string {
   }
   return `ℹ️ LOW: ${anomalies.flags[0] || 'Minor variation'}`;
 }
-
 

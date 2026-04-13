@@ -2,7 +2,8 @@ import { getTacticalStrategy, getTeamStrategyAction, getTeamQuestionsAction } fr
 import { getMissionData, getPitReport } from './data';
 import { getEventTeams, getEventMatches } from './tba';
 import { getStatboticsEvent } from './statbotics';
-import {calculateTeamEPA, ScoutReport} from './spr';
+import { calculateTeamEPA } from './spr';
+import { ScoutReport } from './types/scouting';
 import { calculateTeamReliability } from './reliability';
 import { analyzeTeamRole } from './pickList';
 import { analyzeDefenseProfile } from './defense';

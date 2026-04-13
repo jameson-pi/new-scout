@@ -3,14 +3,39 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { memo } from 'react';
+import { motion } from 'framer-motion';
 
 export default function Navbar() {
     const pathname = usePathname();
 
     return (
-        <nav className="glass" style={{ position: 'fixed', top: '0.75rem', left: '50%', transform: 'translateX(-50%)', width: 'min(calc(100% - 2rem), 1200px)', padding: '0.75rem 1.25rem', borderRadius: '20px', display: 'flex', gap: '1rem', zIndex: 1000, border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 10px 24px rgba(0,0,0,0.24)', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <motion.nav 
+            initial={{ y: -100, x: '-50%' }}
+            animate={{ y: 0, x: '-50%' }}
+            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+            className="glass" 
+            style={{ 
+                position: 'fixed', 
+                top: '0.75rem', 
+                left: '50%', 
+                width: 'min(calc(100% - 2rem), 1200px)', 
+                padding: '0.75rem 1.25rem', 
+                borderRadius: '20px', 
+                display: 'flex', 
+                gap: '1rem', 
+                zIndex: 1000, 
+                border: '1px solid rgba(255,255,255,0.08)', 
+                boxShadow: '0 10px 24px rgba(0,0,0,0.24)', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                flexWrap: 'wrap' 
+            }}
+        >
             <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexShrink: 0 }}>
-                <div style={{ width: '1.2rem', height: '1.2rem', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-brown), var(--secondary-blue)', flexShrink: 0 }}></div>
+                <motion.div 
+                    whileHover={{ scale: 1.2, rotate: 90 }}
+                    style={{ width: '1.2rem', height: '1.2rem', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-brown), var(--secondary-blue)', flexShrink: 0 }}
+                />
                 <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--foreground)', whiteSpace: 'nowrap' }}>Howdy Scout</span>
             </Link>
 
@@ -31,15 +56,20 @@ export default function Navbar() {
                 <NavPill href="/scout" active={pathname.startsWith('/scout')}>Match</NavPill>
                 <NavPill href="/pit-scout" active={pathname.startsWith('/pit-scout')}>Pit</NavPill>
             </div>
-        </nav>
+        </motion.nav>
     );
 }
 
 function NavLink({ href, children, active }: { href: string, children: React.ReactNode, active: boolean }) {
     return (
-        <Link href={href} style={{ textDecoration: 'none', fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: active ? 'var(--secondary-blue)' : 'var(--muted)', transition: 'color 0.2s ease-out', whiteSpace: 'nowrap' }}>
+        <Link href={href} style={{ textDecoration: 'none', fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: active ? 'var(--secondary-blue)' : 'var(--muted)', transition: 'color 0.2s ease-out', whiteSpace: 'nowrap', position: 'relative' }}>
             {children}
-            {active && <div style={{ height: '2px', width: '100%', background: 'rgba(46, 81, 116, 0.8)', marginTop: '4px', borderRadius: '2px' }}></div>}
+            {active && (
+                <motion.div 
+                    layoutId="navbar-underline"
+                    style={{ height: '2px', width: '100%', background: 'rgba(46, 81, 116, 0.8)', marginTop: '4px', borderRadius: '2px' }} 
+                />
+            )}
         </Link>
     );
 }

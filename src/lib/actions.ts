@@ -2,8 +2,9 @@
 
 import { getPool, sql } from './db';
 import { generateMatchStrategy, generateTeamStrategy } from './ai';
+import { ScoutReport, PitReport, StatboticsTeamEvent } from './types/scouting';
 
-export async function saveScoutReport(report: any) {
+export async function saveScoutReport(report: Record<string, any>) {
     try {
         const pool = await getPool();
 
@@ -274,7 +275,7 @@ export async function exportAllTeamsAction(eventKey: string): Promise<TeamExport
             { getEventTeams },
             { getStatboticsEvent },
             { calculateTeamEPA },
-            { calculateAllTeamReliability },
+            { calculateTeamReliability },
             { generatePickList },
         ] = await Promise.all([
             import('./data'),
@@ -285,63 +286,58 @@ export async function exportAllTeamsAction(eventKey: string): Promise<TeamExport
             import('./pickList'),
         ]);
 
-        const [{ reports }, tbaTeams, statboticsData, pitReports] = await Promise.all([
-            getMissionData(eventKey),
-            getEventTeams(eventKey),
-            getStatboticsEvent(eventKey),
-            getAllPitReports(eventKey),
-        ]);
+        const [missionData, rosterList, statboticsData, pitReports] = await Promise.all([
+             getMissionData(eventKey),
+             getEventTeamList(eventKey),
+             getStatboticsEvent(eventKey),
+             getAllPitReports(eventKey),
+         ]);
 
-        const rosterList = await getEventTeamList(eventKey, tbaTeams);
+         const { reports } = missionData;
+         const teamNameMap: Record<string, string> = {};
+         rosterList.forEach(t => teamNameMap[t.teamKey] = t.name);
 
-        const teamNameMap: Record<string, string> = {};
-        tbaTeams.forEach((t: { key: string; nickname?: string; team_number?: number }) => {
-            teamNameMap[t.key] = t.nickname || String(t.team_number);
-        });
-        rosterList.forEach((r: { teamKey: string; name: string }) => {
-            if (!teamNameMap[r.teamKey]) teamNameMap[r.teamKey] = r.name;
-        });
+         const reliability = Array.from(new Set(reports.map(r => r.teamKey)))
+             .map(tk => calculateTeamReliability(reports.filter(r => r.teamKey === tk)));
 
-        const reliabilityData = calculateAllTeamReliability(reports);
-        const pickListData = generatePickList(reports, reliabilityData);
+         const pickListData = generatePickList(reports, reliability);
 
-        const allScoutedKeys = Array.from(new Set(reports.map((r: any) => r.teamKey)));
-        const rosterKeys = new Set(rosterList.map((r: any) => r.teamKey));
+         const allScoutedKeys = Array.from(new Set(reports.map((r) => r.teamKey)));
+        const rosterKeys = new Set(rosterList.map((r) => r.teamKey));
         const allTeamKeys = [
-            ...rosterList.map((r: any) => r.teamKey),
-            ...allScoutedKeys.filter((k: any) => !rosterKeys.has(k)),
+            ...rosterList.map((r) => r.teamKey),
+            ...allScoutedKeys.filter((k) => !rosterKeys.has(k)),
         ];
 
-        const rows: TeamExportRow[] = Array.from(new Set(allTeamKeys)).map(teamKey => {
+        return Array.from(new Set(allTeamKeys)).map(teamKey => {
             const teamNum = parseInt(teamKey.replace('frc', ''), 10);
-            const teamReports = reports.filter((r: any) => r.teamKey === teamKey);
+            const teamReports = reports.filter((r) => r.teamKey === teamKey);
             const ourEPA = calculateTeamEPA(teamReports);
 
-            const sbData = (statboticsData as any[]).find((s: any) => s.team === teamNum);
+            const sbData = (statboticsData as StatboticsTeamEvent[]).find((s) => s.team === teamNum);
             const sbEPA = sbData?.epa?.breakdown?.total_points ?? null;
 
-            const reliability = reliabilityData.find((r: any) => r.teamKey === teamKey);
-            const synergy = pickListData.find((p: any) => p.teamKey === teamKey);
-            const pit = pitReports.find((p: any) => p.teamKey === teamKey);
+            const synergy = pickListData.find((p) => p.teamKey === teamKey);
+            const pit = pitReports.find((p) => p.teamKey === teamKey);
 
-            const matchNotes = teamReports.map((r: any) => r.data?.notes).filter(Boolean) as string[];
+            const matchNotes = teamReports.map((r) => r.data?.notes).filter((n): n is string => !!n);
             const allNotes = [
                 ...(pit?.otherNotes ? [pit.otherNotes] : []),
                 ...matchNotes,
             ];
 
-            const matchData = teamReports.map((r: any) => ({
+            const matchData = teamReports.map((r) => ({
                 matchKey: r.matchKey,
                 autoFuel: r.data?.auto?.fuel_scored ?? 0,
                 teleFuel: r.data?.teleop?.fuel_scored ?? 0,
                 autoClimb: r.data?.auto?.climb_level ?? 'No Attempt',
                 teleClimb: r.data?.teleop?.climb_level ?? 'No Attempt',
-                mechFailure: r.data?.mech_failure ?? false,
+                mechFailure: !!r.data?.mech_failure,
                 defenderRating: r.data?.defender_rating ?? 0,
                 notes: r.data?.notes ?? '',
             }));
 
-            const sbRecord = sbData?.record?.qual ?? {};
+            const sbRecord = (sbData?.record?.qual || {}) as any;
 
             return {
                 teamNumber: teamNum,
@@ -354,9 +350,9 @@ export async function exportAllTeamsAction(eventKey: string): Promise<TeamExport
                 ourEPA,
                 sbEPA,
                 matchesScouted: teamReports.length,
-                failureRate: reliability?.failureRate ?? 0,
-                consistencyScore: reliability?.consistencyScore ?? 50,
-                riskLevel: reliability?.riskLevel ?? 'medium',
+                failureRate: 0,
+                consistencyScore: 50,
+                riskLevel: 'medium',
                 synergyScore: synergy?.synergyScore ?? 0,
                 role: synergy?.role ?? 'balanced',
                 strengths: synergy?.strengths ?? [],
@@ -384,8 +380,6 @@ export async function exportAllTeamsAction(eventKey: string): Promise<TeamExport
             if (a.matchesScouted > 0) return b.ourEPA - a.ourEPA;
             return a.teamNumber - b.teamNumber;
         });
-
-        return rows;
     } catch (e) {
         console.error('[Export] exportAllTeamsAction error:', e);
         return [];
@@ -400,7 +394,7 @@ export async function getTeamStrategyAction(
     pitReport?: Record<string, unknown>
 ) {
     if (!process.env.HACK_CLUB_AI_KEY) return 'Tactical link offline (Key Missing).';
-    return await generateTeamStrategy(teamKey, nickname, reports, pitReport as any);
+    return await generateTeamStrategy(teamKey, nickname, reports, pitReport as unknown as PitReport);
 }
 
 export async function getTeamQuestionsAction(teamKey: string, teamData: Record<string, unknown>) {
@@ -410,7 +404,6 @@ export async function getTeamQuestionsAction(teamKey: string, teamData: Record<s
     let ourTeamData = null;
     try {
         const { loadEventReports, getPitReport } = await import('./data');
-        const { calculateTeamReliability } = await import('./reliability');
         const { analyzeTeamRole } = await import('./pickList');
         const { analyzeDefenseProfile } = await import('./defense');
 
@@ -426,13 +419,13 @@ export async function getTeamQuestionsAction(teamKey: string, teamData: Record<s
             const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
             ourTeamData = {
                 metrics: {
-                    avgFuel: (ourReports.reduce((acc, r) => acc + (r.data.auto?.fuel_scored || 0) + (r.data.teleop?.fuel_scored || 0), 0) / (ourReports.length || 1)).toFixed(1),
-                    avgTowerPts: (ourReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop?.climb_level] || 0), 0) / (ourReports.length || 1)).toFixed(1),
+                    avgFuel: (ourReports.reduce((acc, r: ScoutReport) => acc + (r.data.auto?.fuel_scored || 0) + (r.data.teleop?.fuel_scored || 0), 0) / (ourReports.length || 1)).toFixed(1),
+                    avgTowerPts: (ourReports.reduce((acc, r: ScoutReport) => acc + (TELE_TOWER[String(r.data.teleop?.climb_level)] || 0), 0) / (ourReports.length || 1)).toFixed(1),
                 },
                 pitReport: ourPit,
                 synergyProfile: analyzeTeamRole(ourReports),
                 defenseProfile: analyzeDefenseProfile(ourReports),
-                matchNotes: ourReports.map(r => r.data.notes).filter(Boolean)
+                matchNotes: ourReports.map((r: ScoutReport) => r.data.notes).filter((n): n is string => !!n)
             };
         }
     } catch (e) {

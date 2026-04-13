@@ -4,7 +4,7 @@
  * REBUILT 2026 Edition
  */
 
-import { ScoutReport } from './spr';
+import { ScoutReport } from './types/scouting';
 
 export interface ConsensusMetric {
     teamKey: string;

@@ -72,8 +72,12 @@ export function calculateTeamReliability(reports: ScoutReport[]): TeamReliabilit
     const failurePenalty = failureRate * 40;
     rawConsistency = Math.max(0, rawConsistency - failurePenalty);
 
-    // Confidence weight: 1 match → regress to 50 (unknown), 4+ → fully trust
-    const confidence = Math.min(1, (n - 1) / 3); // 0 @ n=1, 1.0 @ n=4+
+    // Confidence weight: 1 match → 50 (unknown), 4+ → fully trust
+    // If n > 1 and iqr is 0, we can be more confident in consistency
+    const baseConfidence = Math.min(1, (n - 1) / 3); 
+    const perfectConsistencyBonus = (n > 1 && iqr === 0 && failureRate === 0) ? 1 : baseConfidence;
+    const confidence = Math.max(baseConfidence, perfectConsistencyBonus);
+    
     const consistencyScore = Math.round(confidence * rawConsistency + (1 - confidence) * 50);
 
     // Risk level based on failure rate

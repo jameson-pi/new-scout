@@ -3,10 +3,12 @@
 import { useState, useMemo, memo, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { runSimulation, TeamPerformanceDistribution, SimulatedMatch } from '@/lib/simulation';
-import { calculateTeamEPA, ScoutReport } from '@/lib/spr';
+import { calculateTeamEPA } from '@/lib/spr';
+import { ScoutReport } from '@/lib/types/scouting';
 import { StatboticsTeamEvent } from '@/lib/statbotics';
 import { predictUpcomingMatches } from '@/lib/predictions';
 import { exportToCSV, ExportableTeam } from '@/lib/export';
+import { TBAMatch } from '@/lib/tba';
 
 
 interface TbaMatchLite {
@@ -18,8 +20,8 @@ interface TbaMatchLite {
         blue: { score: number; team_keys: string[] };
     };
     score_breakdown?: {
-        red?: { rp?: number };
-        blue?: { rp?: number };
+        red?: { rp?: number; [key: string]: any };
+        blue?: { rp?: number; [key: string]: any };
     };
 }
 
@@ -36,7 +38,7 @@ interface EventDashboardProps {
     distributions: TeamPerformanceDistribution[];
     teamNameMap: Record<string, string>;
     aiSummary: string;
-    tbaMatchesRaw: TbaMatchLite[];
+    tbaMatchesRaw: TBAMatch[];
     actualRankings: RankingsLite | null;
     statboticsData: StatboticsTeamEvent[];
 }
@@ -86,14 +88,14 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
     const groundTruthRPs = useMemo(() => {
         const rps: Record<string, number> = {};
         tbaMatchesRaw.forEach(m => {
-            const mNum = parseInt(m.matchKey?.split('_qm').pop() || m.match_number?.toString() || '0');
+            const mNum = m.match_number || 0;
             if (mNum <= matchLimit && m.alliances) {
                 let redRPs = 0;
                 let blueRPs = 0;
 
                 if (m.score_breakdown) {
-                    redRPs = m.score_breakdown.red?.rp || 0;
-                    blueRPs = m.score_breakdown.blue?.rp || 0;
+                    redRPs = (m.score_breakdown.red as any)?.rp || 0;
+                    blueRPs = (m.score_breakdown.blue as any)?.rp || 0;
                 } else {
                     const redScore = m.alliances.red.score;
                     const blueScore = m.alliances.blue.score;
@@ -194,7 +196,7 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
     const playedResultsMap = useMemo(() => {
         const map: Record<string, { redScore: number; blueScore: number; winner: 'red' | 'blue' | 'tie' }> = {};
         tbaMatchesRaw.forEach((m) => {
-            const key = m.key ?? m.matchKey;
+            const key = m.key;
             if (!key || !m.alliances) return;
             const redScore: number = m.alliances.red?.score ?? -1;
             const blueScore: number = m.alliances.blue?.score ?? -1;
@@ -253,29 +255,29 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                         <p style={{ color: 'var(--muted)', fontSize: '1rem', fontWeight: 500 }}>Match simulation and point-in-time ranking view</p>
                     </div>
 
-                    <div className="w-full md:w-auto event-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                        <Link href={`/event/${eventKey}/teams`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '90px' }}>
+                    <div className="w-full md:w-auto event-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <Link href={`/event/${eventKey}/teams`} style={{ textDecoration: 'none', flex: '1 1 auto', minWidth: '90px', maxWidth: '150px' }}>
                             <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255, 255, 255, 0.03)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                                 <p style={{ fontSize: '9px', fontWeight: 650, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     Teams
                                 </p>
                             </div>
                         </Link>
-                        <Link href={`/scouters/${eventKey}`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '100px' }}>
+                        <Link href={`/scouters/${eventKey}`} style={{ textDecoration: 'none', flex: '1 1 auto', minWidth: '100px', maxWidth: '150px' }}>
                             <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(124,109,216,0.35)', background: 'rgba(124,109,216,0.08)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                                 <p style={{ fontSize: '9px', fontWeight: 650, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     Scouter Intel
                                 </p>
                             </div>
                         </Link>
-                        <Link href={`/event/${eventKey}/draft`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '95px' }}>
+                        <Link href={`/event/${eventKey}/draft`} style={{ textDecoration: 'none', flex: '1 1 auto', minWidth: '95px', maxWidth: '150px' }}>
                             <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(79,174,192,0.35)', background: 'rgba(79,174,192,0.08)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                                 <p style={{ fontSize: '9px', fontWeight: 650, color: 'var(--secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     Draft Advisor
                                 </p>
                             </div>
                         </Link>
-                        <Link href={`/event/${eventKey}/alliance-sim`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '105px' }}>
+                        <Link href={`/event/${eventKey}/alliance-sim`} style={{ textDecoration: 'none', flex: '1 1 auto', minWidth: '105px', maxWidth: '150px' }}>
                             <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(99,143,209,0.35)', background: 'rgba(99,143,209,0.08)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                                 <p style={{ fontSize: '9px', fontWeight: 650, color: '#76a8df', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     Alliance Sim

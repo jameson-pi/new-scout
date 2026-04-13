@@ -1,52 +1,7 @@
+import { RebuiltData, ScoutReport, TBAMatchResult, ScouterStats } from './types/scouting';
+
 // Scout Precision Ranking (SPR) Algorithm
 // REBUILT 2026 Edition
-
-export interface RebuiltData {
-    auto: {
-        fuel_scored: number;
-        climb_level: 'No Attempt' | 'Level1';
-        moved: boolean;
-    };
-    teleop: {
-        fuel_scored: number;
-        climb_level: 'No Attempt' | 'Level1' | 'Level2' | 'Level3';
-    };
-    notes?: string;
-    mech_failure?: boolean;
-    defender_rating?: number;
-    hub_control?: 'Dominant' | 'Average' | 'Weak';
-    trench_capable?: boolean;
-}
-
-export interface ScoutReport {
-    scoutId: string;
-    matchKey: string;
-    teamKey: string;
-    alliance: 'red' | 'blue';
-    data: RebuiltData;
-}
-
-export interface TBAMatchResult {
-    matchKey: string;
-    alliances: {
-        red: { score: number; autoPoints: number; teleopPoints: number; endgamePoints: number };
-        blue: { score: number; autoPoints: number; teleopPoints: number; endgamePoints: number };
-    };
-}
-
-export interface ScouterStats {
-    scoutId: string;
-    matchesScouted: number;
-    avgError: number;
-    variance: number;
-    bias: number;
-    spr: number;
-    // Category Diagnostics
-    autoError: number;
-    teleError: number;
-    endgameError: number;
-    otherDataLength: number;
-}
 
 // REBUILT 2026 Scoring Constants
 const POINTS = {

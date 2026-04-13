@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { saveTeamNote, getTeamNote, HIGHLIGHT_TAGS } from '@/lib/notes';
 import { getTeamStrategyAction, getTeamQuestionsAction } from '@/lib/actions';
 import { semanticColors, neutralColors, getConsensusColor } from '@/lib/designTokens';
-import { ScoutReport } from '@/lib/spr';
+import { ScoutReport } from '@/lib/types/scouting';
 
 interface TeamDetailClientProps {
     eventKey: string;

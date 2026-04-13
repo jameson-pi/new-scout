@@ -1,7 +1,7 @@
 'use client';
 
 import { exportScouterStatsToCSV } from '@/lib/export';
-import { ScouterStats } from '@/lib/spr';
+import { ScouterStats } from '@/lib/types/scouting';
 
 interface ExportScouterStatsButtonProps {
     stats: ScouterStats[];
