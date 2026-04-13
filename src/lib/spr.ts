@@ -45,6 +45,7 @@ export interface ScouterStats {
     autoError: number;
     teleError: number;
     endgameError: number;
+    otherDataLength: number;
 }
 
 // REBUILT 2026 Scoring Constants

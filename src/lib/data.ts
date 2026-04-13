@@ -390,10 +390,10 @@ export async function getAllPitReports(eventKey: string): Promise<PitReport[]> {
             .input('eventKey', sql.NVarChar(20), eventKey)
             .query(`
                 SELECT * FROM frc6377TeamScoutingPrivate
-                WHERE LOWER(event_key) = LOWER(@eventKey)
+                WHERE event_key = @event_key
                 ORDER BY TRY_CAST(frc_team AS INT) ASC
             `);
-        return result.recordset.map(r => rowToPitReport(r as Record<string, unknown>));
+        return result.recordset.map((r: any) => rowToPitReport(r as Record<string, unknown>));
     } catch (e) {
         console.warn(`[DB] getAllPitReports error for ${eventKey}:`, e);
         return [];
@@ -431,3 +431,5 @@ export async function getAvailableEvents(): Promise<{ key: string; name: string;
         { key: '2026txman', name: 'Manor District',      location: 'Manor, TX' },
     ];
 }
+
+

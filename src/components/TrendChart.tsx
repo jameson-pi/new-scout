@@ -27,15 +27,15 @@ export default function TrendChart({ reports, teamKey }: TrendChartProps) {
             const matchNum = parseInt(r.matchKey.split('_qm').pop() || '0');
 
             // Calculate score for this match (REBUILT 2026)
-            const score = (d.auto.fuel_scored * 1) + (AUTO_TOWER[d.auto.tower_level] || 0) + (d.auto.moved ? 3 : 0)
-                + (d.teleop.fuel_scored * 1) + (TELE_TOWER[d.teleop.tower_level] || 0);
+            const score = (d.auto.fuel_scored * 1) + (AUTO_TOWER[d.auto.climb_level as keyof typeof AUTO_TOWER] || 0) + (d.auto.moved ? 0 : 0)
+                + (d.teleop.fuel_scored * 1) + (TELE_TOWER[d.teleop.climb_level as keyof typeof TELE_TOWER] || 0);
 
             // Running average
             const prevReports = teamReports.slice(0, i + 1);
             const avgScore = prevReports.reduce((acc, pr) => {
                 const pd = pr.data;
-                return acc + (pd.auto.fuel_scored * 1) + (AUTO_TOWER[pd.auto.tower_level] || 0) + (pd.auto.moved ? 3 : 0)
-                    + (pd.teleop.fuel_scored * 1) + (TELE_TOWER[pd.teleop.tower_level] || 0);
+                return acc + (pd.auto.fuel_scored * 1) + (AUTO_TOWER[pd.auto.climb_level as keyof typeof AUTO_TOWER] || 0) + (pd.auto.moved ? 0 : 0)
+                    + (pd.teleop.fuel_scored * 1) + (TELE_TOWER[pd.teleop.climb_level as keyof typeof TELE_TOWER] || 0);
             }, 0) / prevReports.length;
 
             return {
@@ -43,7 +43,7 @@ export default function TrendChart({ reports, teamKey }: TrendChartProps) {
                 score,
                 avgScore: Math.round(avgScore * 10) / 10,
                 fuel: d.auto.fuel_scored + d.teleop.fuel_scored,
-                towerPts: (AUTO_TOWER[d.auto.tower_level] || 0) + (TELE_TOWER[d.teleop.tower_level] || 0)
+                towerPts: (AUTO_TOWER[d.auto.climb_level as keyof typeof AUTO_TOWER] || 0) + (TELE_TOWER[d.teleop.climb_level as keyof typeof TELE_TOWER] || 0)
             };
         });
     }, [reports, teamKey]);

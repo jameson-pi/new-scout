@@ -42,7 +42,7 @@ export default async function ComparePage({ params }: { params: Promise<{ eventK
         const avgDefense = teamReports.reduce((acc, r) => acc + (r.data.defender_rating || 0), 0) / teamReports.length;
 
         // Collect all notes: match scouter notes + pit notes
-        const matchNotes = teamReports.map(r => r.data.notes).filter(Boolean);
+        const matchNotes = teamReports.map(r => r.data.notes).filter((n): n is string => !!n);
         const allNotes = [
             ...(pit?.otherNotes ? [`[PIT] ${pit.otherNotes}`] : []),
             ...matchNotes,

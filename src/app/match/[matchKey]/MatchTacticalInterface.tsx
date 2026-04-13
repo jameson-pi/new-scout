@@ -540,7 +540,7 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
             ...p,
             notes: manualNotes[p.teamKey] ? `${p.notes} [OVERRIDE: ${manualNotes[p.teamKey]}]` : p.notes
         }));
-        const result = await getTacticalStrategy(matchKey, selectedAlliance, updatedAllianceData, opponentProfiles);
+        const result = await getTacticalStrategy(matchKey, selectedAlliance, updatedAllianceData as any, opponentProfiles as any);
         setBriefing(result);
         setIsLoading(false);
     };

@@ -6,13 +6,14 @@ import ReactMarkdown from 'react-markdown';
 import { saveTeamNote, getTeamNote, HIGHLIGHT_TAGS } from '@/lib/notes';
 import { getTeamStrategyAction, getTeamQuestionsAction } from '@/lib/actions';
 import { semanticColors, neutralColors, getConsensusColor } from '@/lib/designTokens';
+import { ScoutReport } from '@/lib/spr';
 
 interface TeamDetailClientProps {
     eventKey: string;
     teamKey: string;
     teamNum: string;
     teamName: string;
-    teamReports: Record<string, unknown>[];
+    teamReports: ScoutReport[];
     metrics: {
         avgFuel: string;
         avgTowerPts: string;
@@ -90,7 +91,7 @@ export default function TeamDetailClient({
                     teamName,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     teamReports as any[],
-                    pitReport as Record<string, unknown> | null
+                    (pitReport as Record<string, unknown>) || undefined
                 );
                 if (mounted) {
                     setAiNotes(res);

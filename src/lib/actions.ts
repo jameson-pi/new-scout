@@ -3,7 +3,7 @@
 import { getPool, sql } from './db';
 import { generateMatchStrategy, generateTeamStrategy } from './ai';
 
-export async function saveScoutReport(report: Record<string, unknown>) {
+export async function saveScoutReport(report: any) {
     try {
         const pool = await getPool();
 

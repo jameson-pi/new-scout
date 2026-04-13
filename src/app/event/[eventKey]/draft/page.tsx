@@ -30,8 +30,8 @@ export default async function DraftAdvisorPage({ params }: { params: Promise<{ e
             teamKey: tk,
             name: teamNameMap[tk] || 'UNIT',
             avgFuel: (teamReports.reduce((acc, r) => acc + r.data.auto.fuel_scored + r.data.teleop.fuel_scored, 0) / teamReports.length).toFixed(1),
-            avgTowerPts: (teamReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.climb_level] || 0), 0) / teamReports.length).toFixed(1),
-            towerRate: ((teamReports.filter(r => r.data.teleop.climb_level !== 'No Attempt' && r.data.teleop.climb_level !== 'None').length / teamReports.length) * 100).toFixed(0)
+            avgTowerPts: (teamReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop.climb_level as keyof typeof TELE_TOWER] || 0), 0) / teamReports.length).toFixed(1),
+            towerRate: ((teamReports.filter(r => r.data.teleop.climb_level !== 'No Attempt').length / teamReports.length) * 100).toFixed(0)
         };
     });
 

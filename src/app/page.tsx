@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 
 // Lazy load heavy components
 const EventGrid = ({ events, defaultEventKey }: { events: any[]; defaultEventKey: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginTop: '4.5rem' }} className="reveal delay-1 home-grid" loading="lazy">
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginTop: '4.5rem' }} className="reveal delay-1 home-grid">
     {events.map((event, i) => (
       <Link key={event.key} href={`/event/${event.key}`} className="card-wrapper" style={{ textDecoration: 'none' }}>
         <div className="glass flex flex-col justify-between home-card" style={{ height: '280px', padding: '2.5rem', background: `linear-gradient(135deg, ${i === 0 ? 'rgba(138,88,35,0.12)' : 'rgba(0,204,204,0.08)'} 0%, transparent 100%)`, border: `2px solid ${i === 0 ? 'var(--primary-brown)' : 'var(--primary-teal)'}`, borderRadius: '28px', boxShadow: `0 8px 24px ${i === 0 ? 'rgba(138,88,35,0.15)' : 'rgba(0,204,204,0.15)'}` }}>

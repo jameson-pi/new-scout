@@ -36,13 +36,13 @@ Available Commands:
         let teamName = "Unknown";
         try {
             const teams = await getEventTeams(eventKey);
-            const teamInfo = teams.find(t => t.key === teamKey);
+            const teamInfo = teams.find((t: { key: string; }) => t.key === teamKey);
             if (teamInfo) teamName = teamInfo.nickname || teamInfo.name || "Unknown";
         } catch(e) {}
 
         if (command === 'team-strategy') {
             console.log(`Generating strategy for ${teamName}...`);
-            await getTeamStrategyAction(teamKey, teamName, teamReports, pitReport);
+            await getTeamStrategyAction(teamKey, teamName, teamReports as any, pitReport as any);
         } else {
             console.log(`Generating questions for ${teamName}...`);
             const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
