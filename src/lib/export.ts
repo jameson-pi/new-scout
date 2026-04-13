@@ -3,6 +3,7 @@
  */
 
 import type { TeamExportRow } from './actions';
+import { ScouterStats } from './spr';
 
 // ---------------------------------------------------------------------------
 // Full All-Teams Export helpers (client-side)
@@ -94,6 +95,11 @@ export function exportAllTeamsToJSON(teams: TeamExportRow[], eventKey: string): 
     downloadFile(content, `${eventKey}_all_teams_export.json`, 'application/json');
 }
 
+export function exportObjectToJSON(data: unknown, filename: string): void {
+    const content = JSON.stringify(data, null, 2);
+    downloadFile(content, filename.endsWith('.json') ? filename : `${filename}.json`, 'application/json');
+}
+
 export function exportAllTeamsToTextReport(teams: TeamExportRow[], eventKey: string): void {
     const climbOrder = ['Level3', 'Level2', 'Level1', 'No Attempt'];
     const lines = [
@@ -181,6 +187,33 @@ export function exportPickList(teams: { rank: number; teamKey: string; score: nu
     const rows = teams.map(t => [t.rank, t.teamKey.replace('frc', ''), t.score.toFixed(1), t.notes]);
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     downloadFile(csvContent, 'pick_list.csv', 'text/csv');
+}
+
+/**
+ * Export scouter statistics to CSV
+ */
+export function exportScouterStatsToCSV(stats: ScouterStats[], eventKey: string): void {
+    const headers = [
+        'Scouter ID', 'Matches Scouted', 'Avg Note Length', 'SPR (Precision)',
+        'Avg Error', 'Bias', 'Variance',
+        'Auto Error', 'Teleop Error', 'Endgame Error'
+    ];
+
+    const rows = stats.map(s => [
+        escapeCsv(s.scoutId),
+        s.matchesScouted,
+        Math.round(s.otherDataLength || 0),
+        s.spr.toFixed(2),
+        s.avgError.toFixed(2),
+        s.bias.toFixed(2),
+        s.variance.toFixed(2),
+        s.autoError.toFixed(2),
+        s.teleError.toFixed(2),
+        s.endgameError.toFixed(2)
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    downloadFile(csvContent, `${eventKey}_scouter_stats.csv`, 'text/csv');
 }
 
 /**

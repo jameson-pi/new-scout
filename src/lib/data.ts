@@ -2,6 +2,29 @@ import { ScoutReport, RebuiltData } from './spr';
 import { getEventMatches } from './tba';
 import { getPool, sql } from './db';
 
+// Simple in-memory cache for query results (1 minute TTL in production)
+const queryCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute
+
+function getCacheKey(...args: any[]): string {
+    return args.map(arg => String(arg)).join(':');
+}
+
+function getCached<T>(key: string): T | null {
+    const entry = queryCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+        queryCache.delete(key);
+        return null;
+    }
+    return entry.data as T;
+}
+
+function setCached<T>(key: string, data: T): T {
+    queryCache.set(key, { data, timestamp: Date.now() });
+    return data;
+}
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -95,7 +118,11 @@ export async function loadEventReports(eventKey: string): Promise<ScoutReport[]>
 /**
  * Unified getter for Simulation, SPR, and Dashboard
  */
-export async function getMissionData(eventKey: string = '2026txcle') {
+export async function getMissionData(eventKey: string = '2026txcle'): Promise<{ reports: ScoutReport[], tbaMatches: Record<string, any>, tbaMatchesRaw: any[] }> {
+    const cacheKey = getCacheKey('mission', eventKey);
+    const cached = getCached<{ reports: ScoutReport[], tbaMatches: Record<string, any>, tbaMatchesRaw: any[] }>(cacheKey);
+    if (cached) return cached;
+
     const [reports, tbaMatchesRaw] = await Promise.all([
         loadEventReports(eventKey),
         getEventMatches(eventKey),
@@ -122,7 +149,7 @@ export async function getMissionData(eventKey: string = '2026txcle') {
         };
     });
 
-    return { reports, tbaMatches, tbaMatchesRaw };
+    return setCached<{ reports: ScoutReport[], tbaMatches: Record<string, any>, tbaMatchesRaw: any[] }>(cacheKey, { reports, tbaMatches, tbaMatchesRaw });
 }
 
 export async function getEventSchedule(eventKey: string = '2026txcle') {

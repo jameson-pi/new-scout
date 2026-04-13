@@ -14,47 +14,63 @@ async function withCache(key: string, fn: () => Promise<string>): Promise<string
     const now = Date.now();
     const cached = AI_CACHE.get(key);
     if (cached && now < cached.expiry) {
-        console.log(`[AI CACHE] Hit for ${key}`);
+        console.log(`[AI CACHE HIT] ${key}`);
         return cached.content;
     }
-    const result = await fn();
-    if (result && !result.includes("severed") && !result.includes("offline")) {
-        AI_CACHE.set(key, { content: result, expiry: now + CACHE_TTL });
+    
+    console.log(`[AI GENERATING] Fetching new data for: ${key}...`);
+    try {
+        const result = await fn();
+        console.log(`\n==================================================`);
+        console.log(`[AI RESPONSE SUCCESS] ${key}`);
+        console.log(`==================================================`);
+        console.log(result);
+        console.log(`==================================================\n`);
+        
+        if (result && !result.includes("severed") && !result.includes("offline")) {
+            AI_CACHE.set(key, { content: result, expiry: now + CACHE_TTL });
+        }
+        return result;
+    } catch (e) {
+        console.error(`[AI EXCEPTION] Error generating for ${key}:`, e);
+        throw e;
     }
-    return result;
 }
 
 const REBUILT_CONTEXT = `
-REBUILT 2026 - Strategic Ruleset:
+The REBUILT 2026 game involves complex scoring systems and strategic "shifts" that dictate match flow. Based on the TU20 official game manual, here is the current ruleset:
 
 1. Autonomous Period (First 15 Seconds)
-- Leave (3 Points): All robots must leave starting zone.
-- FUEL in Hub (1 Point per piece): Score as many FUEL as possible into the Hub.
-- Tower Level 1 (15 Points): Robot climbs to Level 1 during auto.
-- Both Hubs are active during Auto. Alliance scoring most FUEL wins the "advantage" (opponent Hub inactive for Shift 1).
+- Active Hubs: Both HUBS are active during AUTO.
+- Tower Advantage: The ALLIANCE that scores the most FUEL during AUTO earns a strategic advantage; the opponent's HUB becomes inactive for the duration of Teleop Shift 1.
+- Auto Tower: Robots can earn 15 points for reaching LEVEL 1 (off the carpet) during AUTO. Max 2 robots per alliance.
 
 2. Teleop Period (2 Minutes 15 Seconds)
-- FUEL in Hub (1 Point per piece): No limit on robot FUEL capacity - throughput is king.
-- Hub Shift System: Hubs alternate active/inactive in 25-second shifts. Check Game Data for which Hub is active.
-- Field Obstacles: The Bump (6.5" barrier) and Trench (22" clearance tunnel) require strategic pathing.
-- AprilTags on Hub, Trenches, Tower, and Outpost for localization.
+- The Shift System: HUBs alternate between active and inactive states in 25-second shifts. Scoring in an inactive HUB earns 0 points.
+- Throughput Scoring: A FUEL piece is scored once it passes through the top opening. Scoring continues for 3 seconds after a HUB deactivates/match ends to account for processing time.
+- Field Navigation:
+  - BUMP: 6.5-inch barrier.
+  - TRENCH: 22.25-inch clearance tunnel (50.34" wide).
+  - HUB: 47"x47" base, 72" tall to front edge of hexagonal opening (41.7" wide).
+  - AprilTags: Used for localization on HUB, TRENCHES, TOWER, and OUTPOST.
 
 3. Endgame (Final 30 Seconds)
-- Both Hubs return to active status.
-- Tower Level 1 (10 Points): Robot off the carpet.
-- Tower Level 2 (20 Points): Bumpers above Low Rung (27 inches).
-- Tower Level 3 (30 Points): Bumpers above Mid Rung (45 inches).
-- Tower Zone Contact Penalty: Touching opponent near their Tower = opponent gets auto Level 3 (30 pts).
+- Hub Status: Both HUBs return to active status for the final 30 seconds.
+- Tower Levels:
+  - LEVEL 1 (10 Points): Robot is no longer touching the carpet or TOWER BASE.
+  - LEVEL 2 (20 Points): BUMPER covers must be completely above the LOW RUNG (27.0" high).
+  - LEVEL 3 (30 Points): BUMPER covers must be completely above the MID RUNG (45.0" high).
+- Rung Details: Low Rung (27"), Mid Rung (45"), High Rung (63"). Center-to-center spacing is 18".
+- Contact Rule: Robot must be contacting at least one RUNG or UPRIGHT on their TOWER to earn points.
+- Protection: Initiating contact with an opponent inside their TOWER projection is a MAJOR FOUL.
 
-4. Penalties
-- Minor Foul: 5 points to opponent.
-- Major Foul: 15 points to opponent.
-
-Ranking Points (RP):
-- Energized RP: Score >= 100 total FUEL.
-- Supercharged RP: Score >= 360 total FUEL.
-- Traversal RP: >= 50 total Tower points.
-- Win RP: 3 Points for winning, 1 for tie.
+4. Violations and Ranking Points (RP)
+- Minor Foul: 5 points to opponent. Major Foul: 15 points to opponent.
+- G415: Damaging an opponent inside their perimeter while your bumpers are outside your zone is a MAJOR FOUL.
+- Energized RP (1 RP): 100+ FUEL scored in active HUB (240+ for DCMP).
+- Supercharged RP (1 RP): Higher secondary FUEL threshold (360+).
+- Traversal RP (1 RP): Alliance scores 50+ total TOWER points.
+- Win: 3 RP. Tie: 1 RP.
 `;
 
 export async function generateMatchStrategy(
@@ -305,5 +321,103 @@ Pit Scouting Intel:
     } catch (e) {
         console.error("Team strategy error:", e);
         return "Intelligence link severed.";
+    }
+}
+
+export async function generateTeamQuestions(teamKey: string, teamData: any) {
+    try {
+        const metrics = teamData.metrics || {};
+        const autoFuel = metrics.avgAutoFuel || 'N/A';
+        const teleFuel = metrics.avgFuel || 'N/A';
+        const towerPts = metrics.avgTowerPts || 'N/A';
+        const pit = teamData.pitReport || {};
+        const synergy = teamData.synergyProfile || {};
+        const defense = teamData.defenseProfile || {};
+        const matchNotes = (teamData.matchNotes || []).map((n: string) => n.trim()).filter(Boolean);
+        const ourData = teamData.ourTeamData;
+
+        let synergyContext = "";
+        if (ourData) {
+            synergyContext = `
+            OUR TEAM (FRC 6377) Profile:
+            - Role: ${ourData.synergyProfile?.role || 'Unknown'}
+            - Avg Fuel: ${ourData.metrics?.avgFuel || 'N/A'}
+            - Avg Tower Pts: ${ourData.metrics?.avgTowerPts || 'N/A'}
+            - Pit Specs: Drivebase=Swerve, Climb=None, Trench=True, Bump=True, Hopper=60
+            - Pit Notes: ${ourData.pitReport?.otherNotes || 'None'}
+            - Defense History: Rating ${ourData.defenseProfile?.defenseRating || 0}/5, Games Defended: ${ourData.defenseProfile?.gamesDefended || 0}
+            - Field Observations (Our Match Notes):
+              ${(ourData.matchNotes || []).map((n: string, i: number) => `${i + 1}. ${n}`).join('\n              ') || 'None'}
+            `;
+        }
+
+        const profile = `
+        Team ${teamKey} Profile:
+        - Auto Fuel: ${autoFuel}
+        - Total Avg Fuel: ${teleFuel}
+        - Avg Tower Pts: ${towerPts}
+        - Pit Intel: Drivebase=${pit.drivebase || '?'}, Max Climb=${pit.climb || '?'}, Hopper Capacity=${pit.hopperCapacity ?? '?'} balls, Turret=${pit.turret || '?'}, Trench=${pit.trench || '?'}, Bump=${pit.bump || '?'}, Shift Tracking=${pit.shiftTracking || '?'}
+        - Pit Notes: ${pit.otherNotes || 'None'}
+        - Synergy Role: ${synergy.role || 'Unknown'}
+        - Strengths: ${((synergy.strengths as string[]) || []).join(', ')}
+        - Defense History: Rating ${defense.defenseRating || 0}/5, Games Defended: ${defense.gamesDefended || 0}
+        - Field Observations (Match Notes):
+          ${matchNotes.map((n: string, i: number) => `${i + 1}. ${n}`).join('\n          ') || 'None'}
+        `;
+
+        const prompt = `Role: You are the Lead Strategist for FRC Team 6377 (Howdy Bots). You are an expert in match flow analysis, alliance synergy, and the 2026 game REBUILT. Your goal is to vet potential alliance partners for the Playoff Draft.
+
+Context:
+
+Candidate Team: ${teamKey}
+
+Our Team: ${synergyContext}
+
+Candidate Profile: ${profile}
+
+Game Rules (REBUILT): ${REBUILT_CONTEXT}
+
+Objective:
+Generate 3 to 5 "high-signal" interview questions for the candidate’s drive team or pit crew. These questions must determine if this team can survive the rigors of a best-of-three playoff bracket and complement Team 6377's specific playstyle.
+
+Constraints & Style Guidelines:
+
+Generalize Data: Do not use EPA, OPR, or specific cycle counts. Use descriptive language (e.g., "consistent high-volume throughput," "versatile navigation," "resilient under defense").
+
+Focus on Playoff Viability: Prioritize mechanical reliability, software adaptability, and strategic "Pivot-ability" over Ranking Points. Factor in the team's ability to handle playoff-level defense and their synergy with Team 6377.
+
+Evidence-Based: Reference specific observations from the provided profile (including match notes and pit intel) or discrepancies between their "Pit Claims" and "Field Performance" (e.g., if match notes show they struggled with a feature they claim to have).
+
+Smart Filtering: Only ask about abilities the robot is documented to have in its profile. Do not ask about features (like climbing Level 3) if the pit intel or match performance indicates they cannot do it.
+
+Professional & Gracious: Frame questions positively to build rapport while remaining probing. (e.g., "Your climber is impressive; how do you ensure that same success when the HAB is crowded?")
+
+No Visual Obviousness: Do not ask about things that can be timed from a stopwatch (like climb speed). Ask about the process behind the performance.
+
+Mechanical vs. Software: Prioritize questions about software modes or strategic adjustments. Assume significant mechanical overhauls are impossible during the event.
+
+Penalties: DO NOT ASK to generate penalties at all.
+Match numbers in notes should be used for context but keep questions general.
+Do not mention finals. Instead mention the entirety of the playoff matches.
+
+Task:
+Analyze the profile against the rules and output a unformatted list of 3 strategic interview questions. 
+        `;
+
+        const cacheKey = `team-questions-${teamKey}-${matchNotes.length}-${(pit.otherNotes || '').length}-synergy-${!!ourData}`;
+        return await withCache(cacheKey, async () => {
+             const response = await client.chat.send({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    { role: 'system', content: 'You are an FRC Elite Strategy Analyst.' },
+                    { role: 'user', content: prompt }
+                ],
+                stream: false
+            });
+            return (response.choices[0]?.message?.content as string) || "Generation offline.";
+        });
+    } catch (e) {
+        console.error("AI Questions Error:", e);
+        return "Question generation offline.";
     }
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import QuickScoutCounter from '@/components/QuickScoutCounter';
 
 interface QuickScoutFormData {
     teamNumber: string;
@@ -26,7 +27,6 @@ export default function QuickScoutPage() {
     const [submitted, setSubmitted] = useState(false);
 
     const handleSubmit = () => {
-        console.log('Quick Scout Data:', formData);
         setSubmitted(true);
         setTimeout(() => {
             setSubmitted(false);
@@ -42,94 +42,74 @@ export default function QuickScoutPage() {
         }, 2000);
     };
 
-    const Counter = ({ value, onChange, label, max = 99 }: { value: number; onChange: (v: number) => void; label: string; max?: number }) => (
-        <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '10px', fontWeight: 900, color: '#888', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{label}</p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                <button
-                    onClick={() => onChange(Math.max(0, value - 1))}
-                    style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontSize: '1.5rem', fontWeight: 900, cursor: 'pointer' }}
-                >
-                    −
-                </button>
-                <span style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--primary)', minWidth: '60px' }}>{value}</span>
-                <button
-                    onClick={() => onChange(Math.min(max, value + 1))}
-                    style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', fontSize: '1.5rem', fontWeight: 900, cursor: 'pointer' }}
-                >
-                    +
-                </button>
-            </div>
-        </div>
-    );
-
     return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '2rem' }}>
-            <div className="mx-auto" style={{ maxWidth: '500px' }}>
-                <header style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--primary)' }}>
-                        QUICK SCOUT
+        <main style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)', padding: '1.25rem' }}>
+            <div className="mx-auto" style={{ maxWidth: '560px' }}>
+                <header style={{ marginBottom: '2rem', textAlign: 'center', display: 'grid', gap: '0.8rem' }}>
+                    <Link href="/" style={{ justifySelf: 'start', textDecoration: 'none', color: 'var(--primary-teal)', fontSize: '12px', fontWeight: 950, letterSpacing: '0.1em', textTransform: 'uppercase' }}>← Back</Link>
+                    <h1 style={{ fontSize: 'clamp(2.2rem, 8vw, 3.5rem)', fontWeight: 950, background: 'linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-brown) 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent' }}>
+                        ⚡ Quick Scout
                     </h1>
-                    <p style={{ color: '#888', fontSize: '0.9rem' }}>Fast mobile data entry • REBUILT 2026</p>
+                    <p style={{ color: 'var(--muted)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Fast Mobile Data Entry • REBUILT 2026</p>
                 </header>
 
                 {submitted ? (
-                    <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✓</div>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--secondary)' }}>SUBMITTED!</p>
+                    <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '0.8rem' }}>✓</div>
+                        <p style={{ fontSize: '1.25rem', fontWeight: 760, color: 'var(--secondary)' }}>Submitted</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gap: '1rem' }}>
                         {/* Team & Match */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="quick-fields" style={{ display: 'grid', gridTemplateColumns: 'clamp(1fr, 50%, 1fr) clamp(1fr, 50%, 1fr)', gap: '1rem' }}>
                             <div>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Team #</label>
+                                <label style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary-teal)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.5rem' }}>🤖 Team #</label>
                                 <input
                                     type="number"
                                     value={formData.teamNumber}
                                     onChange={(e) => setFormData({ ...formData, teamNumber: e.target.value })}
-                                    style={{ width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', color: '#fff', fontSize: '1.5rem', fontWeight: 950 }}
+                                    style={{ width: '100%', padding: '1rem', background: 'rgba(0,204,204,0.1)', border: '2px solid var(--primary-teal)', borderRadius: '15px', color: '#fff', fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 950 }}
                                 />
                             </div>
                             <div>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Match #</label>
+                                <label style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary-brown)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.5rem' }}>🎯 Match #</label>
                                 <input
                                     type="number"
                                     value={formData.matchNumber}
                                     onChange={(e) => setFormData({ ...formData, matchNumber: e.target.value })}
-                                    style={{ width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', color: '#fff', fontSize: '1.5rem', fontWeight: 950 }}
+                                    style={{ width: '100%', padding: '1rem', background: 'rgba(138,88,35,0.1)', border: '2px solid var(--primary-brown)', borderRadius: '15px', color: '#fff', fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 950 }}
                                 />
                             </div>
                         </div>
 
                         {/* Fuel Counters */}
-                        <div className="glass" style={{ padding: '1.5rem', borderRadius: '25px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-                                <Counter label="Auto Fuel" value={formData.autoFuel} onChange={(v) => setFormData({ ...formData, autoFuel: v })} />
-                                <Counter label="Teleop Fuel" value={formData.teleopFuel} onChange={(v) => setFormData({ ...formData, teleopFuel: v })} />
+                        <div className="glass" style={{ padding: '1.25rem', borderRadius: '18px' }}>
+                            <div className="quick-counters" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                <QuickScoutCounter label="Auto Fuel" value={formData.autoFuel} onChange={(v) => setFormData({ ...formData, autoFuel: v })} />
+                                <QuickScoutCounter label="Teleop Fuel" value={formData.teleopFuel} onChange={(v) => setFormData({ ...formData, teleopFuel: v })} />
                             </div>
                         </div>
 
                         {/* Tower Level */}
-                        <div className="glass" style={{ padding: '1.5rem', borderRadius: '25px' }}>
-                            <p style={{ fontSize: '10px', fontWeight: 900, color: '#888', textTransform: 'uppercase', marginBottom: '1rem' }}>Tower Level</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                        <div className="glass" style={{ padding: '1.25rem', borderRadius: '18px' }}>
+                            <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '0.8rem' }}>Tower Level</p>
+                            <div className="quick-tower" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
                                 {(['None', 'Level1', 'Level2', 'Level3'] as const).map(level => (
                                     <button
                                         key={level}
                                         onClick={() => setFormData({ ...formData, towerLevel: level })}
                                         style={{
-                                            padding: '1rem',
+                                            padding: '0.8rem 0.5rem',
                                             borderRadius: '10px',
-                                            border: 'none',
+                                            border: '1px solid rgba(255,255,255,0.12)',
                                             background: formData.towerLevel === level ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
                                             color: formData.towerLevel === level ? '#000' : '#fff',
-                                            fontWeight: 900,
-                                            fontSize: '0.7rem',
+                                            fontWeight: 700,
+                                            fontSize: '0.72rem',
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        {level === 'None' ? 'NONE' : level.replace('Level', 'LVL ')}
+                                        {level === 'None' ? 'None' : level.replace('Level', 'L')}
                                     </button>
                                 ))}
                             </div>
@@ -139,17 +119,17 @@ export default function QuickScoutPage() {
                         <button
                             onClick={() => setFormData({ ...formData, mechFailure: !formData.mechFailure })}
                             style={{
-                                padding: '1rem',
-                                borderRadius: '15px',
-                                border: formData.mechFailure ? '2px solid #ef4444' : '2px solid rgba(255,255,255,0.1)',
-                                background: formData.mechFailure ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
-                                color: formData.mechFailure ? '#ef4444' : '#888',
-                                fontWeight: 950,
+                                padding: '0.9rem',
+                                borderRadius: '12px',
+                                border: formData.mechFailure ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.12)',
+                                background: formData.mechFailure ? 'rgba(239, 68, 68, 0.18)' : 'transparent',
+                                color: formData.mechFailure ? '#ef4444' : 'var(--muted)',
+                                fontWeight: 700,
                                 cursor: 'pointer',
-                                fontSize: '1rem'
+                                fontSize: '0.95rem'
                             }}
                         >
-                            ⚠️ MECHANICAL FAILURE
+                            Mechanical failure
                         </button>
 
                         {/* Notes */}
@@ -159,13 +139,13 @@ export default function QuickScoutPage() {
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             style={{
                                 width: '100%',
-                                padding: '1rem',
+                                padding: '0.9rem',
                                 background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '15px',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                                borderRadius: '12px',
                                 color: '#fff',
-                                fontSize: '1rem',
-                                minHeight: '80px',
+                                fontSize: '0.95rem',
+                                minHeight: '84px',
                                 resize: 'none'
                             }}
                         />
@@ -175,17 +155,17 @@ export default function QuickScoutPage() {
                             onClick={handleSubmit}
                             disabled={!formData.teamNumber || !formData.matchNumber}
                             style={{
-                                padding: '1.5rem',
-                                borderRadius: '20px',
+                                padding: '1rem',
+                                borderRadius: '14px',
                                 border: 'none',
-                                background: formData.teamNumber && formData.matchNumber ? 'var(--secondary)' : 'rgba(255,255,255,0.05)',
-                                color: formData.teamNumber && formData.matchNumber ? '#000' : '#444',
-                                fontWeight: 950,
-                                fontSize: '1.25rem',
+                                background: formData.teamNumber && formData.matchNumber ? 'var(--secondary)' : 'rgba(255,255,255,0.06)',
+                                color: formData.teamNumber && formData.matchNumber ? '#000' : '#666',
+                                fontWeight: 760,
+                                fontSize: '1rem',
                                 cursor: formData.teamNumber && formData.matchNumber ? 'pointer' : 'not-allowed'
                             }}
                         >
-                            SUBMIT SCOUT DATA
+                            Submit scout data
                         </button>
                     </div>
                 )}

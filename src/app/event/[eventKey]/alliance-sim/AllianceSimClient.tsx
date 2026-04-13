@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -81,7 +80,7 @@ export default function AllianceSimClient({ eventKey, teams }: AllianceSimClient
     };
 
     return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
+        <main className="responsive-padding" style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
             <div className="mx-auto" style={{ maxWidth: '1100px' }}>
                 <header style={{ marginBottom: '2rem' }}>
                     <Link href={`/event/${eventKey}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: '1rem' }}>
@@ -93,7 +92,7 @@ export default function AllianceSimClient({ eventKey, teams }: AllianceSimClient
                     <p style={{ color: '#888', fontSize: '1rem' }}>Build your dream alliance and analyze synergy</p>
                 </header>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
+                <div className="side-by-side-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
                     {/* Left: Alliance Builder */}
                     <div>
                         <div className="glass" style={{ padding: '2rem', borderRadius: '30px', marginBottom: '2rem' }}>
@@ -101,7 +100,7 @@ export default function AllianceSimClient({ eventKey, teams }: AllianceSimClient
                                 YOUR ALLIANCE
                             </h3>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+                            <div className="responsive-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
                                 {[0, 1, 2].map(i => {
                                     const team = allianceTeams[i];
                                     return (
@@ -207,7 +206,7 @@ export default function AllianceSimClient({ eventKey, teams }: AllianceSimClient
                                         <p style={{ fontSize: '3rem', fontWeight: 950, color: 'var(--secondary)' }}>{simResults.predictedRPs}</p>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                         <div style={{ textAlign: 'center' }}>
                                             <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Win Rate</p>
                                             <p style={{ fontSize: '2rem', fontWeight: 950, color: '#fff' }}>{simResults.winRate}%</p>
@@ -218,7 +217,7 @@ export default function AllianceSimClient({ eventKey, teams }: AllianceSimClient
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                         <div style={{ textAlign: 'center' }}>
                                             <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Role Balance</p>
                                             <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{simResults.roleBalance}%</p>
@@ -231,7 +230,7 @@ export default function AllianceSimClient({ eventKey, teams }: AllianceSimClient
 
                                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
                                         <p style={{ fontSize: '9px', fontWeight: 900, color: '#888', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Scoring Potential</p>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                                        <div className="responsive-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                                             <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '10px' }}>
                                                 <p style={{ fontSize: '1rem', fontWeight: 950, color: '#a855f7' }}>{simResults.totalFuel}</p>
                                                 <p style={{ fontSize: '8px', color: '#666' }}>Fuel/Match</p>

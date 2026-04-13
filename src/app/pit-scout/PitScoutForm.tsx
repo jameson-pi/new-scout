@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { savePitReport } from '@/lib/actions';
 
 interface RosterTeam { teamKey: string; teamNum: number; name: string; }
@@ -80,26 +81,28 @@ function ToggleButton({ label, value, onChange }: { label: string; value: YesNo;
             type="button"
             onClick={() => onChange(value === 'Yes' ? 'No' : 'Yes')}
             style={{
-                padding: '0.75rem 1rem', borderRadius: '12px', border: '2px solid', fontSize: '11px',
-                fontWeight: 950, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s',
-                background: value === 'Yes' ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)',
-                borderColor: value === 'Yes' ? '#22c55e' : 'rgba(255,255,255,0.1)',
-                color: value === 'Yes' ? '#22c55e' : '#666',
+                padding: '0.7rem 0.95rem', borderRadius: '10px', border: '1px solid', fontSize: '11px',
+                fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease-out',
+                background: value === 'Yes' ? 'rgba(132,202,167,0.14)' : 'rgba(255,255,255,0.03)',
+                borderColor: value === 'Yes' ? '#84caa7' : 'rgba(255,255,255,0.12)',
+                color: value === 'Yes' ? '#84caa7' : 'var(--muted)',
             }}
         >
-            {value === 'Yes' ? '● ' : '○ '}{label}
+            {value === 'Yes' ? 'Yes · ' : 'No · '}{label}
         </button>
     );
 }
 
+const MemoToggleButton = memo(ToggleButton);
+
 function StarRating({ label, value, onChange, max = 5 }: { label: string; value: number; onChange: (v: number) => void; max?: number }) {
     return (
         <div>
-            <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{label}</p>
+            <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.06em' }}>{label}</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {Array.from({ length: max }, (_, i) => (
                     <button key={i} type="button" onClick={() => onChange(i + 1)}
-                        style={{ width: '2.5rem', height: '2.5rem', borderRadius: '8px', border: '2px solid', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', background: i < value ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.04)', borderColor: i < value ? '#8b5cf6' : 'rgba(255,255,255,0.1)', color: i < value ? '#8b5cf6' : '#444' }}>
+                        style={{ width: '2.4rem', height: '2.4rem', borderRadius: '8px', border: '1px solid', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s ease-out', background: i < value ? 'rgba(124,109,216,0.16)' : 'rgba(255,255,255,0.03)', borderColor: i < value ? 'rgba(124,109,216,0.55)' : 'rgba(255,255,255,0.12)', color: i < value ? 'var(--primary)' : 'var(--muted)' }}>
                         ★
                     </button>
                 ))}
@@ -110,8 +113,8 @@ function StarRating({ label, value, onChange, max = 5 }: { label: string; value:
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="glass" style={{ padding: '1.75rem', borderRadius: '24px', display: 'grid', gap: '1rem' }}>
-            <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '0.25rem' }}>{title}</p>
+        <div className="glass" style={{ padding: '1.75rem', borderRadius: '20px', display: 'grid', gap: '1.2rem', borderLeft: '6px solid var(--primary-teal)', background: 'linear-gradient(135deg, rgba(0,204,204,0.08) 0%, transparent 100%)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary-teal)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>⚙ {title}</p>
             {children}
         </div>
     );
@@ -120,13 +123,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div>
-            <p style={{ fontSize: '10px', fontWeight: 900, color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>{label}</p>
+            <p style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary-brown)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>{label}</p>
             {children}
         </div>
     );
 }
 
-const inputStyle: React.CSSProperties = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '2px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '0.75rem 1rem', color: '#fff', fontSize: '1rem', fontWeight: 700, outline: 'none' };
+const inputStyle: React.CSSProperties = { width: '100%', background: 'rgba(0,204,204,0.08)', border: '2px solid var(--primary-teal)', borderRadius: '12px', padding: '0.9rem 1.1rem', color: 'var(--foreground)', fontSize: '1rem', fontWeight: 700 };
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' };
 
 export default function PitScoutForm({ eventKey, roster, initialScouters, preselectedTeam }: Props) {
@@ -179,29 +182,29 @@ export default function PitScoutForm({ eventKey, roster, initialScouters, presel
 
     if (submitted) {
         return (
-            <main style={{ minHeight: '100vh', background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem', padding: '2rem' }}>
-                <div className="glass" style={{ padding: '4rem', borderRadius: '40px', textAlign: 'center', border: '1px solid rgba(34,197,94,0.3)' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic' }}>PIT LOGGED</h2>
-                    <p style={{ color: '#888', marginTop: '0.5rem' }}>Team {submittedTeam.replace('frc', '')} — {eventKey.toUpperCase()}</p>
+            <main style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.5rem' }}>
+                <div className="glass" style={{ padding: '2.5rem', borderRadius: '28px', textAlign: 'center', border: '1px solid rgba(132,202,167,0.3)' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>✅</div>
+                    <h2 style={{ fontSize: '2rem', fontWeight: 760, letterSpacing: '-0.02em' }}>Pit Report Saved</h2>
+                    <p style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>Team {submittedTeam.replace('frc', '')} — {eventKey.toUpperCase()}</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button onClick={() => { setSubmitted(false); setForm(f => ({ ...f, team: '' })); }} style={{ padding: '1rem 2rem', borderRadius: '20px', background: 'var(--primary)', color: '#fff', border: 'none', fontWeight: 950, cursor: 'pointer' }}>SCOUT ANOTHER</button>
-                    <Link href={`/event/${eventKey}`} style={{ padding: '1rem 2rem', borderRadius: '20px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 950, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>BACK TO EVENT</Link>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button onClick={() => { setSubmitted(false); setForm(f => ({ ...f, team: '' })); }} style={{ padding: '0.85rem 1.4rem', borderRadius: '14px', background: 'var(--primary)', color: '#1a1d22', border: 'none', fontWeight: 700, cursor: 'pointer' }}>Scout Another</button>
+                    <Link href={`/event/${eventKey}`} style={{ padding: '0.85rem 1.4rem', borderRadius: '14px', background: 'rgba(255,255,255,0.04)', color: 'var(--foreground)', border: '1px solid rgba(255,255,255,0.12)', fontWeight: 650, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Back to Event</Link>
                 </div>
             </main>
         );
     }
 
     return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '2rem 1.5rem 8rem' }}>
-            <div style={{ maxWidth: '560px', margin: '0 auto', display: 'grid', gap: '1.5rem' }}>
+        <main style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)', padding: '1.5rem 1.25rem 6rem' }}>
+            <div style={{ maxWidth: '560px', margin: '0 auto', display: 'grid', gap: '1.25rem' }}>
                 {/* Header */}
-                <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <Link href={`/event/${eventKey}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '11px', fontWeight: 900, letterSpacing: '0.15em' }}>← EVENT</Link>
+                <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <Link href={`/event/${eventKey}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em' }}>← Event</Link>
                     <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ fontSize: '1rem', fontWeight: 950, letterSpacing: '0.25em', color: 'var(--primary)' }}>PIT SCOUT</h1>
-                        <p style={{ fontSize: '11px', color: '#555', fontWeight: 700 }}>{eventKey.toUpperCase()}</p>
+                        <h1 style={{ fontSize: '0.95rem', fontWeight: 760, letterSpacing: '0.14em', color: 'var(--primary)' }}>Pit Scout</h1>
+                        <p style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{eventKey.toUpperCase()}</p>
                     </div>
                     <div style={{ width: '4rem' }} />
                 </header>
@@ -361,7 +364,7 @@ export default function PitScoutForm({ eventKey, roster, initialScouters, presel
 
                 {/* Robot Photo */}
                 <Section title="Robot Photo">
-                    <RobotImageCapture value={form.robot_image_url} onChange={v => set('robot_image_url', v)} />
+                    <RobotImageCapture value={form.robot_image_url} onChange={(v: string) => set('robot_image_url', v)} />
                     {!form.robot_image_url && (
                         <p style={{ fontSize: '10px', color: '#444', textAlign: 'center' }}>Photo helps alliance partners identify the robot quickly</p>
                     )}
@@ -423,3 +426,36 @@ export default function PitScoutForm({ eventKey, roster, initialScouters, presel
     );
 }
 
+function RobotImageCapture({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const handleSelectedFile = (file?: File) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => onChange(String(reader.result || ''));
+        reader.readAsDataURL(file);
+    };
+
+    return (
+        <div style={{ display: 'grid', gap: '0.6rem' }}>
+            {value ? (
+                <Image
+                    src={value}
+                    alt="Robot preview"
+                    width={960}
+                    height={640}
+                    unoptimized
+                    style={{ width: '100%', maxHeight: '220px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)' }}
+                />
+            ) : (
+                <div style={{ padding: '0.9rem', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.2)', color: 'var(--muted)', textAlign: 'center', fontSize: '12px' }}>
+                    No photo selected
+                </div>
+            )}
+            <input type="file" accept="image/*" capture="environment" style={{ fontSize: '12px', color: 'var(--muted)' }} onChange={(e) => handleSelectedFile(e.target.files?.[0])} />
+            {value && (
+                <button type="button" onClick={() => onChange('')} style={{ width: 'fit-content', padding: '0.55rem 0.8rem', borderRadius: '10px', border: '1px solid rgba(205,93,116,0.35)', background: 'rgba(205,93,116,0.08)', color: 'var(--accent)', fontWeight: 650, cursor: 'pointer' }}>
+                    Remove
+                </button>
+            )}
+        </div>
+    );
+}

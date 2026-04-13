@@ -1,9 +1,9 @@
 'use server';
 
 import { getPool, sql } from './db';
-import { generateMatchStrategy } from './ai';
+import { generateMatchStrategy, generateTeamStrategy } from './ai';
 
-export async function saveScoutReport(report: any) {
+export async function saveScoutReport(report: Record<string, unknown>) {
     try {
         const pool = await getPool();
 
@@ -397,14 +397,53 @@ export async function getTeamStrategyAction(
     teamKey: string,
     nickname: string,
     reports: Record<string, unknown>[],
-    pitReport: Record<string, unknown> | null
-): Promise<string> {
-    const { generateTeamStrategy } = await import('./ai');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return generateTeamStrategy(teamKey, nickname, reports as any[], pitReport as any);
+    pitReport?: Record<string, unknown>
+) {
+    if (!process.env.HACK_CLUB_AI_KEY) return 'Tactical link offline (Key Missing).';
+    return await generateTeamStrategy(teamKey, nickname, reports, pitReport as any);
 }
 
-export async function getTacticalStrategy(matchKey: string, alliance: 'red' | 'blue', allianceData: any[], opponentData: any[]) {
+export async function getTeamQuestionsAction(teamKey: string, teamData: Record<string, unknown>) {
+    if (!process.env.HACK_CLUB_AI_KEY) return 'Question generation offline (Key Missing).';
+    
+    // Fetch our own team's performance data to provide synergy context
+    let ourTeamData = null;
+    try {
+        const { loadEventReports, getPitReport } = await import('./data');
+        const { calculateTeamReliability } = await import('./reliability');
+        const { analyzeTeamRole } = await import('./pickList');
+        const { analyzeDefenseProfile } = await import('./defense');
+
+        // Infer eventKey from teamData or use default
+        const eventKey = (teamData.eventKey as string) || '2026txcle'; 
+        const ourTeamKey = 'frc6377';
+        
+        const allReports = await loadEventReports(eventKey);
+        const ourReports = allReports.filter(r => r.teamKey === ourTeamKey);
+        const ourPit = await getPitReport(ourTeamKey, eventKey);
+
+        if (ourReports.length > 0) {
+            const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };
+            ourTeamData = {
+                metrics: {
+                    avgFuel: (ourReports.reduce((acc, r) => acc + (r.data.auto?.fuel_scored || 0) + (r.data.teleop?.fuel_scored || 0), 0) / (ourReports.length || 1)).toFixed(1),
+                    avgTowerPts: (ourReports.reduce((acc, r) => acc + (TELE_TOWER[r.data.teleop?.climb_level] || 0), 0) / (ourReports.length || 1)).toFixed(1),
+                },
+                pitReport: ourPit,
+                synergyProfile: analyzeTeamRole(ourReports),
+                defenseProfile: analyzeDefenseProfile(ourReports),
+                matchNotes: ourReports.map(r => r.data.notes).filter(Boolean)
+            };
+        }
+    } catch (e) {
+        console.error("[AI] Failed to fetch our team data for synergy:", e);
+    }
+
+    const { generateTeamQuestions } = await import('./ai');
+    return await generateTeamQuestions(teamKey, { ...teamData, ourTeamData });
+}
+
+export async function getTacticalStrategy(matchKey: string, alliance: 'red' | 'blue', allianceData: Record<string, unknown>[], opponentData: Record<string, unknown>[]) {
     try {
         return await generateMatchStrategy(matchKey, alliance, allianceData, opponentData);
     } catch (e) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { getTacticalStrategy } from '@/lib/actions';
 import ReactMarkdown from 'react-markdown';
 
@@ -10,6 +10,7 @@ interface PredictedMatchData {
     predictedTele: number;
     predictedTower: number;
     sampleSize: number;
+    variance?: number;
 }
 
 interface ActualMatchData {
@@ -136,6 +137,29 @@ function AllianceBreakdown({
 
     return (
         <div style={{ background: bgWin, borderRadius: '30px', padding: '2rem', border: `1px solid ${color}22` }}>
+            {/* Alliance composition header */}
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <p style={{ fontSize: '8px', fontWeight: 950, color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>Alliance Teams</p>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        {profiles.map(p => (
+                            <div key={p.teamKey} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 950, color: color }}>{p.teamNum}</span>
+                                <span style={{ fontSize: '8px', fontWeight: 700, color: '#666' }}>
+                                    {p.predicted.predictedPts}pts
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '8px', fontWeight: 950, color: '#666', textTransform: 'uppercase' }}>Total Predicted</p>
+                    <p style={{ fontSize: '1.5rem', fontWeight: 950, color: color, fontFamily: 'monospace' }}>
+                        {profiles.reduce((s, p) => s + p.predicted.predictedPts, 0)}pts
+                    </p>
+                </div>
+            </div>
+
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
@@ -289,12 +313,222 @@ function StatPill({ label, value, color }: { label: string; value: string; color
     );
 }
 
+const MemoStatPill = memo(StatPill);
+
+interface TeamDetailPanelProps {
+    profile: TeamProfile;
+    alliance: 'red' | 'blue';
+    alliancemates: TeamProfile[];
+    onClose: () => void;
+}
+
+function TeamDetailPanel({ profile, alliance, alliancemates, onClose }: TeamDetailPanelProps) {
+    const color = alliance === 'red' ? '#ef4444' : '#3b82f6';
+    const bgColor = alliance === 'red' ? 'rgba(239,68,68,0.08)' : 'rgba(59,130,246,0.08)';
+    
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000, padding: '2rem'
+        }} onClick={onClose}>
+            <div style={{
+                background: '#0a0a0d', border: `1px solid ${color}33`, borderRadius: '35px',
+                maxWidth: '900px', width: '100%', maxHeight: '90vh', overflow: 'auto',
+                padding: '3rem'
+            }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '2rem' }}>
+                    <div>
+                        <h2 style={{ fontSize: '3rem', fontWeight: 950, fontStyle: 'italic', color: color, lineHeight: 1 }}>
+                            {profile.teamNum}
+                        </h2>
+                        <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.5rem' }}>
+                            {alliance} alliance • tactical unit
+                        </p>
+                    </div>
+                    <button onClick={onClose} style={{
+                        background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#666'
+                    }}>
+                        ✕
+                    </button>
+                </div>
+
+                {/* Predicted Score Breakdown */}
+                <div style={{
+                    background: bgColor, border: `1px solid ${color}22`, borderRadius: '20px',
+                    padding: '1.5rem', marginBottom: '2rem'
+                }}>
+                    <p style={{ fontSize: '9px', fontWeight: 950, color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                        📊 PREDICTED PERFORMANCE
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
+                        <div>
+                            <p style={{ fontSize: '8px', color: '#666', fontWeight: 700 }}>Total Score</p>
+                            <p style={{ fontSize: '2rem', fontWeight: 950, color, fontFamily: 'monospace' }}>
+                                {profile.predicted.predictedPts}
+                            </p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '8px', color: '#666', fontWeight: 700 }}>Auto Fuel</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#06b6d4', fontFamily: 'monospace' }}>
+                                {profile.predicted.predictedAuto}
+                            </p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '8px', color: '#666', fontWeight: 700 }}>Teleop Fuel</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#22c55e', fontFamily: 'monospace' }}>
+                                {profile.predicted.predictedTele}
+                            </p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '8px', color: '#666', fontWeight: 700 }}>Tower Points</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#eab308', fontFamily: 'monospace' }}>
+                                {profile.predicted.predictedTower}
+                            </p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '8px', color: '#666', fontWeight: 700 }}>Sample Size</p>
+                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#888' }}>
+                                n={profile.predicted.sampleSize}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Alliance Composition */}
+                <div style={{
+                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px',
+                    padding: '1.5rem', marginBottom: '2rem'
+                }}>
+                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                        👥 ALLIANCE COMPOSITION
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                        {alliancemates.map((mate) => (
+                            <div key={mate.teamKey} style={{
+                                background: mate.teamKey === profile.teamKey ? `${color}22` : 'rgba(0,0,0,0.2)',
+                                border: mate.teamKey === profile.teamKey ? `1px solid ${color}` : '1px solid rgba(255,255,255,0.05)',
+                                borderRadius: '15px', padding: '1rem', textAlign: 'center'
+                            }}>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 950, color: mate.teamKey === profile.teamKey ? color : '#fff' }}>
+                                    {mate.teamNum}
+                                </p>
+                                <p style={{ fontSize: '8px', color: '#666', fontWeight: 700 }}>
+                                    {mate.predicted.predictedPts}pts
+                                </p>
+                                <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                                    {[
+                                        { icon: '⛽', val: (parseFloat(mate.avgAutoFuel) + parseFloat(mate.avgTeleopFuel)).toFixed(0) },
+                                        { icon: '🏔', val: mate.avgTowerPts },
+                                        { icon: '📍', val: mate.trenchCapable === 'Yes' ? '✓' : '✕' }
+                                    ].map((stat, i) => (
+                                        <span key={i} style={{ fontSize: '7px', background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
+                                            {stat.icon} {stat.val}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Historical Performance */}
+                <div style={{
+                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px',
+                    padding: '1.5rem', marginBottom: '2rem'
+                }}>
+                    <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                        📈 HISTORICAL STATS
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+                        {[
+                            { label: 'Avg Fuel', val: parseFloat(profile.avgFuel).toFixed(1), suffix: '⛽' },
+                            { label: 'Auto Fuel', val: profile.avgAutoFuel, suffix: '⛽' },
+                            { label: 'Teleop Fuel', val: profile.avgTeleopFuel, suffix: '⛽' },
+                            { label: 'Tower Points', val: profile.avgTowerPts, suffix: 'pts' },
+                            { label: 'Tower %', val: profile.towerRate, suffix: '%' },
+                            { label: 'Defense Avg', val: profile.avgDefense, suffix: '/10' },
+                            { label: 'Auto Mobility', val: profile.autoMobility, suffix: '%' },
+                            { label: 'Failures', val: String(profile.failures), suffix: 'x' },
+                        ].map(({ label, val, suffix }) => (
+                            <div key={label} style={{
+                                background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '1rem', textAlign: 'center'
+                            }}>
+                                <p style={{ fontSize: '8px', color: '#888', fontWeight: 700 }}>{label}</p>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>
+                                    {val}{suffix}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Pit Scouting Details */}
+                {profile.pit && (
+                    <div style={{
+                        background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: '20px',
+                        padding: '1.5rem', marginBottom: '2rem'
+                    }}>
+                        <p style={{ fontSize: '9px', fontWeight: 950, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                            🔧 PIT SCOUTING
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                            {[
+                                { label: 'Drivebase', val: profile.pit.drivebase },
+                                { label: 'Max Climb', val: profile.pit.climb },
+                                { label: 'Hopper Capacity', val: profile.pit.hopperCapacity ? `${profile.pit.hopperCapacity}` : 'N/A' },
+                                { label: 'Trench Capable', val: profile.pit.trench },
+                                { label: 'Bump Strategy', val: profile.pit.bump },
+                                { label: 'Can Lob', val: profile.pit.canLob },
+                                { label: 'Turret', val: profile.pit.turret },
+                                { label: 'Shift Tracking', val: profile.pit.shiftTracking },
+                                { label: 'Floor Pickup', val: profile.pit.pickupFloor },
+                                { label: 'Outpost Pickup', val: profile.pit.pickupOutpost },
+                                { label: 'Auto Climb', val: profile.pit.autoClimb },
+                                { label: 'Robot Quality', val: profile.pit.robotQuality ? `${profile.pit.robotQuality}/5` : 'N/A' },
+                                { label: 'Weight', val: profile.pit.weightLbs ? `${profile.pit.weightLbs}lbs` : 'N/A' },
+                                { label: 'Height', val: profile.pit.heightIn ? `${profile.pit.heightIn}in` : 'N/A' },
+                            ].filter(item => item.val && item.val !== 'N/A').map(({ label, val }) => (
+                                <div key={label}>
+                                    <p style={{ fontSize: '8px', color: '#a855f7', fontWeight: 700 }}>{label}</p>
+                                    <p style={{ fontSize: '0.95rem', color: '#ccc', fontWeight: 700 }}>{val}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {profile.pit.otherNotes && (
+                            <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px' }}>
+                                <p style={{ fontSize: '8px', color: '#888', fontWeight: 700, marginBottom: '0.5rem' }}>Additional Notes</p>
+                                <p style={{ fontSize: '0.9rem', color: '#ddd', lineHeight: 1.6 }}>{profile.pit.otherNotes}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Field Notes */}
+                {profile.notes && (
+                    <div style={{
+                        background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '20px',
+                        padding: '1.5rem'
+                    }}>
+                        <p style={{ fontSize: '9px', fontWeight: 950, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                            📝 SCOUTER NOTES
+                        </p>
+                        <p style={{ fontSize: '0.95rem', color: '#ddd', lineHeight: 1.8 }}>{profile.notes}</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles, blueProfiles, isPlayed, tbaResult, redPredicted, bluePredicted }: Props) {
     const [selectedAlliance, setSelectedAlliance] = useState<'red' | 'blue'>('red');
     const [manualNotes, setManualNotes] = useState<Record<string, string>>({});
     const [briefing, setBriefing] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [view, setView] = useState<'breakdown' | 'strategy'>(isPlayed ? 'breakdown' : 'strategy');
+    const [selectedTeam, setSelectedTeam] = useState<{ profile: TeamProfile; alliance: 'red' | 'blue' } | null>(null);
 
     const activeProfiles = selectedAlliance === 'red' ? redProfiles : blueProfiles;
     const opponentProfiles = selectedAlliance === 'red' ? blueProfiles : redProfiles;
@@ -412,7 +646,29 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
                             {activeProfiles.map((p) => (
-                                <div key={p.teamKey} className="glass" style={{ padding: '2rem', borderRadius: '35px', borderLeft: `4px solid ${selectedAlliance === 'red' ? '#ef4444' : '#3b82f6'}33` }}>
+                                <div
+                                    key={p.teamKey}
+                                    onClick={() => setSelectedTeam({ profile: p, alliance: selectedAlliance })}
+                                    className="glass"
+                                    style={{ padding: '2rem', borderRadius: '35px', borderLeft: `4px solid ${selectedAlliance === 'red' ? '#ef4444' : '#3b82f6'}33`, cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative', overflow: 'hidden' }}
+                                    onMouseEnter={(e) => {
+                                        const el = e.currentTarget as HTMLElement;
+                                        el.style.borderLeftColor = selectedAlliance === 'red' ? '#ef4444' : '#3b82f6';
+                                        el.style.transform = 'translateY(-4px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        const el = e.currentTarget as HTMLElement;
+                                        el.style.borderLeftColor = selectedAlliance === 'red' ? '#ef444433' : '#3b82f633';
+                                        el.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    {/* Click indicator */}
+                                    <div style={{
+                                        position: 'absolute', top: '1rem', right: '1rem',
+                                        fontSize: '10px', color: '#666', fontWeight: 700
+                                    }}>
+                                        CLICK FOR DETAILS
+                                    </div>
                                     <div className="flex justify-between items-start" style={{ marginBottom: '1.5rem' }}>
                                         <div>
                                             <h4 style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: '#fff', lineHeight: 1 }}>{p.teamNum}</h4>
@@ -478,13 +734,13 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
                     {/* AI Generation */}
                     <section className="reveal delay-3 flex flex-col items-center" style={{ marginTop: '2rem' }}>
                         <button onClick={handleGenerate} disabled={isLoading} className="generate-btn" style={{
-                            padding: '1.5rem 4rem', borderRadius: '100px', border: 'none',
-                            background: isLoading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                            color: '#fff', fontWeight: 950, fontSize: '14px', letterSpacing: '0.1em',
+                            padding: '2rem 5rem', borderRadius: '100px', border: '2px solid var(--primary-teal)',
+                            background: isLoading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-brown) 100%)',
+                            color: isLoading ? '#666' : '#000', fontWeight: 950, fontSize: '16px', letterSpacing: '0.15em', textTransform: 'uppercase',
                             cursor: isLoading ? 'not-allowed' : 'pointer',
-                            boxShadow: isLoading ? 'none' : '0 10px 40px rgba(168, 85, 247, 0.3)', transition: 'all 0.3s ease',
+                            boxShadow: isLoading ? 'none' : '0 0 40px rgba(0, 204, 204, 0.5), 0 15px 50px rgba(0, 204, 204, 0.2)', transition: 'all 0.3s ease',
                         }}>
-                            {isLoading ? 'PROCESSING MISSION INTEL...' : 'GENERATE TACTICAL BRIEFING →'}
+                            {isLoading ? '⚙ PROCESSING INTELLIGENCE...' : '⚡ GENERATE TACTICAL BRIEFING'}
                         </button>
 
                         {briefing && (
@@ -500,6 +756,16 @@ export default function MatchTacticalInterface({ matchKey, eventKey, redProfiles
                         )}
                     </section>
                 </>
+            )}
+
+            {/* Team Detail Panel Modal */}
+            {selectedTeam && (
+                <TeamDetailPanel
+                    profile={selectedTeam.profile}
+                    alliance={selectedTeam.alliance}
+                    alliancemates={selectedTeam.alliance === 'red' ? redProfiles : blueProfiles}
+                    onClose={() => setSelectedTeam(null)}
+                />
             )}
         </div>
     );

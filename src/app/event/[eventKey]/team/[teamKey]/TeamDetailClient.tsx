@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { saveTeamNote, getTeamNote, HIGHLIGHT_TAGS } from '@/lib/notes';
-import { getTeamStrategyAction } from '@/lib/actions';
+import { getTeamStrategyAction, getTeamQuestionsAction } from '@/lib/actions';
+import { semanticColors, neutralColors, getConsensusColor } from '@/lib/designTokens';
 
 interface TeamDetailClientProps {
     eventKey: string;
     teamKey: string;
     teamNum: string;
     teamName: string;
-    teamReports: any[];
+    teamReports: Record<string, unknown>[];
     metrics: {
         avgFuel: string;
         avgTowerPts: string;
@@ -74,28 +75,62 @@ export default function TeamDetailClient({
     const [highlights, setHighlights] = useState(() => getTeamNote(teamKey)?.highlights || []);
     const [aiNotes, setAiNotes] = useState<string | null>(null);
     const [aiLoading, setAiLoading] = useState(true);
+    const [aiQuestions, setAiQuestions] = useState<string | null>(null);
+    const [aiQuestionsLoading, setAiQuestionsLoading] = useState(false);
 
     useEffect(() => {
-        setAiLoading(true);
-        setAiNotes(null);
-        getTeamStrategyAction(
-            teamKey,
-            teamName,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            teamReports as any[],
-            pitReport as Record<string, unknown> | null
-        ).then(result => {
-            setAiNotes(result.replace(/\r\n/g, '\n'));
-        }).catch(() => {
-            setAiNotes('Intelligence link severed.');
-        }).finally(() => {
-            setAiLoading(false);
-        });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [teamKey, eventKey, teamReports.length, pitReport?.drivebase]);
+        let mounted = true;
 
-    const saveNote = () => {
+        const fetchAI = async () => {
+            setAiLoading(true);
+            setAiNotes(null);
+            try {
+                const res = await getTeamStrategyAction(
+                    teamKey,
+                    teamName,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    teamReports as any[],
+                    pitReport as Record<string, unknown> | null
+                );
+                if (mounted) {
+                    setAiNotes(res);
+                }
+            } catch (e) {
+                console.error(e);
+                if (mounted) setAiNotes("Failed to load tactical intel.");
+            } finally {
+                if (mounted) setAiLoading(false);
+            }
+        };
+
+        if (teamReports.length > 0) fetchAI();
+        else {
+            setAiNotes("Not enough mission data.");
+            setAiLoading(false);
+        }
+
+        return () => { mounted = false; };
+    }, [teamKey, teamName, teamReports, pitReport]);
+
+    const handleGenerateQuestions = async () => {
+        setAiQuestionsLoading(true);
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const matchNotes = teamReports.map((r: any) => r.data?.notes).filter(Boolean);
+            const teamData = { metrics, pitReport, synergyProfile, defenseProfile, matchNotes };
+            const questions = await getTeamQuestionsAction(teamKey, teamData);
+            setAiQuestions(questions);
+        } catch (e) {
+            console.error(e);
+            setAiQuestions("Failed to generate questions.");
+        } finally {
+            setAiQuestionsLoading(false);
+        }
+    };
+
+    const handleSaveNote = () => {
         saveTeamNote(teamKey, note, highlights);
+        alert('Notes integrated into local databank.');
     };
 
     const toggleHighlight = (tag: string) => {
@@ -144,17 +179,17 @@ export default function TeamDetailClient({
                         <p style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 950, fontStyle: 'italic', color: '#888', textTransform: 'uppercase' }}>{teamName}</p>
                     </div>
                     <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
-                        <div className="glass" style={{ padding: '1.5rem 2rem', borderRadius: '30px', textAlign: 'center' }}>
+                        <div className="glass accent-border-teal" style={{ padding: '1.5rem 2rem', borderRadius: '30px', textAlign: 'center' }}>
                             <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>Our EPA</p>
-                            <p style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--primary)' }}>{ourEPA.toFixed(1)}</p>
+                            <p style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--primary-teal)' }}>{ourEPA.toFixed(1)}</p>
                         </div>
-                        <div className="glass" style={{ padding: '1.5rem 2rem', borderRadius: '30px', textAlign: 'center' }}>
+                        <div className="glass accent-border-brown" style={{ padding: '1.5rem 2rem', borderRadius: '30px', textAlign: 'center' }}>
                             <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>SB EPA</p>
-                            <p style={{ fontSize: '2.5rem', fontWeight: 950, color: '#aaa' }}>{sbEPA?.toFixed(1) || 'N/A'}</p>
+                            <p style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--primary-brown)' }}>{sbEPA?.toFixed(1) || 'N/A'}</p>
                         </div>
-                        <div className="glass" style={{ padding: '1.5rem 2rem', borderRadius: '30px', textAlign: 'center' }}>
+                        <div className="glass accent-border-top-teal" style={{ padding: '1.5rem 2rem', borderRadius: '30px', textAlign: 'center' }}>
                             <p style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>Synergy</p>
-                            <p style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--secondary)' }}>{synergyProfile.synergyScore.toFixed(0)}</p>
+                            <p style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--secondary-blue)' }}>{synergyProfile.synergyScore.toFixed(0)}</p>
                         </div>
                     </div>
                 </header>
@@ -164,15 +199,15 @@ export default function TeamDetailClient({
 
                     {/* Reliability */}
                     <div className="glass" style={{ padding: '2rem', borderRadius: '30px', borderTop: `4px solid ${getRiskColor(reliability.riskLevel)}` }}>
-                        <h3 style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem' }}>Reliability Tracker</h3>
+                        <h3 style={{ fontSize: '10px', fontWeight: 950, color: neutralColors.mutedDark, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem' }}>Reliability Tracker</h3>
                         <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
                             <span style={{ fontSize: '2rem', fontWeight: 950, color: getRiskColor(reliability.riskLevel) }}>{reliability.riskLevel.toUpperCase()}</span>
-                            <span style={{ fontSize: '0.9rem', color: '#888' }}>{reliability.failureCount}/{reliability.matchCount} failures</span>
+                            <span style={{ fontSize: '0.9rem', color: neutralColors.mutedDark }}>{reliability.failureCount}/{reliability.matchCount} failures</span>
                         </div>
                         <div style={{ marginBottom: '1rem' }}>
                             <div className="flex justify-between" style={{ marginBottom: '0.25rem' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 900, color: '#666' }}>RELIABILITY</span>
-                                <span style={{ fontSize: '9px', fontWeight: 900, color: '#888' }}>{((1 - reliability.failureRate) * 100).toFixed(0)}%</span>
+                                <span style={{ fontSize: '9px', fontWeight: 900, color: neutralColors.mutedDarker }}>RELIABILITY</span>
+                                <span style={{ fontSize: '9px', fontWeight: 900, color: neutralColors.mutedDark }}>{((1 - reliability.failureRate) * 100).toFixed(0)}%</span>
                             </div>
                             <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
                                 <div style={{ height: '100%', width: `${(1 - reliability.failureRate) * 100}%`, background: getRiskColor(reliability.riskLevel), borderRadius: '4px' }}></div>
@@ -180,53 +215,53 @@ export default function TeamDetailClient({
                         </div>
                         <div>
                             <div className="flex justify-between" style={{ marginBottom: '0.25rem' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 900, color: '#666' }}>CONSISTENCY</span>
-                                <span style={{ fontSize: '9px', fontWeight: 900, color: '#888' }}>{reliability.consistencyScore.toFixed(0)}/100</span>
+                                <span style={{ fontSize: '9px', fontWeight: 900, color: neutralColors.mutedDarker }}>CONSISTENCY</span>
+                                <span style={{ fontSize: '9px', fontWeight: 900, color: neutralColors.mutedDark }}>{reliability.consistencyScore.toFixed(0)}/100</span>
                             </div>
                             <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
-                                <div style={{ height: '100%', width: `${reliability.consistencyScore}%`, background: '#3b82f6', borderRadius: '4px' }}></div>
+                                <div style={{ height: '100%', width: `${reliability.consistencyScore}%`, background: semanticColors.info.text, borderRadius: '4px' }}></div>
                             </div>
                         </div>
                     </div>
 
                     {/* Consensus */}
-                    <div className="glass" style={{ padding: '2rem', borderRadius: '30px', borderTop: `4px solid ${consensus.overallConsensus >= 75 ? '#22c55e' : '#eab308'}` }}>
-                        <h3 style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem' }}>Scout Consensus</h3>
+                    <div className="glass bg-tint-success" style={{ padding: '2rem', borderRadius: '30px', border: `1px solid ${semanticColors.success.border}` }}>
+                        <h3 style={{ fontSize: '10px', fontWeight: 950, color: neutralColors.mutedDark, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem' }}>Scout Consensus</h3>
                         <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
-                            <span style={{ fontSize: '2rem', fontWeight: 950, color: consensus.overallConsensus >= 75 ? '#22c55e' : '#eab308' }}>{consensus.overallConsensus.toFixed(0)}%</span>
-                            <span style={{ fontSize: '0.9rem', color: '#888' }}>{consensus.scouterCount} scouters</span>
+                            <span style={{ fontSize: '2rem', fontWeight: 950, color: getConsensusColor(consensus.overallConsensus) }}>{consensus.overallConsensus.toFixed(0)}%</span>
+                            <span style={{ fontSize: '0.9rem', color: neutralColors.mutedDark }}>{consensus.scouterCount} scouters</span>
                         </div>
                         {consensus.flaggedMetrics.length > 0 ? (
                             <div>
-                                <p style={{ fontSize: '9px', fontWeight: 900, color: '#ef4444', marginBottom: '0.5rem' }}>⚠️ DISAGREEMENT ON:</p>
+                                <p className="badge-warning" style={{ display: 'inline-block', marginBottom: '0.75rem' }}>⚠ Disagreement detected</p>
                                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                     {consensus.flaggedMetrics.map(m => (
-                                        <span key={m} style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '0.25rem 0.5rem', borderRadius: '5px' }}>{m}</span>
+                                        <span key={m} className="badge-warning" style={{ display: 'inline-block' }}>{m}</span>
                                     ))}
                                 </div>
                             </div>
                         ) : (
-                                <p style={{ fontSize: '0.85rem', color: '#22c55e' }}>✓ All scouts agree on this team&apos;s capabilities</p>
+                                <p className="badge-success" style={{ display: 'inline-block' }}>✓ All aligned</p>
                         )}
                     </div>
 
                     {/* Defense Profile */}
-                    <div className="glass" style={{ padding: '2rem', borderRadius: '30px', borderTop: `4px solid ${defenseProfile.isDefender ? '#ef4444' : '#444'}` }}>
-                        <h3 style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem' }}>Defense Profile</h3>
+                    <div className="glass bg-tint-error" style={{ padding: '2rem', borderRadius: '30px', border: `1px solid ${semanticColors.error.border}` }}>
+                        <h3 style={{ fontSize: '10px', fontWeight: 950, color: neutralColors.mutedDark, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem' }}>Defense Profile</h3>
                         <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
-                            <span style={{ fontSize: '2rem', fontWeight: 950, color: defenseProfile.isDefender ? '#ef4444' : '#666' }}>{defenseProfile.defenseRating.toFixed(1)}/5</span>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 900, background: defenseProfile.isDefender ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.05)', color: defenseProfile.isDefender ? '#ef4444' : '#666', padding: '0.25rem 0.75rem', borderRadius: '10px' }}>
-                                {defenseProfile.isDefender ? 'DEFENDER' : 'SCORER'}
+                            <span style={{ fontSize: '2rem', fontWeight: 950, color: defenseProfile.isDefender ? semanticColors.error.text : neutralColors.mutedDark }}>{defenseProfile.defenseRating.toFixed(1)}/5</span>
+                            <span className={defenseProfile.isDefender ? 'badge-error' : 'badge-info'} style={{ display: 'inline-block' }}>
+                                {defenseProfile.isDefender ? '● Defender' : '● Scorer'}
                             </span>
                         </div>
                         {defenseProfile.isDefender && (
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                 <div>
-                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#666' }}>VS HUB SCORERS</p>
+                                    <p style={{ fontSize: '9px', fontWeight: 900, color: neutralColors.mutedDarker }}>Effectiveness vs Hub</p>
                                     <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{defenseProfile.effectivenessVsHub.toFixed(0)}%</p>
                                 </div>
                                 <div>
-                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#666' }}>GAMES DEFENDED</p>
+                                    <p style={{ fontSize: '9px', fontWeight: 900, color: neutralColors.mutedDarker }}>Games Defended</p>
                                     <p style={{ fontSize: '1.25rem', fontWeight: 950, color: '#fff' }}>{defenseProfile.gamesDefended}</p>
                                 </div>
                             </div>
@@ -298,7 +333,7 @@ export default function TeamDetailClient({
                     <textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        onBlur={saveNote}
+                        onBlur={handleSaveNote}
                         placeholder="Add your notes about this team..."
                         style={{
                             width: '100%',
@@ -334,9 +369,40 @@ export default function TeamDetailClient({
                             </div>
                         ) : (
                             <div style={{ fontSize: '1.1rem', color: '#ccc', lineHeight: 1.8 }}>
-                                <ReactMarkdown>{aiNotes || 'No intel available.'}</ReactMarkdown>
+                                <ReactMarkdown>{aiNotes || ''}</ReactMarkdown>
                             </div>
                         )}
+                        
+                        {/* Alliance Interview Questions */}
+                        <div style={{ marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid rgba(168, 85, 247, 0.2)' }}>
+                            <h3 style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Alliance Interview Questions</h3>
+                            
+                            {aiQuestions ? (
+                                <div style={{ fontSize: '1.1rem', color: '#ccc', lineHeight: 1.8 }}>
+                                    <ReactMarkdown>{aiQuestions}</ReactMarkdown>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={handleGenerateQuestions}
+                                    disabled={aiQuestionsLoading}
+                                    style={{
+                                        padding: '0.75rem 1.5rem',
+                                        backgroundColor: 'var(--primary)',
+                                        color: '#000',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        cursor: aiQuestionsLoading ? 'not-allowed' : 'pointer',
+                                        fontWeight: 950,
+                                        fontSize: '12px',
+                                        letterSpacing: '0.1em',
+                                        textTransform: 'uppercase',
+                                        opacity: aiQuestionsLoading ? 0.7 : 1
+                                    }}
+                                >
+                                    {aiQuestionsLoading ? 'GENERATING...' : 'GENERATE INTERVIEW QUESTIONS'}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </section>
 

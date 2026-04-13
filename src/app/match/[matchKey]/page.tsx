@@ -143,20 +143,25 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
     } : null;
 
     return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
-            <div className="mx-auto" style={{ maxWidth: '1200px', display: 'grid', gap: '3rem' }}>
+        <main style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)', padding: 'clamp(1.5rem, 5vw, 2.5rem)' }}>
+            <div className="mx-auto responsive-padding" style={{ maxWidth: '1200px', display: 'grid', gap: '2rem' }}>
 
                 <header className="reveal">
-                    <Link href={`/event/${eventKey}`} style={{ fontSize: '9px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#888', textDecoration: 'none', marginBottom: '1rem', display: 'block' }}>
+                    <Link href={`/event/${eventKey}`} style={{ fontSize: '9px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--primary-teal)', textDecoration: 'none', marginBottom: '1.5rem', display: 'block', opacity: 0.9 }}>
                         ← BACK TO {eventKey.split('2026')[1]?.toUpperCase() || 'MISSION'} ANALYTICS
                     </Link>
-                    <div className="flex justify-between items-end">
-                        <h1 className="text-gradient" style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-                            {isPlayed ? 'MATCH BREAKDOWN' : 'STRATEGY'}<span className="text-primary">{isPlayed ? '' : 'TERMINAL'}</span>
-                        </h1>
-                        <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>Match Identifier</p>
-                            <p style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>QM{matchKey.split('_qm').pop()?.toUpperCase()}</p>
+                    <div className="flex justify-between items-end" style={{ gap: '3rem', alignItems: 'flex-end' }}>
+                        <div style={{ flex: 1 }}>
+                            <h1 style={{ fontSize: 'clamp(4rem, 12vw, 7rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.03em', textTransform: 'uppercase', lineHeight: 1, marginBottom: '0.5rem', background: 'linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-brown) 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent' }}>
+                                {isPlayed ? 'MATCH' : 'BATTLE'} <span style={{ color: isPlayed ? 'var(--secondary-red)' : 'var(--primary-brown)', WebkitTextFillColor: 'initial' }}>BREAKDOWN</span>
+                            </h1>
+                            <div style={{ height: '4px', width: '120px', background: 'linear-gradient(90deg, var(--primary-teal) 0%, var(--primary-brown) 100%)', borderRadius: '2px', marginBottom: '1rem' }} />
+                        </div>
+                        <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
+                            <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary-teal)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.25rem' }}>⚙ MATCH ID</p>
+                            <p style={{ fontSize: '4rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary-red)', lineHeight: 1, textShadow: '0 0 20px rgba(172, 36, 36, 0.3)' }}>
+                                QM{matchKey.split('_qm').pop()?.toUpperCase()}
+                            </p>
                         </div>
                     </div>
                 </header>

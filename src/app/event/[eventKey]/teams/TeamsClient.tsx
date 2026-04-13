@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo, useMemo } from 'react';
 import Link from 'next/link';
-import { exportToCSV, ExportableTeam, exportAllTeamsToCSV, exportAllTeamsToJSON, exportAllTeamsToTextReport } from '@/lib/export';
+import { exportToCSV, ExportableTeam, exportAllTeamsToCSV, exportAllTeamsToJSON, exportAllTeamsToTextReport, exportObjectToJSON } from '@/lib/export';
 import { exportAllTeamsAction } from '@/lib/actions';
 
 interface TeamData {
@@ -30,7 +30,7 @@ interface TeamsClientProps {
 export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
     const [sortBy, setSortBy] = useState<'epa' | 'synergy' | 'reliability' | 'number'>('epa');
     const [showUnscouted, setShowUnscouted] = useState(true);
-    const [exportAllLoading, setExportAllLoading] = useState<null | 'csv' | 'json' | 'txt'>(null);
+    const [exportAllLoading, setExportAllLoading] = useState<null | 'csv' | 'json' | 'txt' | 'bundle'>(null);
 
     const filteredTeams = showUnscouted ? teams : teams.filter(t => t.matchesScouted > 0);
 
@@ -71,6 +71,25 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
         }
     };
 
+    const handleExportBundle = async () => {
+        setExportAllLoading('bundle');
+        try {
+            const response = await fetch(`/api/event/${eventKey}/export-all`, { cache: 'no-store' });
+            if (!response.ok) {
+                console.error(`Export bundle failed: ${response.status}`);
+                alert('Full bundle export failed — check console for details.');
+                return;
+            }
+            const bundle = await response.json();
+            exportObjectToJSON(bundle, `${eventKey}_full_export_bundle`);
+        } catch (e) {
+            console.error('Export bundle failed:', e);
+            alert('Full bundle export failed — check console for details.');
+        } finally {
+            setExportAllLoading(null);
+        }
+    };
+
     const getRiskColor = (risk: string) => {
         if (risk === 'low') return '#22c55e';
         if (risk === 'medium') return '#eab308';
@@ -89,24 +108,24 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
     };
 
     return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
+        <main className="responsive-padding" style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
             <div className="mx-auto" style={{ maxWidth: '1200px' }}>
-                <header style={{ marginBottom: '2rem' }}>
-                    <Link href={`/event/${eventKey}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: '1rem' }}>
-                        ← BACK TO DASHBOARD
+                <header style={{ marginBottom: '2.5rem' }}>
+                    <Link href={`/event/${eventKey}`} style={{ color: 'var(--primary-teal)', textDecoration: 'none', fontSize: '11px', fontWeight: 950, letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: '1rem' }}>
+                        ← BACK
                     </Link>
-                    <div className="flex justify-between items-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+                    <div className="flex justify-between items-end responsive-header" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                         <div>
-                            <h1 className="text-gradient" style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.05em', lineHeight: 1 }}>
+                            <h1 style={{ fontSize: 'clamp(2.8rem, 8vw, 5rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.03em', lineHeight: 1, background: 'linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-brown) 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent' }}>
                                 MISSION TEAMS
                             </h1>
-                            <p style={{ color: '#888', fontSize: '1rem', fontWeight: 500 }}>
-                                {teams.length} Teams &nbsp;·&nbsp;
-                                <span style={{ color: 'var(--primary)' }}>{teams.filter(t => t.matchesScouted > 0).length} scouted</span>
-                                &nbsp;·&nbsp; EPA + Reliability + Synergy
+                            <p style={{ color: '#aaa', fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.05em', marginTop: '0.75rem' }}>
+                                <span style={{ color: 'var(--primary-teal)', fontWeight: 950 }}>{teams.length}</span> Teams &nbsp;·&nbsp;
+                                <span style={{ color: 'var(--secondary-blue)', fontWeight: 950 }}>{teams.filter(t => t.matchesScouted > 0).length} scouted</span>
+                                &nbsp;·&nbsp; <span style={{ color: 'var(--primary-brown)' }}>EPA · Reliability · Synergy</span>
                             </p>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-end' }}>
+                        <div className="export-actions" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-end' }}>
                             {/* Quick export (current view) */}
                             <button
                                 onClick={handleExport}
@@ -126,7 +145,7 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                             </button>
 
                             {/* Export All group */}
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <div className="export-group" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 <span style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase', marginRight: '0.25rem' }}>Export All:</span>
                                 {([
                                     { fmt: 'csv' as const, label: '📥 CSV', color: '#22c55e' },
@@ -156,9 +175,28 @@ export default function TeamsClient({ eventKey, teams }: TeamsClientProps) {
                                         {exportAllLoading === fmt ? '⏳ Loading…' : label}
                                     </button>
                                 ))}
+                                <button
+                                    onClick={handleExportBundle}
+                                    disabled={exportAllLoading !== null}
+                                    style={{
+                                        background: exportAllLoading === 'bundle' ? 'rgba(245, 158, 11, 0.16)' : 'rgba(255,255,255,0.03)',
+                                        color: exportAllLoading === 'bundle' ? '#f59e0b' : '#999',
+                                        border: `1px solid ${exportAllLoading === 'bundle' ? '#f59e0b' : 'rgba(255,255,255,0.08)'}`,
+                                        padding: '0.6rem 1.1rem',
+                                        borderRadius: '12px',
+                                        fontWeight: 950,
+                                        cursor: exportAllLoading !== null ? 'not-allowed' : 'pointer',
+                                        fontSize: '0.75rem',
+                                        letterSpacing: '0.05em',
+                                        transition: 'all 0.2s',
+                                        opacity: exportAllLoading !== null && exportAllLoading !== 'bundle' ? 0.4 : 1,
+                                    }}
+                                >
+                                    {exportAllLoading === 'bundle' ? '⏳ Loading…' : '🧩 FULL BUNDLE'}
+                                </button>
                             </div>
                             <p style={{ fontSize: '9px', color: '#444', fontWeight: 700 }}>
-                                CSV = Excel-ready &nbsp;·&nbsp; JSON = raw data &nbsp;·&nbsp; Report = readable .txt
+                                CSV = Excel-ready · JSON = raw teams · Report = readable .txt · Bundle = everything
                             </p>
                         </div>
                     </div>

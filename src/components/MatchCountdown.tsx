@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 
 interface MatchCountdownProps {
     schedule: { matchKey: string; red: string[]; blue: string[] }[];
@@ -8,7 +8,7 @@ interface MatchCountdownProps {
     currentMatchLimit: number;
 }
 
-export default function MatchCountdown({ schedule, ourTeamKey, currentMatchLimit }: MatchCountdownProps) {
+function MatchCountdown({ schedule, ourTeamKey, currentMatchLimit }: MatchCountdownProps) {
     const nextMatch = useMemo(() => {
         return schedule.find(m => {
             const matchNum = parseInt(m.matchKey.split('_qm').pop() || '0');
@@ -102,3 +102,6 @@ export default function MatchCountdown({ schedule, ourTeamKey, currentMatchLimit
         </div>
     );
 }
+
+export default memo(MatchCountdown);
+

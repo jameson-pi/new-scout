@@ -1,28 +1,72 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { runSimulation, TeamPerformanceDistribution, SimulatedMatch } from '@/lib/simulation';
 import { calculateTeamEPA, ScoutReport } from '@/lib/spr';
 import { StatboticsTeamEvent } from '@/lib/statbotics';
 import { predictUpcomingMatches } from '@/lib/predictions';
 import { exportToCSV, ExportableTeam } from '@/lib/export';
-import ReactMarkdown from 'react-markdown';
 
+
+interface TbaMatchLite {
+    key?: string;
+    matchKey?: string;
+    match_number?: number;
+    alliances?: {
+        red: { score: number; team_keys: string[] };
+        blue: { score: number; team_keys: string[] };
+    };
+    score_breakdown?: {
+        red?: { rp?: number };
+        blue?: { rp?: number };
+    };
+}
+
+interface RankingsLite {
+    rankings?: Array<{ team_key: string; rank: number }>;
+}
+
+type ReportWithMatchNum = ScoutReport & { matchNum: number };
 
 interface EventDashboardProps {
     eventKey: string;
-    reports: any[];
+    reports: ScoutReport[];
     schedule: SimulatedMatch[];
     distributions: TeamPerformanceDistribution[];
     teamNameMap: Record<string, string>;
     aiSummary: string;
-    tbaMatchesRaw: any[];
-    actualRankings: any;
+    tbaMatchesRaw: TbaMatchLite[];
+    actualRankings: RankingsLite | null;
     statboticsData: StatboticsTeamEvent[];
 }
 
 export default function EventDashboard({ eventKey, reports, schedule, distributions, teamNameMap, aiSummary, tbaMatchesRaw, actualRankings, statboticsData }: EventDashboardProps) {
+    void aiSummary;
+    void actualRankings;
+
+    const parsedReports = useMemo<ReportWithMatchNum[]>(() => {
+        return reports.map((r) => ({
+            ...r,
+            matchNum: parseInt((r.matchKey || '').split('_qm').pop() || '0', 10),
+        }));
+    }, [reports]);
+
+    const reportsByTeam = useMemo(() => {
+        const map = new Map<string, ReportWithMatchNum[]>();
+        parsedReports.forEach((report) => {
+            const existing = map.get(report.teamKey);
+            if (existing) existing.push(report);
+            else map.set(report.teamKey, [report]);
+        });
+        return map;
+    }, [parsedReports]);
+
+    const statboticsByTeamNum = useMemo(() => {
+        const map = new Map<number, StatboticsTeamEvent>();
+        statboticsData.forEach((row) => map.set(row.team, row));
+        return map;
+    }, [statboticsData]);
 
     const maxMatch = useMemo(() => {
         const nums = schedule.map(m => parseInt(m.matchKey.split('_qm').pop() || '0'));
@@ -32,10 +76,9 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
     // Default to the highest match we actually have scouting data for,
     // so the countdown always points at real upcoming matches.
     const lastScoutedMatch = useMemo(() => {
-        if (reports.length === 0) return 0;
-        const nums = reports.map(r => parseInt(r.matchKey.split('_qm').pop() || '0'));
-        return Math.max(...nums, 0);
-    }, [reports]);
+        if (parsedReports.length === 0) return 0;
+        return Math.max(...parsedReports.map(r => r.matchNum), 0);
+    }, [parsedReports]);
 
     const [matchLimit, setMatchLimit] = useState(() => lastScoutedMatch);
 
@@ -49,8 +92,8 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                 let blueRPs = 0;
 
                 if (m.score_breakdown) {
-                    redRPs = m.score_breakdown.red.rp || 0;
-                    blueRPs = m.score_breakdown.blue.rp || 0;
+                    redRPs = m.score_breakdown.red?.rp || 0;
+                    blueRPs = m.score_breakdown.blue?.rp || 0;
                 } else {
                     const redScore = m.alliances.red.score;
                     const blueScore = m.alliances.blue.score;
@@ -67,22 +110,27 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
 
     // 2. Filter distributions based on matchLimit (Time-travel)
     const filteredDistributions = useMemo(() => {
-        return distributions.map(d => ({
-            ...d,
-            pastSyntheticMatches: reports
-                .filter(r => r.teamKey === d.teamKey && parseInt(r.matchKey.split('_qm').pop() || '0') <= matchLimit)
-                .map(r => r.data)
-        }));
-    }, [distributions, reports, matchLimit]);
+        return distributions.map(d => {
+            const teamReports = reportsByTeam.get(d.teamKey) ?? [];
+            return {
+                ...d,
+                pastSyntheticMatches: teamReports
+                    .filter(r => r.matchNum <= matchLimit)
+                    .map(r => r.data),
+            };
+        });
+    }, [distributions, reportsByTeam, matchLimit]);
 
     // 2.5 Calculate Historical Rank Map (TBA Rank at Match Limit)
     const historicalRankMap = useMemo(() => {
         const sorted = Object.entries(groundTruthRPs)
-            .sort((a, b) => b[1] - a[1]) // Sort by RP desc
-            .map(([tk]) => tk);
+            .sort((a, b) => b[1] - a[1])
+            .map(([teamKey]) => teamKey);
 
         const map: Record<string, number> = {};
-        sorted.forEach((tk, i) => map[tk] = i + 1);
+        sorted.forEach((teamKey, index) => {
+            map[teamKey] = index + 1;
+        });
         return map;
     }, [groundTruthRPs]);
 
@@ -91,34 +139,30 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         return runSimulation(filteredDistributions, schedule, groundTruthRPs, matchLimit);
     }, [filteredDistributions, schedule, groundTruthRPs, matchLimit]);
 
-    const actualRankMap = useMemo(() => {
-        const map: Record<string, number> = {};
-        actualRankings?.rankings?.forEach((r: any) => {
-            map[r.team_key] = r.rank;
-        });
+    const resultsByTeam = useMemo(() => {
+        const map = new Map<string, (typeof results)[number]>();
+        results.forEach((row) => map.set(row.teamKey, row));
         return map;
-    }, [actualRankings]);
+    }, [results]);
 
     const topTeams = [...results].sort((a, b) => {
         const rA = historicalRankMap[a.teamKey] || 999;
         const rB = historicalRankMap[b.teamKey] || 999;
         return rA - rB;
     }).slice(0, 15).map((r) => {
-        const teamNum = parseInt(r.teamKey.replace('frc', ''));
-        const sbData = statboticsData.find(s => s.team === teamNum);
-        const teamReports = reports.filter(rep => rep.teamKey === r.teamKey && parseInt(rep.matchKey.split('_qm').pop() || '0') <= matchLimit);
+        const teamNum = parseInt(r.teamKey.replace('frc', ''), 10);
+        const sbData = statboticsByTeamNum.get(teamNum);
+        const teamReports = (reportsByTeam.get(r.teamKey) ?? []).filter(rep => rep.matchNum <= matchLimit);
         const ourEPA = calculateTeamEPA(teamReports).toFixed(1);
 
-        const simResult = results.find(res => res.teamKey === r.teamKey);
-        // Probability of finishing in the top 8 (alliance selection spots)
+        const simResult = resultsByTeam.get(r.teamKey);
         const top8Count = simResult
             ? Object.entries(simResult.rankDistribution)
-                .filter(([rank]) => parseInt(rank) <= 8)
+                .filter(([rank]) => parseInt(rank, 10) <= 8)
                 .reduce((acc, [, cnt]) => acc + cnt, 0)
             : 0;
         const top8Prob = (top8Count / 10000 * 100).toFixed(0);
-        // Use the actual expected rank from simulation (not just sorted index)
-        const simExpectedRank = simResult ? Math.round(simResult.expectedRank) : results.findIndex(res => res.teamKey === r.teamKey) + 1;
+        const simExpectedRank = simResult ? Math.round(simResult.expectedRank) : 999;
 
         return {
             teamKey: r.teamKey,
@@ -138,10 +182,18 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         return predictUpcomingMatches(schedule, filteredDistributions, matchLimit);
     }, [schedule, filteredDistributions, matchLimit]);
 
+    const matchPredictionMap = useMemo(() => {
+        const map: Record<string, (typeof matchPredictions)[number]> = {};
+        matchPredictions.forEach((prediction) => {
+            map[prediction.matchKey] = prediction;
+        });
+        return map;
+    }, [matchPredictions]);
+
     // 5. Build a quick lookup for played match results (score + winner)
     const playedResultsMap = useMemo(() => {
         const map: Record<string, { redScore: number; blueScore: number; winner: 'red' | 'blue' | 'tie' }> = {};
-        tbaMatchesRaw.forEach((m: any) => {
+        tbaMatchesRaw.forEach((m) => {
             const key = m.key ?? m.matchKey;
             if (!key || !m.alliances) return;
             const redScore: number = m.alliances.red?.score ?? -1;
@@ -156,87 +208,111 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         return map;
     }, [tbaMatchesRaw]);
 
-    return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
-            <div className="mx-auto" style={{ maxWidth: '1200px', display: 'grid', gap: '4rem' }}>
+    const epaCards = useMemo(() => {
+        return Array.from(reportsByTeam.entries())
+            .map(([teamKey, teamReports]) => {
+                const teamNum = parseInt(teamKey.replace('frc', ''), 10);
+                const ourEPAValue = calculateTeamEPA(teamReports);
+                const ourEPA = ourEPAValue.toFixed(1);
 
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end reveal mobile-stack" style={{ gap: '2rem' }}>
-                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                const sbData = statboticsByTeamNum.get(teamNum);
+                const sbPoints = sbData?.epa?.breakdown?.total_points;
+                const sbEPA = sbPoints != null ? sbPoints.toFixed(1) : 'N/A';
+
+                const diffValue = sbPoints != null ? ourEPAValue - sbPoints : 0;
+                const diff = diffValue.toFixed(1);
+                const diffColor = diffValue > 0 ? '#22c55e' : diffValue < 0 ? '#ef4444' : '#888';
+
+                return {
+                    teamKey,
+                    teamNum,
+                    name: teamNameMap[teamKey] || 'TEAM',
+                    ourEPA,
+                    ourEPAValue,
+                    sbEPA,
+                    diff,
+                    diffColor,
+                };
+            })
+            .sort((a, b) => b.ourEPAValue - a.ourEPAValue);
+    }, [reportsByTeam, statboticsByTeamNum, teamNameMap]);
+
+    return (
+        <main style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)', padding: 'clamp(5.5rem, 8vw, 2.5rem) clamp(1rem, 4vw, 1.25rem) 2rem', overflow: 'hidden' }}>
+            <div className="mx-auto responsive-padding" style={{ maxWidth: '1200px', display: 'grid', gap: '2rem', width: '100%' }}>
+
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end reveal mobile-stack" style={{ gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gap: '0.6rem' }}>
                         <div className="flex items-center" style={{ gap: '0.75rem' }}>
-                            <div style={{ width: '0.75rem', height: '0.75rem', borderRadius: '50%', background: '#ff0000', boxShadow: '0 0 10px #ff0000' }}></div>
-                            <p style={{ fontSize: '10px', fontWeight: 950, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#888' }}>{eventKey.split('2026')[1]?.toUpperCase() || eventKey.toUpperCase()} Mission Prediction</p>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-teal)', boxShadow: '0 0 12px var(--primary-teal)' }}></div>
+                            <p style={{ fontSize: '11px', fontWeight: 950, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--primary-teal)' }}>⚙ {eventKey.split('2026')[1]?.toUpperCase() || eventKey.toUpperCase()} DASHBOARD</p>
                         </div>
-                        <h1 className="text-gradient" style={{ fontSize: 'clamp(3rem, 10vw, 6rem)', fontWeight: 950, fontStyle: 'italic', letterSpacing: '-0.05em', lineHeight: 1 }}>
+                        <h1 style={{ fontSize: 'clamp(2.8rem, 10vw, 5.5rem)', fontWeight: 950, letterSpacing: '-0.03em', lineHeight: 1, background: 'linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-brown) 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent' }}>
                             {eventKey.toUpperCase()}
                         </h1>
-                        <p style={{ color: '#888', fontSize: '1.25rem', fontWeight: 500 }}>Monte Carlo Rank Integrity • {schedule.length} Matches Simulated</p>
+                        <p style={{ color: 'var(--muted)', fontSize: '1rem', fontWeight: 500 }}>Match simulation and point-in-time ranking view</p>
                     </div>
 
-                    <div className="w-full md:w-auto" style={{ display: 'flex', gap: '1rem' }}>
-                        <Link href={`/event/${eventKey}/teams`} style={{ textDecoration: 'none', flex: 1 }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid #fff', background: 'rgba(255, 255, 255, 0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 950, color: '#fff', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Teams List →
+                    <div className="w-full md:w-auto event-header-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                        <Link href={`/event/${eventKey}/teams`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '90px' }}>
+                            <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255, 255, 255, 0.03)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 650, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    Teams
                                 </p>
                             </div>
                         </Link>
-                        <Link href={`/scouters/${eventKey}`} style={{ textDecoration: 'none', flex: 1 }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid var(--primary)', background: 'rgba(168, 85, 247, 0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Scouter Intel →
+                        <Link href={`/scouters/${eventKey}`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '100px' }}>
+                            <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(124,109,216,0.35)', background: 'rgba(124,109,216,0.08)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 650, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    Scouter Intel
                                 </p>
                             </div>
                         </Link>
-                        <Link href={`/event/${eventKey}/draft`} style={{ textDecoration: 'none', flex: 1 }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid var(--secondary)', background: 'rgba(57, 255, 20, 0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 950, color: 'var(--secondary)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Draft Advisor →
+                        <Link href={`/event/${eventKey}/draft`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '95px' }}>
+                            <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(79,174,192,0.35)', background: 'rgba(79,174,192,0.08)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 650, color: 'var(--secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    Draft Advisor
                                 </p>
                             </div>
                         </Link>
-                        <Link href={`/event/${eventKey}/alliance-sim`} style={{ textDecoration: 'none', flex: 1 }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid #3b82f6', background: 'rgba(59, 130, 246, 0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 950, color: '#3b82f6', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Alliance Sim →
+                        <Link href={`/event/${eventKey}/alliance-sim`} style={{ textDecoration: 'none', flex: 'clamp(0, (100% - 2rem) / 4, 1fr)', minWidth: '105px' }}>
+                            <div className="glass" style={{ padding: '0.65rem 0.85rem', borderRadius: '999px', border: '1px solid rgba(99,143,209,0.35)', background: 'rgba(99,143,209,0.08)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                <p style={{ fontSize: '9px', fontWeight: 650, color: '#76a8df', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    Alliance Sim
                                 </p>
                             </div>
                         </Link>
                         <Link href={`/event/${eventKey}/compare`} style={{ textDecoration: 'none', flex: 1 }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid #eab308', background: 'rgba(234, 179, 8, 0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 950, color: '#eab308', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Compare →
+                            <div className="glass" style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid rgba(213,182,90,0.35)', background: 'rgba(213,182,90,0.08)', textAlign: 'center' }}>
+                                <p style={{ fontSize: '10px', fontWeight: 650, color: '#d5b65a' }}>
+                                    Compare
                                 </p>
                             </div>
                         </Link>
                         <Link href="/quick-scout" style={{ textDecoration: 'none', flex: 1 }}>
-                            <div className="glass" style={{ padding: '1rem 2rem', borderRadius: '100px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)', textAlign: 'center' }}>
-                                <p style={{ fontSize: '9px', fontWeight: 950, color: '#ef4444', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                                    Quick Scout →
+                            <div className="glass" style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid rgba(205,93,116,0.35)', background: 'rgba(205,93,116,0.08)', textAlign: 'center' }}>
+                                <p style={{ fontSize: '10px', fontWeight: 650, color: 'var(--accent)' }}>
+                                    Quick Scout
+                                </p>
+                            </div>
+                        </Link>
+                        <Link href={`/event/${eventKey}/anomalies`} style={{ textDecoration: 'none', flex: 1 }}>
+                            <div className="glass" style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid rgba(172,36,36,0.35)', background: 'rgba(172,36,36,0.08)', textAlign: 'center' }}>
+                                <p style={{ fontSize: '10px', fontWeight: 650, color: 'var(--secondary-red)' }}>
+                                    Anomalies
                                 </p>
                             </div>
                         </Link>
                     </div>
                 </header>
 
-                {/*/!* AI Event Intelligence *!/*/}
-                {/*<section className="reveal delay-1">*/}
-                {/*    <div className="glass" style={{ padding: '2.5rem', borderRadius: '40px', borderTop: '4px solid var(--primary)', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, transparent 100%)' }}>*/}
-                {/*        <div className="flex items-center" style={{ gap: '1rem', marginBottom: '1.5rem' }}>*/}
-                {/*            <span style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>Strategic Synthesis</span>*/}
-                {/*            <div style={{ height: '1px', flex: 1, background: 'rgba(168, 85, 247, 0.1)' }}></div>*/}
-                {/*        </div>*/}
-                {/*        <div className="ai-content" style={{ color: '#ccc', lineHeight: 1.8, fontSize: '1rem' }}>*/}
-                {/*            <ReactMarkdown>{aiSummary}</ReactMarkdown>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*</section>*/}
 
                 {/* Simulation Control (Slider) */}
                 <section className="reveal delay-2">
-                    <div className="glass" style={{ padding: '2rem', borderRadius: '35px' }}>
-                        <div className="flex justify-between items-center mobile-stack" style={{ marginBottom: '1.5rem' }}>
-                            <h3 style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Point-in-Time Mission Analysis</h3>
-                            <span style={{ fontSize: 'clamp(1.25rem, 4vw, 1.75rem)', fontWeight: 950, fontStyle: 'italic', color: 'var(--primary)' }}>UP TO MATCH {matchLimit}</span>
+                    <div className="glass" style={{ padding: '1.4rem', borderRadius: '24px' }}>
+                        <div className="flex justify-between items-center mobile-stack" style={{ marginBottom: '1rem' }}>
+                            <h3 style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Point-in-Time Analysis</h3>
+                            <span style={{ fontSize: 'clamp(1.1rem, 4vw, 1.4rem)', fontWeight: 760, color: 'var(--primary)' }}>Up to Match {matchLimit}</span>
                         </div>
                         <input
                             type="range" min="0" max={maxMatch} value={matchLimit}
@@ -244,20 +320,20 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                             style={{ width: '100%', height: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', accentColor: 'var(--primary)', cursor: 'pointer' }}
                         />
                         <div className="flex justify-between" style={{ marginTop: '0.5rem' }}>
-                            <span style={{ fontSize: '9px', fontWeight: 900, color: '#555' }}>PRE-EVENT</span>
-                            <span style={{ fontSize: '9px', fontWeight: 900, color: '#555' }}>CURRENT PROGRESS</span>
+                            <span style={{ fontSize: '9px', fontWeight: 650, color: 'var(--muted)' }}>Pre-event</span>
+                            <span style={{ fontSize: '9px', fontWeight: 650, color: 'var(--muted)' }}>Current</span>
                         </div>
                     </div>
                 </section>
 
                 {/* Main Body Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
 
                     {/* Left: Leaderboard */}
                     <div style={{ gridColumn: 'span min(3, 4)', display: 'grid', gap: '2rem' }} className="reveal delay-3">
-                        <div className="flex justify-between items-center" style={{ paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div className="flex justify-between items-center" style={{ paddingBottom: '0.8rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                             <div className="flex items-center gap-4">
-                                <h2 style={{ fontSize: '11px', fontWeight: 950, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', fontStyle: 'italic' }}>TBA Rankings (Match {matchLimit})</h2>
+                                <h2 style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>TBA Rankings (Match {matchLimit})</h2>
                                 <button
                                     onClick={() => {
                                         const exportData: ExportableTeam[] = topTeams.map((t, index) => ({
@@ -279,8 +355,8 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                                         fontWeight: 950,
                                         color: 'var(--primary)',
                                         borderRadius: '10px',
-                                        border: '1px solid var(--primary)',
-                                        background: 'transparent',
+                                        border: '1px solid rgba(124,109,216,0.5)',
+                                        background: 'rgba(124,109,216,0.08)',
                                         cursor: 'pointer',
                                         textTransform: 'uppercase'
                                     }}
@@ -288,44 +364,44 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                                     Export CSV
                                 </button>
                             </div>
-                            <span style={{ fontSize: '9px', fontWeight: 800, color: '#666' }}>DATA SAMPLES: {filteredDistributions.reduce((acc, d) => acc + d.pastSyntheticMatches.length, 0)}</span>
+                            <span style={{ fontSize: '9px', fontWeight: 650, color: 'var(--muted)' }}>Samples: {filteredDistributions.reduce((acc, d) => acc + d.pastSyntheticMatches.length, 0)}</span>
                         </div>
 
-                        <div style={{ display: 'grid', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gap: '0.85rem' }}>
                             {topTeams.map((p) => (
                                 <Link key={p.teamKey} href={`/event/${eventKey}/team/${p.teamKey}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                    <div className="glass flex items-center leaderboard-card" style={{ padding: '2rem', gap: '2rem', borderRadius: '30px' }}>
+                                    <div className="glass flex items-center leaderboard-card" style={{ padding: '1.2rem', gap: '1.25rem', borderRadius: '22px', border: '1px solid rgba(255,255,255,0.08)' }}>
                                         <div className="flex items-center gap-8 rank-pill">
                                             <div style={{ textAlign: 'center' }}>
-                                                <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>TBA</p>
-                                                <span style={{ fontSize: '3.5rem', fontWeight: 950, fontStyle: 'italic', color: '#fff' }}>#{p.actual}</span>
+                                                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>TBA</p>
+                                                <span style={{ fontSize: '2.2rem', fontWeight: 760, color: 'var(--foreground)' }}>#{p.actual}</span>
                                             </div>
-                                            <div className="rank-divider" style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
+                                            <div className="rank-divider" style={{ width: '1px', height: '2.3rem', background: 'rgba(255,255,255,0.12)' }}></div>
                                             <div style={{ textAlign: 'center' }}>
-                                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.1em' }}>SIM</p>
-                                                <span style={{ fontSize: '2.5rem', fontWeight: 950, fontStyle: 'italic', color: p.actual === p.expected ? 'var(--secondary)' : '#aaa' }}>#{p.expected}</span>
+                                                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>SIM</p>
+                                                <span style={{ fontSize: '1.8rem', fontWeight: 760, color: p.actual === p.expected ? 'var(--secondary)' : 'var(--muted)' }}>#{p.expected}</span>
                                             </div>
                                         </div>
 
                                         <div style={{ flex: 1 }}>
-                                            <p style={{ fontSize: '11px', fontWeight: 950, color: 'var(--primary)', letterSpacing: '0.15em' }}>MISSION TEAM {p.team}</p>
-                                            <h3 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', color: '#fff', lineHeight: 1 }}>{p.name}</h3>
+                                            <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.06em' }}>Team {p.team}</p>
+                                            <h3 style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', fontWeight: 720, color: 'var(--foreground)', lineHeight: 1.1 }}>{p.name}</h3>
                                         </div>
 
                                         <div className="flex items-center gap-8 mobile-stack">
                                             <div>
-                                                <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary)', textTransform: 'uppercase' }}>OUR EPA</p>
-                                                <p style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 950, color: '#fff', fontFamily: 'monospace' }}>{p.ourEPA}</p>
+                                                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>Our EPA</p>
+                                                <p style={{ fontSize: 'clamp(1.05rem, 3vw, 1.35rem)', fontWeight: 760, color: 'var(--foreground)', fontFamily: 'monospace' }}>{p.ourEPA}</p>
                                             </div>
-                                            <div className="rank-divider" style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
+                                            <div className="rank-divider" style={{ width: '1px', height: '2.2rem', background: 'rgba(255,255,255,0.12)' }}></div>
                                             <div>
-                                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#aaa', textTransform: 'uppercase' }}>SB EPA</p>
-                                                <p style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 950, color: '#ccc', fontFamily: 'monospace' }}>{p.sbEPA}</p>
+                                                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>SB EPA</p>
+                                                <p style={{ fontSize: 'clamp(1.05rem, 3vw, 1.35rem)', fontWeight: 700, color: '#d0d5de', fontFamily: 'monospace' }}>{p.sbEPA}</p>
                                             </div>
-                                            <div className="rank-divider" style={{ width: '1px', height: '3rem', background: 'rgba(255,255,255,0.1)' }}></div>
+                                            <div className="rank-divider" style={{ width: '1px', height: '2.2rem', background: 'rgba(255,255,255,0.12)' }}></div>
                                             <div style={{ textAlign: 'right' }}>
-                                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#aaa', textTransform: 'uppercase' }}>TOP 8 PROB</p>
-                                                <div style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary)' }}>
+                                                <p style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Top 8</p>
+                                                <div style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', fontWeight: 760, color: 'var(--secondary)' }}>
                                                     {p.prob}
                                                 </div>
                                             </div>
@@ -338,103 +414,102 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
 
                     {/* Right: Insights */}
                     <div style={{ display: 'grid', gap: '2rem' }} className="reveal delay-4">
-                        <section className="glass" style={{ padding: '2rem', borderRadius: '30px' }}>
-                            <h3 style={{ fontSize: '10px', fontWeight: 950, color: '#888', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem' }}>Simulation Health</h3>
-                            <p style={{ fontSize: '0.875rem', color: '#aaa', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+                        <section className="glass" style={{ padding: '1.4rem', borderRadius: '22px' }}>
+                            <h3 style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>Simulation Health</h3>
+                            <p style={{ fontSize: '0.86rem', color: '#c7ced7', lineHeight: 1.5, marginBottom: '1rem' }}>
                                 {matchLimit === 0
                                     ? "Pre-event baseline. Based on generic synthetic samples."
                                     : `Point-in-time snapshot using real data up to Match ${matchLimit}.`}
                             </p>
-                            <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                                <div style={{ height: '100%', borderRadius: '10px', background: '#22c55e', width: `${Math.min(100, (matchLimit / maxMatch) * 100)}%` }}></div>
+                            <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+                                <div style={{ height: '100%', borderRadius: '10px', background: '#84caa7', width: `${Math.min(100, (matchLimit / maxMatch) * 100)}%` }}></div>
                             </div>
                         </section>
                     </div>
                 </div>
 
                 {/* Tactical Schedule */}
-                <div className="reveal delay-5" style={{ marginTop: '2rem' }}>
-                    <div className="flex justify-between items-end" style={{ marginBottom: '2rem' }}>
+                <div className="reveal delay-5" style={{ marginTop: '1rem' }}>
+                    <div className="flex justify-between items-end" style={{ marginBottom: '1.5rem' }}>
                         <div>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase' }}>Tactical Schedule</h2>
-                            <p style={{ fontSize: '11px', color: '#888', fontWeight: 600 }}>MATCH-BY-MATCH AI STRATEGY GENERATION</p>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 760, marginBottom: '0.5rem' }}>Match Schedule</h2>
+                            <p style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>Per-match score and win probability view</p>
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                        {schedule.map((m: any) => {
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                        {schedule.map((m: SimulatedMatch) => {
                             const mNum = parseInt(m.matchKey.split('_qm').pop() || '0');
                             const isPlayed = mNum <= matchLimit;
                             const result = playedResultsMap[m.matchKey];
                             return (
-                                <Link key={m.matchKey} href={`/match/${m.matchKey}`} style={{ textDecoration: 'none', opacity: isPlayed ? 0.7 : 1 }}>
-                                    <div className="glass" style={{ padding: '1.5rem', borderRadius: '25px', border: isPlayed ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
-                                            <span style={{ fontSize: '11px', fontWeight: 900, color: isPlayed ? '#666' : 'var(--primary)' }}>{m.matchKey.split('_').pop()?.toUpperCase() || 'QM?'}</span>
+                                <Link key={m.matchKey} href={`/match/${m.matchKey}`} style={{ textDecoration: 'none', opacity: isPlayed ? 0.75 : 1 }}>
+                                    <div className="glass" style={{ padding: '1rem', borderRadius: '18px', border: isPlayed ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.1)' }}>
+                                        <div className="flex justify-between items-center" style={{ marginBottom: '0.8rem' }}>
+                                            <span style={{ fontSize: '11px', fontWeight: 700, color: isPlayed ? 'var(--muted)' : 'var(--primary)' }}>{m.matchKey.split('_').pop()?.toUpperCase() || 'QM?'}</span>
                                             {isPlayed && result ? (
                                                 <span style={{
-                                                    fontSize: '9px', fontWeight: 950, textTransform: 'uppercase',
-                                                    color: result.winner === 'tie' ? '#eab308' : result.winner === 'red' ? '#ef4444' : '#3b82f6'
+                                                    fontSize: '9px', fontWeight: 700, textTransform: 'uppercase',
+                                                    color: result.winner === 'tie' ? '#d5b65a' : result.winner === 'red' ? '#cd5d74' : '#76a8df'
                                                 }}>
                                                     {result.winner === 'tie' ? '⚖ TIE' : result.winner === 'red' ? '🔴 RED WIN' : '🔵 BLUE WIN'}
                                                 </span>
                                             ) : isPlayed ? (
-                                                <span style={{ fontSize: '9px', fontWeight: 950, color: '#22c55e' }}>● COMPLETE</span>
+                                                <span style={{ fontSize: '9px', fontWeight: 700, color: '#84caa7' }}>Complete</span>
                                             ) : (
-                                                <span style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>AI STRATEGY →</span>
+                                                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Preview</span>
                                             )}
                                         </div>
                                         <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', background: isPlayed && result?.winner === 'red' ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.05)', padding: '0.5rem', borderRadius: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', background: isPlayed && result?.winner === 'red' ? 'rgba(205,93,116,0.14)' : 'rgba(205,93,116,0.08)', padding: '0.5rem', borderRadius: '10px' }}>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    {m.red.map((t: string) => <span key={t} style={{ color: '#ef4444', fontSize: '12px', fontWeight: 900 }}>{t.replace('frc', '')}</span>)}
+                                                    {m.red.map((t: string) => <span key={t} style={{ color: '#cd5d74', fontSize: '12px', fontWeight: 700 }}>{t.replace('frc', '')}</span>)}
                                                 </div>
-                                                {result && <span style={{ fontSize: '1rem', fontWeight: 950, color: result.winner === 'red' ? '#ef4444' : '#888', fontFamily: 'monospace' }}>{result.redScore}</span>}
+                                                {result && <span style={{ fontSize: '1rem', fontWeight: 760, color: result.winner === 'red' ? '#cd5d74' : 'var(--muted)', fontFamily: 'monospace' }}>{result.redScore}</span>}
                                             </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', background: isPlayed && result?.winner === 'blue' ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.05)', padding: '0.5rem', borderRadius: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', background: isPlayed && result?.winner === 'blue' ? 'rgba(118,168,223,0.14)' : 'rgba(118,168,223,0.08)', padding: '0.5rem', borderRadius: '10px' }}>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    {m.blue.map((t: string) => <span key={t} style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 900 }}>{t.replace('frc', '')}</span>)}
+                                                    {m.blue.map((t: string) => <span key={t} style={{ color: '#76a8df', fontSize: '12px', fontWeight: 700 }}>{t.replace('frc', '')}</span>)}
                                                 </div>
-                                                {result && <span style={{ fontSize: '1rem', fontWeight: 950, color: result.winner === 'blue' ? '#3b82f6' : '#888', fontFamily: 'monospace' }}>{result.blueScore}</span>}
+                                                {result && <span style={{ fontSize: '1rem', fontWeight: 760, color: result.winner === 'blue' ? '#76a8df' : 'var(--muted)', fontFamily: 'monospace' }}>{result.blueScore}</span>}
                                             </div>
                                             {!isPlayed && (() => {
-                                                const prediction = matchPredictions.find(p => p.matchKey === m.matchKey);
+                                                const prediction = matchPredictionMap[m.matchKey];
                                                 if (!prediction) return null;
                                                 const confColor = prediction.confidence === 'high' ? '#22c55e' : prediction.confidence === 'medium' ? '#eab308' : '#ef4444';
                                                 return (
-                                                    <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', borderLeft: `3px solid ${confColor}` }}>
+                                                    <div style={{ marginTop: '0.45rem', padding: '0.65rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', borderLeft: `2px solid ${confColor}` }}>
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                                            <span style={{ fontSize: '9px', fontWeight: 950, color: '#888', textTransform: 'uppercase' }}>WIN PROBABILITY</span>
-                                                            <span style={{ fontSize: '9px', fontWeight: 950, color: confColor, textTransform: 'uppercase' }}>{prediction.confidence} CONF</span>
+                                                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Win Probability</span>
+                                                            <span style={{ fontSize: '9px', fontWeight: 700, color: confColor, textTransform: 'uppercase' }}>{prediction.confidence}</span>
                                                         </div>
                                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', alignItems: 'center' }}>
                                                             <div style={{ textAlign: 'center' }}>
-                                                                <div style={{ fontSize: '1.25rem', fontWeight: 950, color: '#ef4444' }}>{(prediction.redWinProbability * 100).toFixed(0)}%</div>
-                                                                <div style={{ fontSize: '9px', color: '#666' }}>{prediction.redScoreRange.mean.toFixed(0)} pts</div>
+                                                                <div style={{ fontSize: '1.1rem', fontWeight: 760, color: '#cd5d74' }}>{(prediction.redWinProbability * 100).toFixed(0)}%</div>
+                                                                <div style={{ fontSize: '9px', color: 'var(--muted)' }}>{prediction.redScoreRange.mean.toFixed(0)} pts</div>
                                                             </div>
-                                                            <div style={{ fontSize: '10px', color: '#444' }}>VS</div>
+                                                            <div style={{ fontSize: '10px', color: 'var(--muted)' }}>vs</div>
                                                             <div style={{ textAlign: 'center' }}>
-                                                                <div style={{ fontSize: '1.25rem', fontWeight: 950, color: '#3b82f6' }}>{(prediction.blueWinProbability * 100).toFixed(0)}%</div>
-                                                                <div style={{ fontSize: '9px', color: '#666' }}>{prediction.blueScoreRange.mean.toFixed(0)} pts</div>
+                                                                <div style={{ fontSize: '1.1rem', fontWeight: 760, color: '#76a8df' }}>{(prediction.blueWinProbability * 100).toFixed(0)}%</div>
+                                                                <div style={{ fontSize: '9px', color: 'var(--muted)' }}>{prediction.blueScoreRange.mean.toFixed(0)} pts</div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 );
                                             })()}
                                             {isPlayed && result && (() => {
-                                                const prediction = matchPredictions.find(p => p.matchKey === m.matchKey)
-                                                    ?? predictUpcomingMatches([m], filteredDistributions, mNum - 1)[0];
+                                                const prediction = matchPredictionMap[m.matchKey];
                                                 if (!prediction) return null;
                                                 const predictedWinner = prediction.redWinProbability >= prediction.blueWinProbability ? 'red' : 'blue';
                                                 const correct = predictedWinner === result.winner || result.winner === 'tie';
                                                 return (
                                                     <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span style={{ fontSize: '9px', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Predicted</span>
+                                                        <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Predicted</span>
                                                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                                            <span style={{ fontSize: '9px', fontWeight: 950, color: '#ef4444' }}>{(prediction.redWinProbability * 100).toFixed(0)}%R</span>
-                                                            <span style={{ fontSize: '9px', color: '#444' }}>·</span>
-                                                            <span style={{ fontSize: '9px', fontWeight: 950, color: '#3b82f6' }}>{(prediction.blueWinProbability * 100).toFixed(0)}%B</span>
-                                                            <span style={{ fontSize: '9px', fontWeight: 950, color: correct ? '#22c55e' : '#ef4444' }}>{correct ? '✓' : '✗'}</span>
+                                                            <span style={{ fontSize: '9px', fontWeight: 700, color: '#cd5d74' }}>{(prediction.redWinProbability * 100).toFixed(0)}%R</span>
+                                                            <span style={{ fontSize: '9px', color: 'var(--muted)' }}>·</span>
+                                                            <span style={{ fontSize: '9px', fontWeight: 700, color: '#76a8df' }}>{(prediction.blueWinProbability * 100).toFixed(0)}%B</span>
+                                                            <span style={{ fontSize: '9px', fontWeight: 700, color: correct ? '#84caa7' : '#cd5d74' }}>{correct ? '✓' : '✗'}</span>
                                                         </div>
                                                     </div>
                                                 );
@@ -448,51 +523,33 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                 </div>
 
                 {/* EPA Analysis Section */}
-                <div className="reveal delay-6" style={{ marginTop: '2rem' }}>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '1.5rem' }}>EPA Analysis (Our Data vs Statbotics)</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                        {/* Sort by our EPA descending */}
-                        {Array.from(new Set(reports.map(r => r.teamKey))).map(teamKey => {
-                            const teamNum = parseInt(teamKey.replace('frc', ''));
-                            const teamReports = reports.filter(r => r.teamKey === teamKey);
-                            const ourEPA = calculateTeamEPA(teamReports).toFixed(1);
+                <div className="reveal delay-6" style={{ marginTop: '1rem' }}>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 760, marginBottom: '1rem' }}>EPA Analysis (Our Data vs Statbotics)</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.85rem' }}>
+                        {epaCards.map((card) => (
+                            <div key={card.teamKey} className="glass" style={{ padding: '1.15rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div className="flex justify-between items-center" style={{ marginBottom: '0.8rem' }}>
+                                    <span style={{ fontSize: '1.1rem', fontWeight: 760, color: 'var(--primary)' }}>{card.teamNum}</span>
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)' }}>{card.name}</span>
+                                </div>
 
-                            const sbData = statboticsData.find(s => s.team === teamNum);
-                            const sbEPA = (sbData && sbData.epa?.breakdown?.total_points != null) ? sbData.epa.breakdown.total_points.toFixed(1) : 'N/A';
-
-                            const diff = (sbData && sbData.epa?.breakdown?.total_points != null) ? (parseFloat(ourEPA) - sbData.epa.breakdown.total_points).toFixed(1) : '0.0';
-                            const diffColor = parseFloat(diff) > 0 ? '#22c55e' : parseFloat(diff) < 0 ? '#ef4444' : '#888';
-
-                            return (
-                                <div key={teamKey} className="glass" style={{ padding: '1.5rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
-                                        <span style={{ fontSize: '1.25rem', fontWeight: 950, color: 'var(--primary)' }}>{teamNum}</span>
-                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888' }}>{teamNameMap[teamKey] || 'TEAM'}</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p style={{ fontSize: '9px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Our EPA</p>
+                                        <p style={{ fontSize: '1.3rem', fontWeight: 760, color: 'var(--foreground)' }}>{card.ourEPA}</p>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p style={{ fontSize: '9px', fontWeight: 900, color: '#aaa', textTransform: 'uppercase' }}>OUR EPA</p>
-                                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#fff' }}>{ourEPA}</p>
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '9px', fontWeight: 900, color: '#aaa', textTransform: 'uppercase' }}>STATBOTICS</p>
-                                            <p style={{ fontSize: '1.5rem', fontWeight: 950, color: '#ccc' }}>{sbEPA}</p>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <p style={{ fontSize: '9px', fontWeight: 900, color: '#aaa', textTransform: 'uppercase' }}>DIFFERENCE</p>
-                                        <p style={{ fontSize: '1.1rem', fontWeight: 950, color: diffColor }}>{parseFloat(diff) > 0 ? '+' : ''}{diff}</p>
+                                    <div>
+                                        <p style={{ fontSize: '9px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Statbotics</p>
+                                        <p style={{ fontSize: '1.3rem', fontWeight: 700, color: '#d0d5de' }}>{card.sbEPA}</p>
                                     </div>
                                 </div>
-                            );
-                        }).sort((a, b) => {
-                            // Extract Our EPA from JSX? No, that's messy. Let's sorting by logic first.
-                            // Actually, map logic inside JSX is hard to sort.
-                            // I will refactor this block in a real implementation, but for now I'll just map.
-                            return 0;
-                        })}
+
+                                <div style={{ marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                    <p style={{ fontSize: '9px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Difference</p>
+                                    <p style={{ fontSize: '1rem', fontWeight: 760, color: card.diffColor }}>{parseFloat(card.diff) > 0 ? '+' : ''}{card.diff}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 

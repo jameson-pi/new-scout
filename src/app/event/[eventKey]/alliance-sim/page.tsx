@@ -8,7 +8,8 @@ import AllianceSimClient from './AllianceSimClient';
 
 export default async function AllianceSimPage({ params }: { params: Promise<{ eventKey: string }> }) {
     const { eventKey } = await params;
-    const { reports } = await getMissionData(eventKey);
+    const missionData = await getMissionData(eventKey);
+    const reports = missionData.reports || [];
     const eventTeams = await getEventTeams(eventKey);
     const statboticsData = await getStatboticsEvent(eventKey);
 

@@ -69,11 +69,15 @@ function getTowerPoints(level: string, phase: 'auto' | 'tele'): number {
  */
 export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, TBAMatchResult>): ScouterStats[] {
     const scouterErrors: Record<string, { total: number[], auto: number[], tele: number[], endgame: number[] }> = {};
+    const noteLengths: Record<string, number[]> = {};
 
     // Group reports by Match + Alliance
     const reportsByMatchAlliance: Record<string, ScoutReport[]> = {};
 
     reports.forEach(r => {
+        if (!noteLengths[r.scoutId]) noteLengths[r.scoutId] = [];
+        noteLengths[r.scoutId].push(r.data.notes?.trim().length || 0);
+
         const key = `${r.matchKey}::${r.alliance}`;
         if (!reportsByMatchAlliance[key]) reportsByMatchAlliance[key] = [];
         reportsByMatchAlliance[key].push(r);
@@ -152,6 +156,9 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
         const teleMae = errs.tele.reduce((sum, err) => sum + err, 0) / n;
         const endgameMae = errs.endgame.reduce((sum, err) => sum + err, 0) / n;
 
+        const notes = noteLengths[scoutId] || [];
+        const avgNoteLength = notes.length ? notes.reduce((a, b) => a + b, 0) / notes.length : 0;
+
         results.push({
             scoutId,
             matchesScouted: n,
@@ -161,7 +168,8 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
             spr: mae,
             autoError: autoMae,
             teleError: teleMae,
-            endgameError: endgameMae
+            endgameError: endgameMae,
+            otherDataLength: avgNoteLength
         });
     }
 

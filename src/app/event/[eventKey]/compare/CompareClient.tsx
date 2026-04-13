@@ -61,7 +61,7 @@ export default function CompareClient({ eventKey, teams }: CompareClientProps) {
     ];
 
     return (
-        <main style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
+        <main className="responsive-padding" style={{ minHeight: '100vh', background: '#000', color: '#fff', padding: '4rem 2rem' }}>
             <div className="mx-auto" style={{ maxWidth: '1200px' }}>
                 <header style={{ marginBottom: '2rem' }}>
                     <Link href={`/event/${eventKey}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: '1rem' }}>
@@ -156,65 +156,69 @@ export default function CompareClient({ eventKey, teams }: CompareClientProps) {
                             CAPABILITY COMPARISON
                         </h3>
 
-                        {/* Team Headers */}
-                        <div style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem', marginBottom: '2rem' }}>
-                            <div></div>
-                            {comparedTeams.map(t => (
-                                <div key={t.teamKey} style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--primary)' }}>{t.teamNum}</p>
-                                    <p style={{ fontSize: '0.8rem', color: '#888' }}>{t.name}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Metrics */}
-                        {metrics.map(m => (
-                            <div key={m.key} style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem', marginBottom: '1.5rem', alignItems: 'center' }}>
-                                <div style={{ fontSize: '0.9rem', fontWeight: 900, color: '#888' }}>{m.label}</div>
-                                {comparedTeams.map(t => {
-                                    const value = (t as any)[m.key];
-                                    const pct = (value / m.max) * 100;
-                                    const isWinner = Math.max(...comparedTeams.map(ct => (ct as any)[m.key])) === value;
-                                    return (
-                                        <div key={t.teamKey}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                <span style={{ fontSize: '1.25rem', fontWeight: 950, color: isWinner ? m.color : '#fff' }}>
-                                                    {m.format(value)}
-                                                </span>
-                                                {isWinner && <span style={{ fontSize: '0.7rem', background: m.color, color: '#000', padding: '0.1rem 0.3rem', borderRadius: '5px', fontWeight: 900 }}>BEST</span>}
-                                            </div>
-                                            <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
-                                                <div style={{ height: '100%', width: `${pct}%`, background: m.color, borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-
-                        {/* Scouter & Pit Notes */}
-                        {comparedTeams.some(t => t.allNotes && t.allNotes.length > 0) && (
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                                <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1rem' }}>Scouter & Pit Intel</p>
-                                <div style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem' }}>
+                        <div className="comparison-wrapper">
+                            <div className="comparison-grid-min">
+                                {/* Team Headers */}
+                                <div style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem', marginBottom: '2rem' }}>
                                     <div></div>
                                     {comparedTeams.map(t => (
-                                        <div key={t.teamKey} style={{ display: 'grid', gap: '0.4rem' }}>
-                                            {t.allNotes && t.allNotes.length > 0 ? (
-                                                t.allNotes.map((note, i) => (
-                                                    <p key={i} style={{ fontSize: '0.75rem', color: note.startsWith('[PIT]') ? '#a855f7' : '#888', lineHeight: 1.5, fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.75rem', borderRadius: '8px', borderLeft: `2px solid ${note.startsWith('[PIT]') ? 'rgba(168,85,247,0.4)' : 'rgba(255,255,255,0.1)'}` }}>
-                                                        &ldquo;{note.replace('[PIT] ', '')}&rdquo;
-                                                        {note.startsWith('[PIT]') && <span style={{ fontSize: '8px', color: '#a855f7', fontStyle: 'normal', fontWeight: 950, marginLeft: '0.4rem' }}>PIT</span>}
-                                                    </p>
-                                                ))
-                                            ) : (
-                                                <p style={{ fontSize: '0.75rem', color: '#333', fontStyle: 'italic' }}>No notes yet</p>
-                                            )}
+                                        <div key={t.teamKey} style={{ textAlign: 'center' }}>
+                                            <p style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--primary)' }}>{t.teamNum}</p>
+                                            <p style={{ fontSize: '0.8rem', color: '#888' }}>{t.name}</p>
                                         </div>
                                     ))}
                                 </div>
+
+                                {/* Metrics */}
+                                {metrics.map(m => (
+                                    <div key={m.key} style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem', marginBottom: '1.5rem', alignItems: 'center' }}>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 900, color: '#888' }}>{m.label}</div>
+                                        {comparedTeams.map(t => {
+                                            const value = (t as any)[m.key];
+                                            const pct = (value / m.max) * 100;
+                                            const isWinner = Math.max(...comparedTeams.map(ct => (ct as any)[m.key])) === value;
+                                            return (
+                                                <div key={t.teamKey}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                                        <span style={{ fontSize: '1.25rem', fontWeight: 950, color: isWinner ? m.color : '#fff' }}>
+                                                            {m.format(value)}
+                                                        </span>
+                                                        {isWinner && <span style={{ fontSize: '0.7rem', background: m.color, color: '#000', padding: '0.1rem 0.3rem', borderRadius: '5px', fontWeight: 900 }}>BEST</span>}
+                                                    </div>
+                                                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
+                                                        <div style={{ height: '100%', width: `${pct}%`, background: m.color, borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+
+                                {/* Scouter & Pit Notes */}
+                                {comparedTeams.some(t => t.allNotes && t.allNotes.length > 0) && (
+                                    <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <p style={{ fontSize: '10px', fontWeight: 950, color: '#444', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1rem' }}>Scouter & Pit Intel</p>
+                                        <div style={{ display: 'grid', gridTemplateColumns: `150px repeat(${comparedTeams.length}, 1fr)`, gap: '1rem' }}>
+                                            <div></div>
+                                            {comparedTeams.map(t => (
+                                                <div key={t.teamKey} style={{ display: 'grid', gap: '0.4rem' }}>
+                                                    {t.allNotes && t.allNotes.length > 0 ? (
+                                                        t.allNotes.map((note, i) => (
+                                                            <p key={i} style={{ fontSize: '0.75rem', color: note.startsWith('[PIT]') ? '#a855f7' : '#888', lineHeight: 1.5, fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.75rem', borderRadius: '8px', borderLeft: `2px solid ${note.startsWith('[PIT]') ? 'rgba(168,85,247,0.4)' : 'rgba(255,255,255,0.1)'}` }}>
+                                                                &ldquo;{note.replace('[PIT] ', '')}&rdquo;
+                                                                {note.startsWith('[PIT]') && <span style={{ fontSize: '8px', color: '#a855f7', fontStyle: 'normal', fontWeight: 950, marginLeft: '0.4rem' }}>PIT</span>}
+                                                            </p>
+                                                        ))
+                                                    ) : (
+                                                        <p style={{ fontSize: '0.75rem', color: '#333', fontStyle: 'italic' }}>No notes yet</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
 

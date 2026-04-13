@@ -1,4 +1,4 @@
-import { exportToCSV, exportPickList, exportToTextReport, ExportableTeam } from '../export';
+import { exportToCSV, exportPickList, exportToTextReport, exportScouterStatsToCSV, ExportableTeam } from '../export';
 
 // Mock document methods are set up in jest.setup.ts
 
@@ -25,6 +25,29 @@ describe('export', () => {
         createElementSpy.mockRestore();
         appendChildSpy.mockRestore();
         removeChildSpy.mockRestore();
+    });
+
+    describe('exportScouterStatsToCSV', () => {
+        it('should generate scouter stats CSV', () => {
+            const stats = [
+                {
+                    scoutId: 'Scout1',
+                    matchesScouted: 10,
+                    spr: 1.5,
+                    avgError: 1.2,
+                    bias: 0.5,
+                    variance: 0.8,
+                    autoError: 0.4,
+                    teleError: 0.6,
+                    endgameError: 0.2
+                }
+            ];
+
+            exportScouterStatsToCSV(stats, '2026txcle');
+
+            expect(mockLink.click).toHaveBeenCalled();
+            expect(mockLink.download).toBe('2026txcle_scouter_stats.csv');
+        });
     });
 
     describe('exportToCSV', () => {
