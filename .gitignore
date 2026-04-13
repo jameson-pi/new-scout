@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.agents
+/scripts
+gemini.md
+skills-lock.json
+2026GameManual.md
+2026GameManual.pdf
+2024 Howdy Bots Brand Guide.pdf

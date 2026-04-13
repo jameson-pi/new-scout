@@ -10,7 +10,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "ask-ai": "npx tsx --env-file=.env.local scripts/ask-ai.ts"
+    "ask-ai": "npx tsx --env-file=.env.local src/lib/ask-ai.ts"
   },
   "dependencies": {
     "@openrouter/sdk": "^0.3.15",

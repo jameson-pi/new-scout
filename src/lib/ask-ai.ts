@@ -1,11 +1,11 @@
-import { getTacticalStrategy, getTeamStrategyAction, getTeamQuestionsAction } from '../src/lib/actions';
-import { getMissionData, getPitReport } from '../src/lib/data';
-import { getEventTeams, getEventMatches } from '../src/lib/tba';
-import { pullStatboticsData } from '../src/lib/statbotics';
-import { calculateTeamEPA } from '../src/lib/spr';
-import { calculateTeamReliability } from '../src/lib/reliability';
-import { analyzeTeamRole } from '../src/lib/pickList';
-import { analyzeDefenseProfile } from '../src/lib/defense';
+import { getTacticalStrategy, getTeamStrategyAction, getTeamQuestionsAction } from './actions';
+import { getMissionData, getPitReport } from './data';
+import { getEventTeams, getEventMatches } from './tba';
+import { getStatboticsEvent } from './statbotics';
+import {calculateTeamEPA, ScoutReport} from './spr';
+import { calculateTeamReliability } from './reliability';
+import { analyzeTeamRole } from './pickList';
+import { analyzeDefenseProfile } from './defense';
 
 async function main() {
     const args = process.argv.slice(2);
@@ -56,7 +56,7 @@ Available Commands:
             const reliability = calculateTeamReliability(teamReports);
             const synergyProfile = analyzeTeamRole(teamReports);
             const defenseProfile = analyzeDefenseProfile(teamReports);
-            const matchNotes = teamReports.map((r: any) => r.data?.notes).filter(Boolean);
+            const matchNotes = teamReports.map((r: ScoutReport) => r.data?.notes).filter(Boolean);
 
             const teamData = { metrics, pitReport, synergyProfile, defenseProfile, matchNotes };
 
