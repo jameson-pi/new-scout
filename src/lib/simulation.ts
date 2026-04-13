@@ -1,4 +1,5 @@
-import { RebuiltData } from './spr';
+import type { RebuiltData } from './types/scouting';
+
 
 /**
  * Monte Carlo Event Simulator

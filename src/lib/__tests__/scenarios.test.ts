@@ -5,8 +5,7 @@ import {
     ScenarioResult
 } from '../scenarios';
 import { SimulatedMatch, TeamPerformanceDistribution } from '../simulation';
-import { RebuiltData } from '../spr';
-
+import type { RebuiltData } from '../types/scouting';
 // Helper to create mock performance distribution (REBUILT 2026)
 function createMockDistribution(teamKey: string): TeamPerformanceDistribution {
     const pastMatches: RebuiltData[] = [{

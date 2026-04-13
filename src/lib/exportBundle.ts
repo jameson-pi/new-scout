@@ -4,7 +4,7 @@ import { predictUpcomingMatches } from './predictions';
 import { TeamPerformanceDistribution } from './simulation';
 import { getStatboticsEvent } from './statbotics';
 import { getEventRankings, getEventTeams } from './tba';
-import { ScoutReport } from './spr';
+import type { ScoutReport } from './types/scouting';
 
 export interface EventExportBundle {
     eventKey: string;

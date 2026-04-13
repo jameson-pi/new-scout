@@ -1,4 +1,5 @@
-import { ScoutReport, RebuiltData } from './spr';
+import type { ScoutReport, RebuiltData } from './types/scouting';
+
 
 /**
  * Synthetic Data Generator

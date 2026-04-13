@@ -3,7 +3,9 @@
  * Ranks teams by alliance compatibility
  */
 
-import { ScoutReport, calculateTeamEPA } from './spr';
+import { calculateTeamEPA } from './spr';
+import type { ScoutReport } from './types/scouting';
+
 import { TeamReliability } from './reliability';
 
 const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, 'No Attempt': 0 };

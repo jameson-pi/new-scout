@@ -4,7 +4,7 @@ import {
     TeamPerformanceDistribution,
     SimResult
 } from '../simulation';
-import { RebuiltData } from '../spr';
+import type { RebuiltData } from '../types/scouting';
 
 // Helper to create mock performance distribution
 function createMockDistribution(

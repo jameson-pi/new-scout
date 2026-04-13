@@ -4,7 +4,7 @@
  * REBUILT 2026 Edition
  */
 
-import { ScoutReport } from './spr';
+import type { ScoutReport } from './types/scouting';
 
 export interface TeamReliability {
     teamKey: string;

@@ -1,5 +1,6 @@
 import { TeamPerformanceDistribution, SimulatedMatch } from './simulation';
-import { RebuiltData } from './spr';
+import type { RebuiltData } from './types/scouting';
+
 
 /**
  * Match Prediction Engine

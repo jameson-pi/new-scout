@@ -4,7 +4,7 @@ import {
     RPProbability
 } from '../rpCalculator';
 import { TeamPerformanceDistribution } from '../simulation';
-import { RebuiltData } from '../spr';
+import type { RebuiltData } from '../types/scouting';
 
 // Helper to create mock performance distribution (REBUILT 2026)
 function createMockDistribution(
