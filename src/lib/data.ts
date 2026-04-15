@@ -410,7 +410,7 @@ export async function getAvailableEvents(): Promise<{ key: string; name: string;
         const result = await pool.request().query(`
             SELECT event_key, event_name
             FROM frc6377Events
-            WHERE LOWER(event_key) IN ('2026howdy','2026txcle','2026txman')
+            WHERE LOWER(event_key) IN ('2026howdy','2026txcle','2026txman','2026txcmp1')
             ORDER BY event_key ASC
         `);
         if (result.recordset.length > 0) {
@@ -419,6 +419,7 @@ export async function getAvailableEvents(): Promise<{ key: string; name: string;
                 name: r.event_name,
                 location: r.event_key === '2026txcle' ? 'Houston, TX'
                          : r.event_key === '2026txman' ? 'Manor, TX'
+                         : r.event_key === '2026txcmp1' ? 'Houston, TX'
                          : 'Houston, TX',
             }));
         }
@@ -430,5 +431,6 @@ export async function getAvailableEvents(): Promise<{ key: string; name: string;
         { key: '2026howdy', name: 'HowdyScout Practice', location: 'Houston, TX' },
         { key: '2026txcle', name: 'Space City #1',       location: 'Houston, TX' },
         { key: '2026txman', name: 'Manor District',      location: 'Manor, TX' },
+        { key: '2026txcmp1', name: 'Texas District Championship Mercury', location: 'Houston, TX' },
     ];
 }

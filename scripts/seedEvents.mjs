@@ -14,6 +14,7 @@ const events = [
     { key: '2026howdy',  name: 'HowdyScout Practice', start: '2026-02-01', end: '2026-02-01' },
     { key: '2026txcle',  name: 'Space City #1',        start: '2026-03-19', end: '2026-03-22' },
     { key: '2026txman',  name: 'Manor District',       start: '2026-03-26', end: '2026-03-29' },
+    { key: '2026txcmp1', name: 'Texas District Championship Mercury', start: '2026-04-15', end: '2026-04-18' },
 ];
 
 for (const ev of events) {
@@ -37,4 +38,3 @@ for (const ev of events) {
 
 console.log('Done seeding events.');
 process.exit(0);
-
