@@ -99,15 +99,15 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                     alliances: {
                         red: {
                             score: m.alliances.red.score,
-                            autoPoints: (m.score_breakdown?.red as any)?.autoPoints || 0,
-                            teleopPoints: (m.score_breakdown?.red as any)?.teleopPoints || 0,
-                            endgamePoints: (m.score_breakdown?.red as any)?.endgamePoints || 0,
+                            autoPoints: m.score_breakdown?.red?.autoPoints || 0,
+                            teleopPoints: m.score_breakdown?.red?.teleopPoints || 0,
+                            endgamePoints: m.score_breakdown?.red?.endgamePoints || 0,
                         },
                         blue: {
                             score: m.alliances.blue.score,
-                            autoPoints: (m.score_breakdown?.blue as any)?.autoPoints || 0,
-                            teleopPoints: (m.score_breakdown?.blue as any)?.teleopPoints || 0,
-                            endgamePoints: (m.score_breakdown?.blue as any)?.endgamePoints || 0,
+                            autoPoints: m.score_breakdown?.blue?.autoPoints || 0,
+                            teleopPoints: m.score_breakdown?.blue?.teleopPoints || 0,
+                            endgamePoints: m.score_breakdown?.blue?.endgamePoints || 0,
                         },
                     },
                 };
@@ -259,10 +259,10 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                         const part = (mk.split('_').pop() || '').toLowerCase();
                         if (part.startsWith('qm')) return parseInt(part.slice(2)) || 0;
                         const level = part.match(/^([a-z]+)/)?.[1] || '';
-                        const [s, mm] = part.slice(level.length).split('m').map(Number);
-                        if (level === 'qf') return 100000 + (s || 0) * 10 + (mm || 0);
-                        if (level === 'sf') return 110000 + (s || 0) * 10 + (mm || 0);
-                        if (level === 'f')  return 120000 + (s || 0) * 10 + (mm || 0);
+                        const [setNumStr, matchInSet] = part.slice(level.length).split('m').map(Number);
+                        if (level === 'qf') return 100000 + (setNumStr || 0) * 10 + (matchInSet || 0);
+                        if (level === 'sf') return 110000 + (setNumStr || 0) * 10 + (matchInSet || 0);
+                        if (level === 'f')  return 120000 + (setNumStr || 0) * 10 + (matchInSet || 0);
                         return 200000;
                     };
                     return getPriority(a.matchKey) - getPriority(b.matchKey);

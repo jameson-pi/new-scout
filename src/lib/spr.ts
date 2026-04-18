@@ -132,6 +132,10 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
     return results.sort((a, b) => a.spr - b.spr);
 }
 
+// Weight smoothing constant: avoids instability when SPR ≈ 0 and
+// gives a ~2× bonus to near-perfect scouts vs a ~0.17× weight at SPR=5.
+const SPR_SMOOTHING_FACTOR = 0.5;
+
 /**
  * Calculates estimated EPA for a team.
  * When scouterStats are provided each report is weighted by the inverse of
@@ -154,13 +158,13 @@ export function calculateTeamEPA(reports: ScoutReport[], scouterStats?: ScouterS
             d.teleop.fuel_scored * POINTS.tele.fuel +
             getTowerPoints(d.teleop.climb_level, 'tele');
 
-        // Weight = 1 / (SPR + 0.5) so that a near-perfect scout (SPR≈0)
+        // Weight = 1 / (SPR + smoothing) so that a near-perfect scout (SPR≈0)
         // gets ~2× weight while an inaccurate scout (SPR=5) gets ~0.17× weight.
         let weight = 1;
         if (scouterStats && scouterStats.length > 0) {
             const stats = scouterStats.find(s => s.scoutId === r.scoutId);
             if (stats !== undefined) {
-                weight = 1 / (stats.spr + 0.5);
+                weight = 1 / (stats.spr + SPR_SMOOTHING_FACTOR);
             }
         }
 
