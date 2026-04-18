@@ -2,9 +2,9 @@
 
 import { useState, useMemo, memo, Suspense, lazy } from 'react';
 import Link from 'next/link';
-import { runSimulation, TeamPerformanceDistribution, SimulatedMatch } from '@/lib/simulation';
-import { calculateTeamEPA } from '@/lib/spr';
-import { ScoutReport } from '@/lib/types/scouting';
+import { runSimulation, TeamPerformanceDistribution, SimulatedMatch, getMatchLabel } from '@/lib/simulation';
+import { calculateSPR, calculateTeamEPA } from '@/lib/spr';
+import { ScoutReport, TBAMatchResult } from '@/lib/types/scouting';
 import { StatboticsTeamEvent } from '@/lib/statbotics';
 import { predictUpcomingMatches } from '@/lib/predictions';
 import { exportToCSV, ExportableTeam } from '@/lib/export';
@@ -48,10 +48,11 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
     void actualRankings;
 
     const parsedReports = useMemo<ReportWithMatchNum[]>(() => {
-        return reports.map((r) => ({
-            ...r,
-            matchNum: parseInt((r.matchKey || '').split('_qm').pop() || '0', 10),
-        }));
+        return reports.map((r) => {
+            const part = (r.matchKey || '').split('_').pop()?.toLowerCase() || '';
+            const matchNum = part.startsWith('qm') ? (parseInt(part.slice(2)) || 0) : Number.MAX_SAFE_INTEGER;
+            return { ...r, matchNum };
+        });
     }, [reports]);
 
     const reportsByTeam = useMemo(() => {
@@ -71,23 +72,56 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
     }, [statboticsData]);
 
     const maxMatch = useMemo(() => {
-        const nums = schedule.map(m => parseInt(m.matchKey.split('_qm').pop() || '0'));
+        const nums = schedule.map(m => {
+            const part = (m.matchKey.split('_').pop() || '').toLowerCase();
+            return part.startsWith('qm') ? (parseInt(part.slice(2)) || 0) : 0;
+        });
         return Math.max(...nums, 0);
     }, [schedule]);
 
-    // Default to the highest match we actually have scouting data for,
+    // Default to the highest QUAL match we have scouting data for,
     // so the countdown always points at real upcoming matches.
     const lastScoutedMatch = useMemo(() => {
-        if (parsedReports.length === 0) return 0;
-        return Math.max(...parsedReports.map(r => r.matchNum), 0);
+        const qualReports = parsedReports.filter(r => r.matchNum < Number.MAX_SAFE_INTEGER);
+        if (qualReports.length === 0) return 0;
+        return Math.max(...qualReports.map(r => r.matchNum), 0);
     }, [parsedReports]);
 
     const [matchLimit, setMatchLimit] = useState(() => lastScoutedMatch);
 
-    // 1. Calculate Ground Truth RPs (from TBA) up to matchLimit
+    // Scouter accuracy stats — used to weight EPA by scouter precision
+    const scouterStats = useMemo(() => {
+        const tbaMatchesForSPR: Record<string, TBAMatchResult> = {};
+        tbaMatchesRaw.forEach(m => {
+            if (m.alliances) {
+                tbaMatchesForSPR[m.key] = {
+                    matchKey: m.key,
+                    alliances: {
+                        red: {
+                            score: m.alliances.red.score,
+                            autoPoints: (m.score_breakdown?.red as any)?.autoPoints || 0,
+                            teleopPoints: (m.score_breakdown?.red as any)?.teleopPoints || 0,
+                            endgamePoints: (m.score_breakdown?.red as any)?.endgamePoints || 0,
+                        },
+                        blue: {
+                            score: m.alliances.blue.score,
+                            autoPoints: (m.score_breakdown?.blue as any)?.autoPoints || 0,
+                            teleopPoints: (m.score_breakdown?.blue as any)?.teleopPoints || 0,
+                            endgamePoints: (m.score_breakdown?.blue as any)?.endgamePoints || 0,
+                        },
+                    },
+                };
+            }
+        });
+        return calculateSPR(reports, tbaMatchesForSPR);
+    }, [reports, tbaMatchesRaw]);
+
+    // 1. Calculate Ground Truth RPs (from TBA qual matches only) up to matchLimit
     const groundTruthRPs = useMemo(() => {
         const rps: Record<string, number> = {};
         tbaMatchesRaw.forEach(m => {
+            // Only qual matches contribute to rankings
+            if (m.comp_level !== 'qm') return;
             const mNum = m.match_number || 0;
             if (mNum <= matchLimit && m.alliances) {
                 let redRPs = 0;
@@ -155,7 +189,7 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         const teamNum = parseInt(r.teamKey.replace('frc', ''), 10);
         const sbData = statboticsByTeamNum.get(teamNum);
         const teamReports = (reportsByTeam.get(r.teamKey) ?? []).filter(rep => rep.matchNum <= matchLimit);
-        const ourEPA = calculateTeamEPA(teamReports).toFixed(1);
+        const ourEPA = calculateTeamEPA(teamReports, scouterStats).toFixed(1);
 
         const simResult = resultsByTeam.get(r.teamKey);
         const top8Count = simResult
@@ -179,7 +213,7 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         };
     });
 
-    // 4. Generate Match Predictions for upcoming matches
+    // 4. Generate Match Predictions for upcoming qual matches
     const matchPredictions = useMemo(() => {
         return predictUpcomingMatches(schedule, filteredDistributions, matchLimit);
     }, [schedule, filteredDistributions, matchLimit]);
@@ -210,11 +244,38 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
         return map;
     }, [tbaMatchesRaw]);
 
+    // 6. Build display schedule that includes ALL matches (qual + elim), sorted correctly
+    const allMatchesForDisplay = useMemo((): SimulatedMatch[] => {
+        if (tbaMatchesRaw && tbaMatchesRaw.length > 0) {
+            return [...tbaMatchesRaw]
+                .filter(m => m.alliances && (m.alliances.red.team_keys?.length ?? 0) > 0)
+                .map(m => ({
+                    matchKey: m.key,
+                    red: m.alliances.red.team_keys.slice(0, 3),
+                    blue: m.alliances.blue.team_keys.slice(0, 3),
+                }))
+                .sort((a, b) => {
+                    const getPriority = (mk: string) => {
+                        const part = (mk.split('_').pop() || '').toLowerCase();
+                        if (part.startsWith('qm')) return parseInt(part.slice(2)) || 0;
+                        const level = part.match(/^([a-z]+)/)?.[1] || '';
+                        const [s, mm] = part.slice(level.length).split('m').map(Number);
+                        if (level === 'qf') return 100000 + (s || 0) * 10 + (mm || 0);
+                        if (level === 'sf') return 110000 + (s || 0) * 10 + (mm || 0);
+                        if (level === 'f')  return 120000 + (s || 0) * 10 + (mm || 0);
+                        return 200000;
+                    };
+                    return getPriority(a.matchKey) - getPriority(b.matchKey);
+                });
+        }
+        return schedule; // Fall back to qual-only schedule
+    }, [tbaMatchesRaw, schedule]);
+
     const epaCards = useMemo(() => {
         return Array.from(reportsByTeam.entries())
             .map(([teamKey, teamReports]) => {
                 const teamNum = parseInt(teamKey.replace('frc', ''), 10);
-                const ourEPAValue = calculateTeamEPA(teamReports);
+                const ourEPAValue = calculateTeamEPA(teamReports, scouterStats);
                 const ourEPA = ourEPAValue.toFixed(1);
 
                 const sbData = statboticsByTeamNum.get(teamNum);
@@ -440,15 +501,19 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                        {schedule.map((m: SimulatedMatch) => {
-                            const mNum = parseInt(m.matchKey.split('_qm').pop() || '0');
-                            const isPlayed = mNum <= matchLimit;
+                        {allMatchesForDisplay.map((m: SimulatedMatch) => {
+                            const part = (m.matchKey.split('_').pop() || '').toLowerCase();
+                            const isQual = part.startsWith('qm');
+                            const mNum = isQual ? (parseInt(part.slice(2)) || 0) : Number.MAX_SAFE_INTEGER;
                             const result = playedResultsMap[m.matchKey];
+                            // Qual matches are "played" when within the slider limit;
+                            // elimination matches are "played" when TBA reports a score.
+                            const isPlayed = isQual ? (mNum <= matchLimit) : !!result;
                             return (
                                 <Link key={m.matchKey} href={`/match/${m.matchKey}`} style={{ textDecoration: 'none', opacity: isPlayed ? 0.75 : 1 }}>
                                     <div className="glass" style={{ padding: '1rem', borderRadius: '18px', border: isPlayed ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.1)' }}>
                                         <div className="flex justify-between items-center" style={{ marginBottom: '0.8rem' }}>
-                                            <span style={{ fontSize: '11px', fontWeight: 700, color: isPlayed ? 'var(--muted)' : 'var(--primary)' }}>{m.matchKey.split('_').pop()?.toUpperCase() || 'QM?'}</span>
+                                            <span style={{ fontSize: '11px', fontWeight: 700, color: isPlayed ? 'var(--muted)' : 'var(--primary)' }}>{getMatchLabel(m.matchKey)}</span>
                                             {isPlayed && result ? (
                                                 <span style={{
                                                     fontSize: '9px', fontWeight: 700, textTransform: 'uppercase',
@@ -475,7 +540,7 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                                                 </div>
                                                 {result && <span style={{ fontSize: '1rem', fontWeight: 760, color: result.winner === 'blue' ? '#76a8df' : 'var(--muted)', fontFamily: 'monospace' }}>{result.blueScore}</span>}
                                             </div>
-                                            {!isPlayed && (() => {
+                                            {!isPlayed && isQual && (() => {
                                                 const prediction = matchPredictionMap[m.matchKey];
                                                 if (!prediction) return null;
                                                 const confColor = prediction.confidence === 'high' ? '#22c55e' : prediction.confidence === 'medium' ? '#eab308' : '#ef4444';
@@ -499,7 +564,7 @@ export default function EventDashboard({ eventKey, reports, schedule, distributi
                                                     </div>
                                                 );
                                             })()}
-                                            {isPlayed && result && (() => {
+                                            {isPlayed && result && isQual && (() => {
                                                 const prediction = matchPredictionMap[m.matchKey];
                                                 if (!prediction) return null;
                                                 const predictedWinner = prediction.redWinProbability >= prediction.blueWinProbability ? 'red' : 'blue';

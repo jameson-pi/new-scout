@@ -1,7 +1,7 @@
 import { getMissionData, getEventTeamList, getAllPitReports } from '@/lib/data';
 import { getEventTeams } from '@/lib/tba';
 import { getStatboticsEvent } from '@/lib/statbotics';
-import { calculateTeamEPA } from '@/lib/spr';
+import { calculateSPR, calculateTeamEPA } from '@/lib/spr';
 import { calculateAllTeamReliability } from '@/lib/reliability';
 import { generatePickList } from '@/lib/pickList';
 import TeamsClient from './TeamsClient';
@@ -9,7 +9,7 @@ import TeamsClient from './TeamsClient';
 export default async function TeamsListPage({ params }: { params: Promise<{ eventKey: string }> }) {
     const { eventKey } = await params;
 
-    const [{ reports }, tbaTeams, statboticsData, pitReports] = await Promise.all([
+    const [{ reports, tbaMatches }, tbaTeams, statboticsData, pitReports] = await Promise.all([
         getMissionData(eventKey),
         getEventTeams(eventKey),
         getStatboticsEvent(eventKey),
@@ -30,6 +30,8 @@ export default async function TeamsListPage({ params }: { params: Promise<{ even
 
     const reliabilityData = calculateAllTeamReliability(reports);
     const pickListData = generatePickList(reports, reliabilityData);
+    // Compute scouter accuracy stats so EPA can be weighted by scouter precision
+    const scouterStats = calculateSPR(reports, tbaMatches);
 
     // Union: all roster teams + any scouted-but-not-on-roster teams
     const allScoutedKeys = Array.from(new Set(reports.map(r => r.teamKey)));
@@ -42,7 +44,7 @@ export default async function TeamsListPage({ params }: { params: Promise<{ even
     const teams = Array.from(new Set(allTeamKeys)).map(teamKey => {
         const teamNum = parseInt(teamKey.replace('frc', ''), 10);
         const teamReports = reports.filter(r => r.teamKey === teamKey);
-        const ourEPA = calculateTeamEPA(teamReports);
+        const ourEPA = calculateTeamEPA(teamReports, scouterStats);
 
         const sbData = (statboticsData as { team: number; epa?: { breakdown?: { total_points?: number } } }[])
             .find(s => s.team === teamNum);

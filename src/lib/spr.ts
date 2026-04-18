@@ -132,25 +132,43 @@ export function calculateSPR(reports: ScoutReport[], tbaMatches: Record<string, 
     return results.sort((a, b) => a.spr - b.spr);
 }
 
-export function calculateTeamEPA(reports: ScoutReport[]): number {
+/**
+ * Calculates estimated EPA for a team.
+ * When scouterStats are provided each report is weighted by the inverse of
+ * its scouter's SPR (Mean Absolute Error), so more-accurate scouts carry
+ * more weight in the average.  Falls back to equal weighting when stats are
+ * unavailable or when a scouter has no SPR data yet.
+ */
+export function calculateTeamEPA(reports: ScoutReport[], scouterStats?: ScouterStats[]): number {
     if (reports.length === 0) return 0;
 
-    let totalPoints = 0;
+    let totalWeightedPoints = 0;
+    let totalWeight = 0;
+
     reports.forEach(r => {
         const d = r.data;
-        // Auto
-        totalPoints += d.auto.fuel_scored * POINTS.auto.fuel;
-        totalPoints += getTowerPoints(d.auto.climb_level, 'auto');
-        if (d.auto.moved) totalPoints += POINTS.auto.moved;
+        const points =
+            d.auto.fuel_scored * POINTS.auto.fuel +
+            getTowerPoints(d.auto.climb_level, 'auto') +
+            (d.auto.moved ? POINTS.auto.moved : 0) +
+            d.teleop.fuel_scored * POINTS.tele.fuel +
+            getTowerPoints(d.teleop.climb_level, 'tele');
 
-        // Teleop
-        totalPoints += d.teleop.fuel_scored * POINTS.tele.fuel;
+        // Weight = 1 / (SPR + 0.5) so that a near-perfect scout (SPR≈0)
+        // gets ~2× weight while an inaccurate scout (SPR=5) gets ~0.17× weight.
+        let weight = 1;
+        if (scouterStats && scouterStats.length > 0) {
+            const stats = scouterStats.find(s => s.scoutId === r.scoutId);
+            if (stats !== undefined) {
+                weight = 1 / (stats.spr + 0.5);
+            }
+        }
 
-        // Endgame (Tower)
-        totalPoints += getTowerPoints(d.teleop.climb_level, 'tele');
+        totalWeightedPoints += points * weight;
+        totalWeight += weight;
     });
 
-    return totalPoints / reports.length;
+    return totalWeight > 0 ? totalWeightedPoints / totalWeight : 0;
 }
 
 // Helper: Cartesian Product
