@@ -14,7 +14,77 @@
 - **Real-time Data** - Live integration with The Blue Alliance API
 - **EPA Metrics** - Integration with Statbotics EPA data
 
-## Getting Started
+## Auton Importance CLI 🤖
+
+Analyzes FRC match data to quantify how often winning autonomous (auto) by exactly **1 point** correlates with winning the full match.
+
+### Setup
+
+Add your API key to `.env.local`:
+
+```
+TBA_AUTH_KEY=your_tba_api_key
+# Optional — override Statbotics base URL
+# STATBOTICS_API_BASE=https://api.statbotics.io/v3
+```
+
+### Usage
+
+```bash
+npm run auton-importance -- [options]
+```
+
+| Option | Description |
+|---|---|
+| `--year <year>` | **(Required)** Season year, e.g. `2024` |
+| `--event <eventKey>` | Limit to a single event, e.g. `2024txcle` |
+| `--level <level>` | Filter by comp level: `qm`, `ef`, `qf`, `sf`, `f` |
+| `--limit <n>` | Stop after analysing *n* qualifying matches |
+| `--json-out <file>` | Write full JSON results to a file |
+| `--use-statbotics` | Enrich matches with Statbotics EPA data |
+| `--help` | Show help |
+
+### Examples
+
+```bash
+# Analyse all 2024 qualification matches (full season)
+npm run auton-importance -- --year 2024 --level qm
+
+# Analyse a single event with Statbotics EPA enrichment
+npm run auton-importance -- --year 2024 --event 2024txcle --use-statbotics
+
+# Export results to JSON
+npm run auton-importance -- --year 2024 --json-out ./out/2024-auton.json
+
+# Show help
+npm run auton-importance -- --help
+```
+
+### Output
+
+The tool prints a human-readable summary table plus a sample match listing to stdout.
+
+When `--json-out` is specified the full result object (records + summaries by event) is written as pretty-printed JSON:
+
+```jsonc
+{
+  "year": 2024,
+  "filters": { "event": "2024txcle", "level": "qm" },
+  "records": [ /* one entry per qualifying match */ ],
+  "summary": {
+    "totalMatches": 12,
+    "wins": 7, "losses": 4, "ties": 1,
+    "winPct": 58.3, "lossPct": 33.3, "tiePct": 8.3,
+    "finalMarginDistribution": { "-15": 1, "3": 2, ... }
+  },
+  "bySeason": { "2024": { ... } },
+  "byEvent": { "2024txcle": { ... } }
+}
+```
+
+---
+
+
 
 ### Prerequisites
 
@@ -33,6 +103,7 @@ Create a `.env.local` file:
 
 ```
 NEXT_PUBLIC_TBA_API_KEY=your_tba_api_key
+TBA_AUTH_KEY=your_tba_api_key
 HACK_CLUB_AI_KEY=your_ai_key
 ```
 
