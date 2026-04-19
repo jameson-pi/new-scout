@@ -5,10 +5,10 @@
  * 1 point correlates with winning the full match.
  *
  * Usage:
- *   npm run auton-importance -- --year 2024
- *   npm run auton-importance -- --year 2024 --event 2024txcle
- *   npm run auton-importance -- --year 2024 --level qm --use-statbotics
- *   npm run auton-importance -- --year 2024 --json-out results.json
+ *   npm run auton-importance -- --year 2026
+ *   npm run auton-importance -- --year 2026 --event 2026txcle
+ *   npm run auton-importance -- --year 2026 --level qm --use-statbotics
+ *   npm run auton-importance -- --year 2026 --json-out results.json
  *
  * Required environment variable:
  *   TBA_AUTH_KEY   – The Blue Alliance API auth key
@@ -41,18 +41,21 @@ interface CliArgs {
 
 function printHelp(): void {
     console.log(`
-auton-importance — FRC Autonomous Importance Analyzer
-======================================================
+auton-importance — FRC Autonomous Importance Analyzer (2026 REBUILT)
+=====================================================================
 
 Finds all matches where one alliance won autonomous by exactly 1 point and
 reports how often those alliances went on to win the full match.
+
+Scoring (2026 REBUILT): fuel×1pt, Tower Level 1 auto=15pts, moved=3pts.
+TBA reports the total as 'autoPoints' in the match score_breakdown.
 
 Usage:
   npm run auton-importance -- [options]
 
 Options:
-  --year <year>         Season year (required, e.g. 2024)
-  --event <eventKey>    Limit to a single event (e.g. 2024txcle)
+  --year <year>         Season year (default: 2026)
+  --event <eventKey>    Limit to a single event (e.g. 2026txcle)
   --level <level>       Filter by comp level: qm | ef | qf | sf | f
   --limit <n>           Stop after analysing n qualifying matches
   --json-out <file>     Write full JSON results to this file path
@@ -64,20 +67,20 @@ Environment variables:
   STATBOTICS_API_BASE   (optional) Override Statbotics API base URL
 
 Examples:
-  # Analyse all 2024 qualification matches
-  npm run auton-importance -- --year 2024 --level qm
+  # Analyse all 2026 qualification matches (default year)
+  npm run auton-importance -- --level qm
 
   # Analyse a single event with Statbotics EPA enrichment
-  npm run auton-importance -- --year 2024 --event 2024txcle --use-statbotics
+  npm run auton-importance -- --event 2026txcle --use-statbotics
 
-  # Export to JSON
-  npm run auton-importance -- --year 2024 --json-out ./out/2024-auton.json
+  # Export results to JSON
+  npm run auton-importance -- --json-out ./out/2026-auton.json
 `);
 }
 
 function parseArgs(argv: string[]): CliArgs {
     const args: CliArgs = {
-        year: 0,
+        year: 0, // 0 = use DEFAULT_YEAR (2026)
         useStatbotics: false,
         help: false,
     };
@@ -208,25 +211,23 @@ async function main(): Promise<void> {
         return;
     }
 
-    if (!args.year || isNaN(args.year)) {
-        console.error('Error: --year <year> is required.\n');
-        printHelp();
-        process.exit(1);
-    }
+    // Default to 2026 (DEFAULT_YEAR) when --year is not provided
+    const year = args.year && !isNaN(args.year) ? args.year : 2026;
 
-    if (!process.env.TBA_AUTH_KEY) {
+    const tbaKey = process.env.TBA_AUTH_KEY || process.env.NEXT_PUBLIC_TBA_API_KEY || process.env.TBA_API_KEY;
+    if (!tbaKey) {
         console.error('Error: TBA_AUTH_KEY environment variable is not set.');
         process.exit(1);
     }
 
-    console.log(`\nAuton Importance Analysis`);
-    console.log(`Year: ${args.year}${args.event ? `  Event: ${args.event}` : ''}${args.level ? `  Level: ${args.level}` : ''}${args.useStatbotics ? '  [Statbotics EPA enabled]' : ''}`);
+    console.log(`\nAuton Importance Analysis — 2026 REBUILT`);
+    console.log(`Year: ${year}${args.event ? `  Event: ${args.event}` : ''}${args.level ? `  Level: ${args.level}` : ''}${args.useStatbotics ? '  [Statbotics EPA enabled]' : ''}`);
     console.log('Fetching match data from The Blue Alliance...');
 
     let result: AutonImportanceResult;
     try {
         result = await runAutonImportanceAnalysis({
-            year: args.year,
+            year,
             event: args.event,
             level: args.level,
             limit: args.limit,
@@ -244,7 +245,7 @@ async function main(): Promise<void> {
     }
 
     // --- Overall summary ---
-    printSummaryTable(`Overall — ${args.year}`, result.summary);
+    printSummaryTable(`Overall — ${year}`, result.summary);
 
     // --- By event (if multiple events) ---
     const eventKeys = Object.keys(result.byEvent);

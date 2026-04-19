@@ -16,7 +16,9 @@
 
 ## Auton Importance CLI 🤖
 
-Analyzes FRC match data to quantify how often winning autonomous (auto) by exactly **1 point** correlates with winning the full match.
+Analyzes FRC 2026 REBUILT match data to quantify how often winning autonomous (auto) by exactly **1 point** correlates with winning the full match.
+
+**2026 REBUILT scoring:** fuel × 1 pt, Tower Level 1 auto = 15 pts, moved = 3 pts (via `autoPoints` field in TBA score_breakdown).
 
 ### Setup
 
@@ -36,25 +38,28 @@ npm run auton-importance -- [options]
 
 | Option | Description |
 |---|---|
-| `--year <year>` | **(Required)** Season year, e.g. `2024` |
-| `--event <eventKey>` | Limit to a single event, e.g. `2024txcle` |
+| `--year <year>` | Season year (default: `2026`) |
+| `--event <eventKey>` | Limit to a single event, e.g. `2026txcle` |
 | `--level <level>` | Filter by comp level: `qm`, `ef`, `qf`, `sf`, `f` |
 | `--limit <n>` | Stop after analysing *n* qualifying matches |
 | `--json-out <file>` | Write full JSON results to a file |
-| `--use-statbotics` | Enrich matches with Statbotics EPA data |
+| `--use-statbotics` | Enrich matches with Statbotics EPA (sums per-team EPA per alliance) |
 | `--help` | Show help |
 
 ### Examples
 
 ```bash
-# Analyse all 2024 qualification matches (full season)
-npm run auton-importance -- --year 2024 --level qm
+# Analyse all 2026 qualification matches (default year)
+npm run auton-importance -- --level qm
 
-# Analyse a single event with Statbotics EPA enrichment
-npm run auton-importance -- --year 2024 --event 2024txcle --use-statbotics
+# Analyse a single 2026 event with Statbotics EPA enrichment
+npm run auton-importance -- --event 2026txcle --use-statbotics
 
 # Export results to JSON
-npm run auton-importance -- --year 2024 --json-out ./out/2024-auton.json
+npm run auton-importance -- --json-out ./out/2026-auton.json
+
+# Analyse a specific year
+npm run auton-importance -- --year 2025 --level qm
 
 # Show help
 npm run auton-importance -- --help
@@ -68,8 +73,8 @@ When `--json-out` is specified the full result object (records + summaries by ev
 
 ```jsonc
 {
-  "year": 2024,
-  "filters": { "event": "2024txcle", "level": "qm" },
+  "year": 2026,
+  "filters": { "event": "2026txcle", "level": "qm" },
   "records": [ /* one entry per qualifying match */ ],
   "summary": {
     "totalMatches": 12,
@@ -77,8 +82,8 @@ When `--json-out` is specified the full result object (records + summaries by ev
     "winPct": 58.3, "lossPct": 33.3, "tiePct": 8.3,
     "finalMarginDistribution": { "-15": 1, "3": 2, ... }
   },
-  "bySeason": { "2024": { ... } },
-  "byEvent": { "2024txcle": { ... } }
+  "bySeason": { "2026": { ... } },
+  "byEvent": { "2026txcle": { ... } }
 }
 ```
 

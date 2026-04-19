@@ -1,87 +1,44 @@
 /**
- * Auton Importance Analysis
+ * Auton Importance Analysis — 2026 REBUILT Edition
  *
- * Analyzes FRC match data to quantify how often winning autonomous (auto) by
- * exactly 1 point correlates with winning the full match.
+ * Analyzes FRC match data to quantify how often winning the autonomous (auto)
+ * period by exactly 1 point correlates with winning the full match.
+ *
+ * Scoring constants match the 2026 REBUILT game (see spr.ts / predictions.ts):
+ *   - Fuel in auto:       1 pt / piece
+ *   - Tower Level 1 auto: 15 pts
+ *   - Mobility (moved):    3 pts
+ *   - TBA reports the sum as `autoPoints` in score_breakdown
  *
  * Data sources:
- *   - The Blue Alliance API  (env: TBA_AUTH_KEY)
- *   - Statbotics API         (env: STATBOTICS_API_BASE, optional override)
+ *   - The Blue Alliance API  (env: TBA_AUTH_KEY)  — via ./tba lib
+ *   - Statbotics API         (env: STATBOTICS_API_BASE, optional)  — via ./statbotics lib
  */
 
+import { getEventMatches, TBAMatch } from './tba';
+import { getStatboticsEvent, StatboticsTeamEvent } from './statbotics';
+
 // ---------------------------------------------------------------------------
-// Constants / configuration
+// Constants
 // ---------------------------------------------------------------------------
 
+export const DEFAULT_YEAR = 2026;
 export const TBA_BASE_URL = 'https://www.thebluealliance.com/api/v3';
-export const DEFAULT_STATBOTICS_BASE = 'https://api.statbotics.io/v3';
+
+/**
+ * 2026 REBUILT auto scoring constants (mirrors spr.ts / predictions.ts).
+ * TBA will report the total as `autoPoints`; these sub-components are used
+ * as a fallback when only individual breakdown fields are available.
+ */
+export const REBUILT_AUTO_POINTS = {
+    fuel: 1,          // per fuel piece scored in auto
+    towerLevel1: 15,  // Tower Level 1 climb in auto
+    mobility: 3,      // robot moved off the starting line
+} as const;
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export interface TBAScoreBreakdown {
-    autoPoints?: number;
-    // 2024 Crescendo
-    autoAmpNotePoints?: number;
-    autoSpeakerNotePoints?: number;
-    autoLeavePoints?: number;
-    // 2023 Charged Up
-    autoChargeStationPoints?: number;
-    autoMobilityPoints?: number;
-    autoDockingPoints?: number;
-    // 2022 Rapid React
-    taxiPoints?: number;
-    cargoPoints?: number;
-    // 2020/2021
-    autoInitLinePoints?: number;
-    autoCellPoints?: number;
-    // 2019 Destination Deep Space
-    habLinePoints?: number;
-    // 2018 POWER UP
-    autoRunPoints?: number;
-    autoOwnershipPoints?: number;
-    autoQuestPoints?: number;
-    // 2026 REBUILT - possible field names
-    autoAlgaePoints?: number;
-    autoCoralPoints?: number;
-    [key: string]: number | undefined;
-}
-
-export interface TBAAlliance {
-    score: number;
-    team_keys: string[];
-}
-
-export interface TBAMatch {
-    key: string;
-    event_key?: string;
-    match_number: number;
-    comp_level: 'qm' | 'ef' | 'qf' | 'sf' | 'f';
-    alliances: {
-        red: TBAAlliance;
-        blue: TBAAlliance;
-    };
-    score_breakdown?: {
-        red?: TBAScoreBreakdown;
-        blue?: TBAScoreBreakdown;
-    } | null;
-    actual_time?: number | null;
-    winning_alliance?: 'red' | 'blue' | '';
-    year?: number;
-}
-
-export interface StatboticsTeam {
-    team: number;
-    event: string;
-    epa?: {
-        total_points?: { mean: number; sd?: number };
-        breakdown?: {
-            auto_points?: number;
-            [key: string]: number | undefined;
-        };
-    };
-}
 
 export type MatchResult = 'win' | 'loss' | 'tie';
 
@@ -100,9 +57,9 @@ export interface AutonMatchRecord {
 
     finalScoreBlue: number;
     finalScoreRed: number;
-    finalMargin: number; // blue - red (positive = blue won)
+    finalMargin: number; // blue - red (positive = blue won overall)
 
-    /** 'win' | 'loss' | 'tie' from the auton winner's perspective */
+    /** Result from the auton winner's perspective */
     matchResultForAutonWinner: MatchResult;
 
     // Statbotics enrichment (optional)
@@ -119,7 +76,7 @@ export interface AutonImportanceSummary {
     winPct: number;
     lossPct: number;
     tiePct: number;
-    finalMarginDistribution: Record<number, number>; // finalMargin -> count
+    finalMarginDistribution: Record<number, number>;
 }
 
 export interface AutonImportanceResult {
@@ -135,58 +92,53 @@ export interface AutonImportanceResult {
     byEvent: Record<string, AutonImportanceSummary>;
 }
 
+export interface AnalysisOptions {
+    year?: number;
+    event?: string;
+    level?: string;
+    limit?: number;
+    useStatbotics?: boolean;
+}
+
 // ---------------------------------------------------------------------------
-// Auton score extraction
+// Auton score extraction — 2026 REBUILT focused
 // ---------------------------------------------------------------------------
 
 /**
- * Extract the autonomous score for an alliance from a TBA score_breakdown.
- * Tries explicit `autoPoints` first; falls back to summing known auto
- * sub-component fields so the tool works across multiple seasons.
+ * Extract the autonomous score for one alliance from a TBA score_breakdown.
+ *
+ * Strategy (2026 REBUILT):
+ *  1. Use `autoPoints` directly — TBA provides this for all supported seasons.
+ *  2. Fall back to summing 2026-specific sub-fields:
+ *       autoFuelPoints + autoTowerPoints + autoMobilityPoints
+ *  3. Generic catch-all: sum any field whose name starts with "auto"
+ *     (excluding RP / bonus fields) — future-proofs against new TBA field names.
  */
-export function extractAutonScore(breakdown: TBAScoreBreakdown | undefined | null): number {
+export function extractAutonScore(breakdown: Record<string, unknown> | null | undefined): number {
     if (!breakdown) return 0;
 
-    // Most seasons expose a top-level autoPoints field
+    // TBA provides autoPoints for all seasons including 2026 REBUILT
     if (typeof breakdown.autoPoints === 'number') {
         return breakdown.autoPoints;
     }
 
-    // 2024 Crescendo
+    // 2026 REBUILT sub-components when autoPoints is not directly available:
+    //   autoFuelPoints    = fuel pieces scored × REBUILT_AUTO_POINTS.fuel (1 pt each)
+    //   autoTowerPoints   = Tower Level 1 climbs × REBUILT_AUTO_POINTS.towerLevel1 (15 pts)
+    //   autoMobilityPoints= robots that moved × REBUILT_AUTO_POINTS.mobility (3 pts)
     if (
-        breakdown.autoAmpNotePoints !== undefined ||
-        breakdown.autoSpeakerNotePoints !== undefined ||
-        breakdown.autoLeavePoints !== undefined
-    ) {
-        return (
-            (breakdown.autoAmpNotePoints ?? 0) +
-            (breakdown.autoSpeakerNotePoints ?? 0) +
-            (breakdown.autoLeavePoints ?? 0)
-        );
-    }
-
-    // 2023 Charged Up
-    if (
-        breakdown.autoChargeStationPoints !== undefined ||
+        breakdown.autoFuelPoints !== undefined ||
+        breakdown.autoTowerPoints !== undefined ||
         breakdown.autoMobilityPoints !== undefined
     ) {
         return (
-            (breakdown.autoMobilityPoints ?? 0) +
-            (breakdown.autoChargeStationPoints ?? 0)
+            ((breakdown.autoFuelPoints as number) ?? 0) +
+            ((breakdown.autoTowerPoints as number) ?? 0) +
+            ((breakdown.autoMobilityPoints as number) ?? 0)
         );
     }
 
-    // 2022 Rapid React — auto cargo + taxi
-    if (breakdown.taxiPoints !== undefined) {
-        return (breakdown.taxiPoints ?? 0) + (breakdown.cargoPoints ?? 0);
-    }
-
-    // 2020/2021 Infinite Recharge
-    if (breakdown.autoInitLinePoints !== undefined) {
-        return (breakdown.autoInitLinePoints ?? 0) + (breakdown.autoCellPoints ?? 0);
-    }
-
-    // 2026 REBUILT — check for known auto field names dynamically
+    // Generic fallback: sum any numeric field starting with "auto"
     let sumFromAuto = 0;
     let foundAny = false;
     for (const [key, val] of Object.entries(breakdown)) {
@@ -200,19 +152,18 @@ export function extractAutonScore(breakdown: TBAScoreBreakdown | undefined | nul
             foundAny = true;
         }
     }
-    if (foundAny) return sumFromAuto;
-
-    return 0;
+    return foundAny ? sumFromAuto : 0;
 }
 
 // ---------------------------------------------------------------------------
-// Match filtering
+// Match processing
 // ---------------------------------------------------------------------------
 
 /**
  * Determine the overall match winner ('red', 'blue', or 'tie').
+ * Uses winning_alliance from TBA when available; falls back to score comparison.
  */
-export function getMatchWinner(match: TBAMatch): 'red' | 'blue' | 'tie' {
+export function getMatchWinner(match: TBAMatch & { winning_alliance?: string }): 'red' | 'blue' | 'tie' {
     if (match.winning_alliance && match.winning_alliance !== '') {
         return match.winning_alliance as 'red' | 'blue';
     }
@@ -225,33 +176,30 @@ export function getMatchWinner(match: TBAMatch): 'red' | 'blue' | 'tie' {
 
 /**
  * Process a single TBA match into an AutonMatchRecord.
- * Returns null if the match does not qualify (no breakdown, no auton margin of ±1,
- * or unplayed match with score -1).
+ * Returns null when the match does not qualify:
+ *   - Unplayed (score -1)
+ *   - No score_breakdown
+ *   - Auton margin ≠ ±1
  */
 export function processMatch(
-    match: TBAMatch,
+    match: TBAMatch & { event_key?: string; winning_alliance?: string },
     year: number,
     epas?: { red: number; blue: number }
 ): AutonMatchRecord | null {
-    // Skip unplayed matches
     if (match.alliances.red.score < 0 || match.alliances.blue.score < 0) return null;
-    // Skip if no score breakdown
     if (!match.score_breakdown) return null;
 
-    const blueBreakdown = match.score_breakdown.blue;
-    const redBreakdown = match.score_breakdown.red;
+    const breakdown = match.score_breakdown as { red?: Record<string, unknown>; blue?: Record<string, unknown> };
+    const autonBlue = extractAutonScore(breakdown.blue ?? null);
+    const autonRed = extractAutonScore(breakdown.red ?? null);
 
-    const autonBlue = extractAutonScore(blueBreakdown);
-    const autonRed = extractAutonScore(redBreakdown);
-
-    const autonDiff = autonBlue - autonRed; // positive = blue won auton
-
+    const autonDiff = autonBlue - autonRed;
     if (Math.abs(autonDiff) !== 1) return null;
 
     const autonWinnerAlliance: 'red' | 'blue' = autonDiff > 0 ? 'blue' : 'red';
     const finalScoreBlue = match.alliances.blue.score;
     const finalScoreRed = match.alliances.red.score;
-    const finalMargin = finalScoreBlue - finalScoreRed; // positive = blue won overall
+    const finalMargin = finalScoreBlue - finalScoreRed;
 
     const matchWinner = getMatchWinner(match);
     let matchResultForAutonWinner: MatchResult;
@@ -290,24 +238,18 @@ export function processMatch(
 }
 
 /**
- * Filter a list of TBA matches to only those where auton margin = ±1
- * and build the full record set.
+ * Filter a list of TBA matches to those where auton margin = ±1.
  */
 export function filterAutonByOneMargin(
     matches: TBAMatch[],
     year: number,
-    options: {
-        compLevel?: string;
-        limit?: number;
-    } = {}
+    options: { compLevel?: string; limit?: number } = {}
 ): AutonMatchRecord[] {
     let filtered = matches;
-
     if (options.compLevel) {
         const lvl = options.compLevel.toLowerCase();
         filtered = filtered.filter((m) => m.comp_level.toLowerCase() === lvl);
     }
-
     const records: AutonMatchRecord[] = [];
     for (const match of filtered) {
         if (options.limit && records.length >= options.limit) break;
@@ -318,7 +260,7 @@ export function filterAutonByOneMargin(
 }
 
 // ---------------------------------------------------------------------------
-// Aggregation / summary
+// Aggregation
 // ---------------------------------------------------------------------------
 
 export function buildSummary(records: AutonMatchRecord[]): AutonImportanceSummary {
@@ -329,7 +271,6 @@ export function buildSummary(records: AutonMatchRecord[]): AutonImportanceSummar
 
     const dist: Record<number, number> = {};
     for (const r of records) {
-        // Express margin from the auton-winner's perspective
         const margin = r.autonWinnerAlliance === 'blue' ? r.finalMargin : -r.finalMargin;
         dist[margin] = (dist[margin] ?? 0) + 1;
     }
@@ -347,120 +288,63 @@ export function buildSummary(records: AutonMatchRecord[]): AutonImportanceSummar
 }
 
 // ---------------------------------------------------------------------------
-// TBA API helpers
+// Statbotics EPA enrichment — uses getStatboticsEvent from ./statbotics lib
 // ---------------------------------------------------------------------------
-
-function makeTbaHeaders(): Record<string, string> {
-    const key = process.env.TBA_AUTH_KEY;
-    if (!key) {
-        throw new Error('TBA_AUTH_KEY environment variable is not set.');
-    }
-    return { 'X-TBA-Auth-Key': key };
-}
-
-async function tbaFetch(path: string): Promise<unknown> {
-    const url = `${TBA_BASE_URL}${path}`;
-    const res = await fetch(url, { headers: makeTbaHeaders() });
-    if (!res.ok) {
-        throw new Error(`TBA API error ${res.status} for ${url}: ${res.statusText}`);
-    }
-    return res.json();
-}
-
-export async function fetchEventsForYear(year: number): Promise<{ key: string }[]> {
-    return tbaFetch(`/events/${year}/simple`) as Promise<{ key: string }[]>;
-}
-
-export async function fetchMatchesForEvent(eventKey: string): Promise<TBAMatch[]> {
-    try {
-        const matches = (await tbaFetch(`/event/${eventKey}/matches`)) as TBAMatch[];
-        return matches.map((m) => ({ ...m, event_key: eventKey }));
-    } catch (e) {
-        console.warn(`Skipping event ${eventKey}: ${(e as Error).message}`);
-        return [];
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Statbotics API helpers
-// ---------------------------------------------------------------------------
-
-function statboticsBase(): string {
-    return process.env.STATBOTICS_API_BASE || DEFAULT_STATBOTICS_BASE;
-}
-
-export interface StatboticsMatch {
-    key: string;
-    event: string;
-    red_epa_sum?: number;
-    blue_epa_sum?: number;
-    red?: { total_points?: { mean?: number } };
-    blue?: { total_points?: { mean?: number } };
-    // Statbotics v3 match object uses epa sums directly
-    epa?: {
-        red?: number | null;
-        blue?: number | null;
-    };
-    pred?: {
-        red_score?: number;
-        blue_score?: number;
-    };
-}
-
-export async function fetchStatboticsMatchesForEvent(
-    eventKey: string
-): Promise<StatboticsMatch[]> {
-    const url = `${statboticsBase()}/matches?event=${eventKey}&limit=500`;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return [];
-        return res.json() as Promise<StatboticsMatch[]>;
-    } catch {
-        return [];
-    }
-}
 
 /**
- * Build a lookup map: matchKey -> { red: epaSum, blue: epaSum }
+ * Build per-alliance expected-points sums from Statbotics per-team event data.
+ *
+ * Uses `getStatboticsEvent` from the existing statbotics lib to fetch all
+ * team EPAs for an event, then sums the three robots on each alliance.
  */
-export function buildEpaLookup(
-    statboticsMatches: StatboticsMatch[]
-): Map<string, { red: number; blue: number }> {
-    const map = new Map<string, { red: number; blue: number }>();
-    for (const sm of statboticsMatches) {
-        const red =
-            sm.red_epa_sum ??
-            sm.epa?.red ??
-            sm.pred?.red_score ??
-            0;
-        const blue =
-            sm.blue_epa_sum ??
-            sm.epa?.blue ??
-            sm.pred?.blue_score ??
-            0;
-        map.set(sm.key, { red: Number(red) || 0, blue: Number(blue) || 0 });
+export function buildAllianceEpaFromTeamData(
+    teamEvents: StatboticsTeamEvent[],
+    redKeys: string[],
+    blueKeys: string[]
+): { red: number; blue: number } {
+    const epaMap = new Map<number, number>();
+    for (const te of teamEvents) {
+        epaMap.set(te.team, te.epa.total_points.mean);
     }
-    return map;
+
+    const sumEpa = (keys: string[]) =>
+        keys.reduce((sum, key) => {
+            const num = parseInt(key.replace('frc', ''), 10);
+            return sum + (epaMap.get(num) ?? 0);
+        }, 0);
+
+    return { red: sumEpa(redKeys), blue: sumEpa(blueKeys) };
 }
 
 // ---------------------------------------------------------------------------
-// Main analysis function
+// TBA events helper — not available in tba.ts, kept local
 // ---------------------------------------------------------------------------
 
-export interface AnalysisOptions {
-    year: number;
-    event?: string;
-    level?: string;
-    limit?: number;
-    useStatbotics?: boolean;
+export async function fetchEventsForYear(year: number): Promise<{ key: string }[]> {
+    const key = process.env.TBA_AUTH_KEY || process.env.NEXT_PUBLIC_TBA_API_KEY || process.env.TBA_API_KEY;
+    if (!key) throw new Error('No TBA API key set (TBA_AUTH_KEY).');
+    const url = `${TBA_BASE_URL}/events/${year}/simple`;
+    const res = await fetch(url, { headers: { 'X-TBA-Auth-Key': key } });
+    if (!res.ok) throw new Error(`TBA API error ${res.status}: ${res.statusText}`);
+    return res.json() as Promise<{ key: string }[]>;
 }
+
+// ---------------------------------------------------------------------------
+// Main analysis — uses getEventMatches and getStatboticsEvent from libs
+// ---------------------------------------------------------------------------
 
 export async function runAutonImportanceAnalysis(
     options: AnalysisOptions
 ): Promise<AutonImportanceResult> {
-    const { year, event, level, limit, useStatbotics = false } = options;
+    const {
+        year = DEFAULT_YEAR,
+        event,
+        level,
+        limit,
+        useStatbotics = false,
+    } = options;
 
-    // 1. Gather events to query
+    // 1. Determine events to analyse
     let eventKeys: string[];
     if (event) {
         eventKeys = [event];
@@ -469,21 +353,21 @@ export async function runAutonImportanceAnalysis(
         eventKeys = events.map((e) => e.key);
     }
 
-    // 2. Fetch TBA matches (with optional per-event Statbotics enrichment)
+    // 2. Fetch and process matches per event
     const allRecords: AutonMatchRecord[] = [];
 
     for (const eventKey of eventKeys) {
-        const matches = await fetchMatchesForEvent(eventKey);
+        // Reuse the shared TBA library — respects LOCAL_ONLY_EVENTS, caching etc.
+        const matches = await getEventMatches(eventKey);
         if (matches.length === 0) continue;
 
-        // Build EPA lookup if requested
-        let epaLookup: Map<string, { red: number; blue: number }> | undefined;
+        // Optional Statbotics EPA enrichment using the shared statbotics lib.
+        // getStatboticsEvent returns per-team EPA data; we sum per alliance.
+        let teamEvents: StatboticsTeamEvent[] | undefined;
         if (useStatbotics) {
-            const sbMatches = await fetchStatboticsMatchesForEvent(eventKey);
-            epaLookup = buildEpaLookup(sbMatches);
+            teamEvents = await getStatboticsEvent(eventKey);
         }
 
-        // Process each match
         let levelMatches = matches;
         if (level) {
             levelMatches = matches.filter(
@@ -493,8 +377,21 @@ export async function runAutonImportanceAnalysis(
 
         for (const match of levelMatches) {
             if (limit && allRecords.length >= limit) break;
-            const epas = epaLookup?.get(match.key);
-            const rec = processMatch(match, year, epas);
+
+            let epas: { red: number; blue: number } | undefined;
+            if (teamEvents && teamEvents.length > 0) {
+                epas = buildAllianceEpaFromTeamData(
+                    teamEvents,
+                    match.alliances.red.team_keys,
+                    match.alliances.blue.team_keys
+                );
+            }
+
+            const rec = processMatch(
+                match as TBAMatch & { event_key?: string; winning_alliance?: string },
+                year,
+                epas
+            );
             if (rec) allRecords.push(rec);
         }
 
@@ -522,12 +419,5 @@ export async function runAutonImportanceAnalysis(
         byEvent[ek] = buildSummary(recs);
     }
 
-    return {
-        year,
-        filters: { event, level, limit },
-        records: allRecords,
-        summary,
-        bySeason,
-        byEvent,
-    };
+    return { year, filters: { event, level, limit }, records: allRecords, summary, bySeason, byEvent };
 }
