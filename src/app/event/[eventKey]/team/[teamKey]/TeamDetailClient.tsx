@@ -7,6 +7,7 @@ import { saveTeamNote, getTeamNote, HIGHLIGHT_TAGS } from '@/lib/notes';
 import { getTeamStrategyAction, getTeamQuestionsAction } from '@/lib/actions';
 import { semanticColors, neutralColors, getConsensusColor } from '@/lib/designTokens';
 import { ScoutReport } from '@/lib/types/scouting';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface TeamDetailClientProps {
     eventKey: string;
@@ -431,28 +432,45 @@ export default function TeamDetailClient({
                 <section className="reveal">
                     <div className="glass" style={{ padding: '2.5rem', borderRadius: '40px' }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 950, fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '2rem' }}>Performance Timeline</h2>
-                        <div style={{ width: '100%', overflowX: 'auto', paddingBottom: '1rem' }}>
-                            <div style={{ minWidth: '500px', height: '250px', display: 'flex', alignItems: 'end', gap: '0.75rem' }}>
-                                {matchHistory.map((m, i) => (
-                                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'end', height: '100%', gap: '0.5rem' }}>
-                                        <div className="flex flex-col gap-1" style={{ height: '80%' }}>
-                                            <div style={{ height: `${(m.teleOP / 80) * 100}%`, background: 'var(--primary)', borderRadius: '6px' }} title="Teleop"></div>
-                                            <div style={{ height: `${(m.auto / 80) * 100}%`, background: 'var(--secondary)', borderRadius: '6px' }} title="Auto"></div>
-                                        </div>
-                                        <span style={{ textAlign: 'center', fontSize: '10px', fontWeight: 950, color: '#666' }}>Q{m.match}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="flex gap-4" style={{ marginTop: '1.5rem' }}>
-                            <div className="flex items-center gap-2">
-                                <div style={{ width: '12px', height: '12px', background: 'var(--primary)', borderRadius: '3px' }}></div>
-                                <span style={{ fontSize: '10px', fontWeight: 900, color: '#888' }}>TELEOP</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div style={{ width: '12px', height: '12px', background: 'var(--secondary)', borderRadius: '3px' }}></div>
-                                <span style={{ fontSize: '10px', fontWeight: 900, color: '#888' }}>AUTO</span>
-                            </div>
+                        <div style={{ width: '100%', height: '300px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={matchHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                    <XAxis 
+                                        dataKey="match" 
+                                        stroke="#888" 
+                                        fontSize={10} 
+                                        tickFormatter={(val) => `Q${val}`} 
+                                        tickMargin={10} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                    />
+                                    <YAxis 
+                                        stroke="#888" 
+                                        fontSize={10} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tickFormatter={(val) => `${val}`}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            background: '#111',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '15px',
+                                            fontSize: '12px',
+                                            fontWeight: 900
+                                        }}
+                                        itemStyle={{
+                                            fontWeight: 950
+                                        }}
+                                        labelFormatter={(label) => `Match Q${label}`}
+                                    />
+                                    <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 900, paddingTop: '10px' }} iconType="circle" />
+                                    <Line type="monotone" dataKey="total" name="Total Points" stroke="#a855f7" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="teleOP" name="Teleop Points" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
+                                    <Line type="monotone" dataKey="auto" name="Auto Points" stroke="var(--secondary)" strokeWidth={2} dot={{ r: 3 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
                 </section>

@@ -107,13 +107,26 @@ export default function MatchDashboard() {
 
             if (nextMatch) {
                 // Estimate match start time (every match is ~7 minutes)
+                // If the next match is currently ongoing, estimation should be different
                 const matchesUntil = nextMatch.matchNumber - (state.currentMatchNumber || 0);
-                const estimatedMinutes = matchesUntil * 7;
-                const estimatedStart = new Date(now.getTime() + estimatedMinutes * 60000);
+                
+                // If our next match is the current one (ongoing), it's starts "now"ish or is active
+                // If it's in the future, we multiply by a cyclic 7-8 min buffer
+                let estimatedMinutes = 0;
+                if (nextMatch.status === 'ongoing') {
+                    // It's happening now
+                    estimatedMinutes = 0;
+                } else {
+                    // Match starts roughly 7 minutes after the start of currentMatchNumber
+                    estimatedMinutes = matchesUntil * 7;
+                }
 
+                const estimatedStart = new Date(now.getTime() + estimatedMinutes * 60000);
                 const diff = estimatedStart.getTime() - now.getTime();
 
-                if (diff > 0) {
+                if (nextMatch.status === 'ongoing') {
+                    setCountdown('LIVE NOW');
+                } else if (diff > 0) {
                     const hours = Math.floor(diff / 3600000);
                     const minutes = Math.floor((diff % 3600000) / 60000);
                     const seconds = Math.floor((diff % 60000) / 1000);
@@ -122,8 +135,8 @@ export default function MatchDashboard() {
                         hours > 0
                             ? `${hours}h ${minutes}m ${seconds}s`
                             : minutes > 0
-                              ? `${minutes}m ${seconds}s`
-                              : `${seconds}s`
+                              ? `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                              : `00:${seconds.toString().padStart(2, '0')}`
                     );
                 } else {
                     setCountdown('Starting soon!');
