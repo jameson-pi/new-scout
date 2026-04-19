@@ -5,7 +5,7 @@
  *  - extractAutonScore  (breakdown field extraction for multiple seasons)
  *  - getMatchWinner     (winning alliance determination)
  *  - processMatch       (full record construction + filtering)
- *  - filterAutonByOneMargain (batch filtering with comp_level / limit)
+ *  - filterAutonByOneMargin (batch filtering with comp_level / limit)
  *  - buildSummary       (aggregation)
  *  - buildEpaLookup     (Statbotics EPA lookup)
  */
@@ -14,7 +14,7 @@ import {
     extractAutonScore,
     getMatchWinner,
     processMatch,
-    filterAutonByOneMargain,
+    filterAutonByOneMargin,
     buildSummary,
     buildEpaLookup,
     TBAMatch,
@@ -271,10 +271,10 @@ describe('processMatch', () => {
 });
 
 // ---------------------------------------------------------------------------
-// filterAutonByOneMargain
+// filterAutonByOneMargin
 // ---------------------------------------------------------------------------
 
-describe('filterAutonByOneMargain', () => {
+describe('filterAutonByOneMargin', () => {
     const matches: TBAMatch[] = [
         // qualifies: auton margin = 1 (blue)
         makeMatch({
@@ -300,18 +300,18 @@ describe('filterAutonByOneMargain', () => {
     ];
 
     it('returns all qualifying matches when no filter is applied', () => {
-        const records = filterAutonByOneMargain(matches, 2024);
+        const records = filterAutonByOneMargin(matches, 2024);
         expect(records).toHaveLength(2);
     });
 
     it('filters by comp_level', () => {
-        const records = filterAutonByOneMargain(matches, 2024, { compLevel: 'qm' });
+        const records = filterAutonByOneMargin(matches, 2024, { compLevel: 'qm' });
         expect(records).toHaveLength(1);
         expect(records[0].matchKey).toBe('2024ev_qm1');
     });
 
     it('respects the limit option', () => {
-        const records = filterAutonByOneMargain(matches, 2024, { limit: 1 });
+        const records = filterAutonByOneMargin(matches, 2024, { limit: 1 });
         expect(records).toHaveLength(1);
     });
 });

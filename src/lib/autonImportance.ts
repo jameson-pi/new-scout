@@ -293,7 +293,7 @@ export function processMatch(
  * Filter a list of TBA matches to only those where auton margin = ±1
  * and build the full record set.
  */
-export function filterAutonByOneMargain(
+export function filterAutonByOneMargin(
     matches: TBAMatch[],
     year: number,
     options: {
