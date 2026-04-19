@@ -1,5 +1,5 @@
 const TBA_BASE_URL = 'https://www.thebluealliance.com/api/v3';
-const TBA_KEY = process.env.NEXT_PUBLIC_TBA_API_KEY || process.env.TBA_API_KEY;
+const TBA_KEY = process.env.TBA_AUTH_KEY || process.env.NEXT_PUBLIC_TBA_API_KEY || process.env.TBA_API_KEY;
 
 // Practice / local events that don't exist on TBA — skip the network call entirely
 const LOCAL_ONLY_EVENTS = new Set(['2026howdy']);
