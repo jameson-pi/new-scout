@@ -56,7 +56,6 @@ describe('constants', () => {
     it('REBUILT_AUTO_POINTS matches game manual values', () => {
         expect(REBUILT_AUTO_POINTS.fuel).toBe(1);
         expect(REBUILT_AUTO_POINTS.towerLevel1).toBe(15);
-        expect(REBUILT_AUTO_POINTS.mobility).toBe(3);
     });
 });
 
@@ -75,17 +74,15 @@ describe('extractAutonScore', () => {
     });
 
     it('sums 2026 REBUILT sub-components when autoPoints is absent', () => {
-        // 5 fuel × 1pt + Level1 tower × 15pt + 1 mobility × 3pt = 23
+        // 5 fuel × 1pt + Level1 tower × 15pt = 20
         expect(extractAutonScore({
             autoFuelPoints: 5,
             autoTowerPoints: 15,
-            autoMobilityPoints: 3,
-        })).toBe(23);
+        })).toBe(20);
     });
 
     it('handles partial 2026 sub-fields (missing fields default to 0)', () => {
         expect(extractAutonScore({ autoFuelPoints: 8 })).toBe(8);
-        expect(extractAutonScore({ autoMobilityPoints: 3 })).toBe(3);
         expect(extractAutonScore({ autoTowerPoints: 15 })).toBe(15);
     });
 
@@ -236,8 +233,8 @@ describe('processMatch', () => {
     });
 
     it('extracts auton from 2026 REBUILT sub-components via extractAutonScore', () => {
-        // 6 fuel (6pt) + tower L1 (15pt) + moved (3pt) = 24 for blue
-        // 5 fuel (5pt) + tower L1 (15pt) + moved (3pt) = 23 for red  => margin = 1
+        // 6 fuel (6pt) + tower L1 (15pt) = 21 for blue
+        // 5 fuel (5pt) + tower L1 (15pt) = 20 for red  => margin = 1
         const m = makeMatch({
             key: '2026txcle_qm10',
             winning_alliance: 'blue',
@@ -246,14 +243,14 @@ describe('processMatch', () => {
                 blue: { score: 80, team_keys: [] },
             },
             score_breakdown: {
-                red: { autoFuelPoints: 5, autoTowerPoints: 15, autoMobilityPoints: 3 },
-                blue: { autoFuelPoints: 6, autoTowerPoints: 15, autoMobilityPoints: 3 },
+                red: { autoFuelPoints: 5, autoTowerPoints: 15 },
+                blue: { autoFuelPoints: 6, autoTowerPoints: 15 },
             },
         });
         const rec = processMatch(m, 2026);
         expect(rec).not.toBeNull();
-        expect(rec!.autonBlue).toBe(24);
-        expect(rec!.autonRed).toBe(23);
+        expect(rec!.autonBlue).toBe(21);
+        expect(rec!.autonRed).toBe(20);
         expect(rec!.autonWinnerAlliance).toBe('blue');
     });
 });

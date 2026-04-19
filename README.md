@@ -18,7 +18,7 @@
 
 Analyzes FRC 2026 REBUILT match data to quantify how often winning autonomous (auto) by exactly **1 point** correlates with winning the full match.
 
-**2026 REBUILT scoring:** fuel × 1 pt, Tower Level 1 auto = 15 pts, moved = 3 pts (via `autoPoints` field in TBA score_breakdown).
+**2026 REBUILT scoring:** fuel × 1 pt, Tower Level 1 auto = 15 pts (via `autoPoints` field in TBA score_breakdown).
 
 ### Setup
 

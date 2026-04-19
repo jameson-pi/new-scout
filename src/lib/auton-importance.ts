@@ -47,7 +47,7 @@ auton-importance — FRC Autonomous Importance Analyzer (2026 REBUILT)
 Finds all matches where one alliance won autonomous by exactly 1 point and
 reports how often those alliances went on to win the full match.
 
-Scoring (2026 REBUILT): fuel×1pt, Tower Level 1 auto=15pts, moved=3pts.
+Scoring (2026 REBUILT): fuel×1pt, Tower Level 1 auto=15pts.
 TBA reports the total as 'autoPoints' in the match score_breakdown.
 
 Usage:

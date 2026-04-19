@@ -7,7 +7,6 @@
  * Scoring constants match the 2026 REBUILT game (see spr.ts / predictions.ts):
  *   - Fuel in auto:       1 pt / piece
  *   - Tower Level 1 auto: 15 pts
- *   - Mobility (moved):    3 pts
  *   - TBA reports the sum as `autoPoints` in score_breakdown
  *
  * Data sources:
@@ -33,7 +32,6 @@ export const TBA_BASE_URL = 'https://www.thebluealliance.com/api/v3';
 export const REBUILT_AUTO_POINTS = {
     fuel: 1,          // per fuel piece scored in auto
     towerLevel1: 15,  // Tower Level 1 climb in auto
-    mobility: 3,      // robot moved off the starting line
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -110,7 +108,7 @@ export interface AnalysisOptions {
  * Strategy (2026 REBUILT):
  *  1. Use `autoPoints` directly — TBA provides this for all supported seasons.
  *  2. Fall back to summing 2026-specific sub-fields:
- *       autoFuelPoints + autoTowerPoints + autoMobilityPoints
+ *       autoFuelPoints + autoTowerPoints
  *  3. Generic catch-all: sum any field whose name starts with "auto"
  *     (excluding RP / bonus fields) — future-proofs against new TBA field names.
  */
@@ -123,18 +121,15 @@ export function extractAutonScore(breakdown: Record<string, unknown> | null | un
     }
 
     // 2026 REBUILT sub-components when autoPoints is not directly available:
-    //   autoFuelPoints    = fuel pieces scored × REBUILT_AUTO_POINTS.fuel (1 pt each)
-    //   autoTowerPoints   = Tower Level 1 climbs × REBUILT_AUTO_POINTS.towerLevel1 (15 pts)
-    //   autoMobilityPoints= robots that moved × REBUILT_AUTO_POINTS.mobility (3 pts)
+    //   autoFuelPoints = fuel pieces scored × REBUILT_AUTO_POINTS.fuel (1 pt each)
+    //   autoTowerPoints = Tower Level 1 climbs × REBUILT_AUTO_POINTS.towerLevel1 (15 pts)
     if (
         breakdown.autoFuelPoints !== undefined ||
-        breakdown.autoTowerPoints !== undefined ||
-        breakdown.autoMobilityPoints !== undefined
+        breakdown.autoTowerPoints !== undefined
     ) {
         return (
             ((breakdown.autoFuelPoints as number) ?? 0) +
-            ((breakdown.autoTowerPoints as number) ?? 0) +
-            ((breakdown.autoMobilityPoints as number) ?? 0)
+            ((breakdown.autoTowerPoints as number) ?? 0)
         );
     }
 
