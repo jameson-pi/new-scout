@@ -86,8 +86,26 @@ export function runSimulation(
     }).sort((a, b) => a.expectedRank - b.expectedRank);
 }
 
-function getMatchNumber(matchKey: string): number {
-    return parseInt(matchKey.split('_qm').pop() || '0');
+export function getMatchNumber(matchKey: string): number {
+    const part = (matchKey.split('_').pop() || '').toLowerCase();
+    if (part.startsWith('qm')) return parseInt(part.slice(2)) || 0;
+    return Number.MAX_SAFE_INTEGER; // Elimination matches always sort after all qual matches
+}
+
+/**
+ * Returns a human-readable label for any match key.
+ * e.g. "2026txcle_qm5"   -> "QM5"
+ *      "2026txcle_sf1m2"  -> "SF1 M2"
+ *      "2026txcle_f1m1"   -> "F1 M1"
+ */
+export function getMatchLabel(matchKey: string): string {
+    const part = (matchKey.split('_').pop() || '').toLowerCase();
+    if (part.startsWith('qm')) return `QM${part.slice(2)}`;
+    const compLevel = part.match(/^([a-z]+)/)?.[1] || '';
+    const rest = part.slice(compLevel.length);
+    const [setStr, matchStr] = rest.split('m');
+    if (!matchStr) return part.toUpperCase();
+    return `${compLevel.toUpperCase()}${setStr} M${matchStr}`;
 }
 
 function processMatchOutcome(iterationRPs: Record<string, number>, match: SimulatedMatch, red: any, blue: any) {

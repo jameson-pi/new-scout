@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getMissionData } from '@/lib/data';
 import { getAllPitReports } from '@/lib/data';
 import { getEventMatches } from '@/lib/tba';
+import { getMatchNumber, getMatchLabel } from '@/lib/simulation';
 import MatchTacticalInterface from './MatchTacticalInterface';
 
 export default async function MatchStrategyPage({ params }: { params: Promise<{ matchKey: string }> }) {
@@ -18,7 +19,7 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
 
     const alliances = match.alliances;
     const isPlayed = match.alliances?.red?.score != null && match.alliances.red.score >= 0;
-    const matchNumber = parseInt(matchKey.split('_qm').pop() || '0');
+    const matchNumber = getMatchNumber(matchKey);
 
     const TELE_TOWER: Record<string, number> = { Level1: 10, Level2: 20, Level3: 30, None: 0, 'No Attempt': 0 };
 
@@ -29,7 +30,7 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
     function getRobotPrediction(teamKey: string): { predictedPts: number; predictedAuto: number; predictedTele: number; predictedTower: number; sampleSize: number } {
         const priorReports = reports.filter(r =>
             r.teamKey === teamKey &&
-            parseInt(r.matchKey.split('_qm').pop() || '0') < matchNumber
+            getMatchNumber(r.matchKey) < matchNumber
         );
         if (priorReports.length === 0) {
             // Fall back to all reports if no prior ones (e.g. first match)
@@ -160,7 +161,7 @@ export default async function MatchStrategyPage({ params }: { params: Promise<{ 
                         <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
                             <p style={{ fontSize: '10px', fontWeight: 950, color: 'var(--primary-teal)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.25rem' }}>⚙ MATCH ID</p>
                             <p style={{ fontSize: '4rem', fontWeight: 950, fontStyle: 'italic', color: 'var(--secondary-red)', lineHeight: 1, textShadow: '0 0 20px rgba(172, 36, 36, 0.3)' }}>
-                                QM{matchKey.split('_qm').pop()?.toUpperCase()}
+                                {getMatchLabel(matchKey)}
                             </p>
                         </div>
                     </div>
